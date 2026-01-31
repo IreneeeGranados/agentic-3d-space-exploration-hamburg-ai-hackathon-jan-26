@@ -206,6 +206,14 @@ strong {
 }
 
 /* Custom Flight Cursor (Arrow) */
+.hud-controls {
+    display: flex;
+    /* Kept for the text wrapper */
+    margin-top: 5px;
+}
+
+/* Removed .hud-btn styles as buttons are removed */
+
 .flight-cursor {
     position: absolute;
     top: 50%;
