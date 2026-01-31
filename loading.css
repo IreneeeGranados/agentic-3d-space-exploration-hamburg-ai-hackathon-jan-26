@@ -1,0 +1,285 @@
+/* ============================================
+   LOADING SCREEN - SPACE VIBES
+   ============================================ */
+
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    overflow: hidden;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Animated stars background */
+.loading-stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+        radial-gradient(2px 2px at 60px 70px, #fff, transparent),
+        radial-gradient(1px 1px at 50px 50px, #ddd, transparent),
+        radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+        radial-gradient(2px 2px at 90px 10px, #eee, transparent),
+        radial-gradient(1px 1px at 200px 150px, #fff, transparent),
+        radial-gradient(2px 2px at 150px 100px, #ddd, transparent);
+    background-size: 200px 200px;
+    animation: stars-move 60s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes stars-move {
+    from { transform: translateX(0) translateY(0); }
+    to { transform: translateX(-200px) translateY(-200px); }
+}
+
+/* Content container */
+.loading-content {
+    position: relative;
+    text-align: center;
+    z-index: 10;
+    max-width: 600px;
+    padding: 40px;
+}
+
+/* Title with glow effect */
+.loading-title {
+    font-family: 'Courier New', monospace;
+    font-size: 4em;
+    font-weight: bold;
+    color: #fff;
+    margin: 0 0 10px 0;
+    text-shadow: 
+        0 0 10px rgba(57, 255, 20, 0.8),
+        0 0 20px rgba(57, 255, 20, 0.6),
+        0 0 30px rgba(57, 255, 20, 0.4),
+        0 0 40px rgba(255, 0, 255, 0.3);
+    letter-spacing: 8px;
+    animation: title-pulse 2s ease-in-out infinite;
+}
+
+@keyframes title-pulse {
+    0%, 100% { 
+        text-shadow: 
+            0 0 10px rgba(57, 255, 20, 0.8),
+            0 0 20px rgba(57, 255, 20, 0.6),
+            0 0 30px rgba(57, 255, 20, 0.4),
+            0 0 40px rgba(255, 0, 255, 0.3);
+    }
+    50% { 
+        text-shadow: 
+            0 0 20px rgba(57, 255, 20, 1),
+            0 0 30px rgba(57, 255, 20, 0.8),
+            0 0 40px rgba(57, 255, 20, 0.6),
+            0 0 50px rgba(255, 0, 255, 0.5);
+    }
+}
+
+.loading-subtitle {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    color: #ff00ff;
+    margin: 0 0 50px 0;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+/* Rocket animation container */
+.loading-rocket-container {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    margin: 40px 0;
+    overflow: hidden;
+}
+
+.loading-rocket {
+    position: absolute;
+    font-size: 3em;
+    animation: rocket-fly 3s linear infinite;
+    filter: drop-shadow(0 0 10px rgba(255, 107, 0, 0.8));
+}
+
+@keyframes rocket-fly {
+    0% {
+        left: -10%;
+        transform: translateY(0px) rotate(-15deg);
+    }
+    50% {
+        transform: translateY(-10px) rotate(0deg);
+    }
+    100% {
+        left: 110%;
+        transform: translateY(0px) rotate(15deg);
+    }
+}
+
+/* Rocket trail */
+.loading-trail {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 107, 0, 0.8) 20%,
+        rgba(57, 255, 20, 0.6) 40%,
+        rgba(0, 255, 255, 0.4) 60%,
+        transparent
+    );
+    transform: translateY(-50%);
+    animation: trail-shimmer 3s linear infinite;
+    filter: blur(2px);
+}
+
+@keyframes trail-shimmer {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
+/* Progress bar */
+.loading-progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 30px 0 20px 0;
+    border: 1px solid rgba(57, 255, 20, 0.3);
+    box-shadow: 
+        0 0 10px rgba(57, 255, 20, 0.3),
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.loading-progress-bar {
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(57, 255, 20, 0.8),
+        rgba(0, 255, 255, 0.8),
+        rgba(255, 0, 255, 0.8)
+    );
+    background-size: 200% 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: progress-gradient 2s linear infinite;
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.8);
+}
+
+@keyframes progress-gradient {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+/* Loading status text */
+.loading-status {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    color: #39ff14;
+    margin: 15px 0 5px 0;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.8);
+}
+
+.loading-detail {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #00ffff;
+    margin: 0;
+    opacity: 0.8;
+}
+
+/* Cosmic particles effect */
+.loading-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(57, 255, 20, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+    animation: cosmic-glow 10s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes cosmic-glow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+}
+
+/* Nebula effect */
+.loading-screen::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(
+        circle,
+        rgba(138, 43, 226, 0.15) 0%,
+        rgba(75, 0, 130, 0.1) 25%,
+        transparent 70%
+    );
+    transform: translate(-50%, -50%);
+    animation: nebula-rotate 30s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes nebula-rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .loading-title {
+        font-size: 2.5em;
+        letter-spacing: 4px;
+    }
+    
+    .loading-subtitle {
+        font-size: 1em;
+    }
+    
+    .loading-rocket {
+        font-size: 2em;
+    }
+    
+    .loading-content {
+        padding: 20px;
+    }
+}
+
+/* Glitch effect for extra space vibes (optional) */
+@keyframes glitch {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+}
+
+.loading-title:hover {
+    animation: glitch 0.3s infinite, title-pulse 2s ease-in-out infinite;
+}

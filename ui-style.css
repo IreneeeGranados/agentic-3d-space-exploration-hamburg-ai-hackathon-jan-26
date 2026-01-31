@@ -1,0 +1,576 @@
+/* ========================================
+   NASA MISSION CONTROL - CLEAN UI DESIGN
+   Professional, data-focused, utilitarian
+   ======================================== */
+
+:root {
+    /* Color Palette - NASA Mission Control */
+    --primary-bg: rgba(10, 15, 25, 0.85);
+    --secondary-bg: rgba(15, 25, 40, 0.90);
+    --accent-blue: #00D9FF;
+    --accent-success: #00FF88;
+    --accent-warning: #FFB800;
+    --accent-danger: #FF3366;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0B0C0;
+    --text-dim: #607080;
+    --border-color: rgba(0, 217, 255, 0.3);
+    --panel-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    
+    /* Typography */
+    --font-main: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+    --font-mono: 'Courier New', 'Consolas', monospace;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+/* ========================================
+   PANEL BASE STYLES
+   ======================================== */
+
+.ui-panel {
+    position: fixed;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: var(--panel-shadow);
+    backdrop-filter: blur(10px);
+    font-family: var(--font-main);
+    color: var(--text-primary);
+    padding: var(--spacing-md);
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.ui-panel.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Panel Headers */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-blue);
+    margin: 0;
+}
+
+.panel-subtitle {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin: 0;
+}
+
+/* ========================================
+   TOP LEFT - FLIGHT HUD
+   ======================================== */
+
+#flight-hud {
+    top: var(--spacing-lg);
+    left: var(--spacing-lg);
+    min-width: 280px;
+}
+
+.hud-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.hud-section:last-child {
+    margin-bottom: 0;
+}
+
+.hud-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-xs);
+}
+
+.hud-value {
+    font-size: 18px;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.hud-value.large {
+    font-size: 24px;
+}
+
+.hud-value.accent {
+    color: var(--accent-blue);
+}
+
+.hud-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.hud-grid-item {
+    text-align: center;
+}
+
+/* ========================================
+   TOP RIGHT - MISSION STATUS
+   ======================================== */
+
+#mission-status {
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    min-width: 320px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-success);
+    animation: pulse 2s infinite;
+}
+
+.status-dot.inactive {
+    background: var(--text-dim);
+    animation: none;
+}
+
+.status-dot.warning {
+    background: var(--accent-warning);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.destination-card {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.destination-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-bottom: var(--spacing-sm);
+}
+
+.destination-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-xs);
+}
+
+/* ========================================
+   BOTTOM LEFT - CONTROLS REFERENCE
+   ======================================== */
+
+#controls-panel {
+    bottom: var(--spacing-lg);
+    left: var(--spacing-lg);
+    min-width: 280px;
+}
+
+.control-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-group-title {
+    font-size: 11px;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+}
+
+.control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+    font-size: 12px;
+}
+
+.control-key {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-primary);
+}
+
+.control-description {
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   BOTTOM RIGHT - PLANET SELECTOR
+   ======================================== */
+
+#planet-selector {
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    width: 400px;
+    max-height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-container {
+    margin-bottom: var(--spacing-md);
+}
+
+.search-input {
+    width: 100%;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.2);
+}
+
+.search-input::placeholder {
+    color: var(--text-dim);
+}
+
+.filter-bar {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.filter-btn {
+    flex: 1;
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-btn:hover {
+    background: rgba(0, 217, 255, 0.1);
+    border-color: var(--accent-blue);
+    color: var(--text-primary);
+}
+
+.filter-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: var(--primary-bg);
+}
+
+.planet-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
+}
+
+/* Custom Scrollbar */
+.planet-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.planet-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.planet-list::-webkit-scrollbar-thumb {
+    background: var(--accent-blue);
+    border-radius: 3px;
+}
+
+.planet-item {
+    background: var(--secondary-bg);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.planet-item:hover {
+    border-color: var(--accent-blue);
+    background: rgba(0, 217, 255, 0.1);
+    transform: translateX(4px);
+}
+
+.planet-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.planet-item-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.planet-item-distance {
+    font-family: var(--font-mono);
+}
+
+.planet-item-habitability {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.planet-item-habitability.high {
+    background: rgba(0, 255, 136, 0.2);
+    color: var(--accent-success);
+}
+
+.planet-item-habitability.medium {
+    background: rgba(255, 184, 0, 0.2);
+    color: var(--accent-warning);
+}
+
+.planet-item-habitability.low {
+    background: rgba(255, 51, 102, 0.2);
+    color: var(--accent-danger);
+}
+
+/* ========================================
+   TOGGLE BUTTONS
+   ======================================== */
+
+.toggle-btn {
+    position: fixed;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: var(--spacing-sm);
+    color: var(--accent-blue);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(10px);
+    z-index: 99;
+}
+
+.toggle-btn:hover {
+    background: var(--accent-blue);
+    color: var(--primary-bg);
+    transform: scale(1.05);
+}
+
+#toggle-ui-btn {
+    top: 50%;
+    right: var(--spacing-sm);
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+/* ========================================
+   MODAL/OVERLAY - PLANET DETAILS
+   ======================================== */
+
+#planet-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    max-height: 80vh;
+    background: var(--primary-bg);
+    border: 2px solid var(--accent-blue);
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+}
+
+#planet-modal.visible {
+    display: flex;
+}
+
+.modal-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.modal-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+}
+
+.modal-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.modal-section-title {
+    font-size: 12px;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+}
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.modal-field {
+    margin-bottom: var(--spacing-sm);
+}
+
+.modal-field-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: var(--spacing-xs);
+}
+
+.modal-field-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+}
+
+.modal-footer {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.modal-btn {
+    flex: 1;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn.primary {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: var(--primary-bg);
+}
+
+.modal-btn.primary:hover {
+    background: #00B5D9;
+    border-color: #00B5D9;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 199;
+    display: none;
+}
+
+.modal-overlay.visible {
+    display: block;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+
+@media (max-width: 1400px) {
+    #planet-selector {
+        width: 320px;
+    }
+}
+
+@media (max-height: 800px) {
+    .ui-panel {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    #planet-selector {
+        max-height: 400px;
+    }
+}
