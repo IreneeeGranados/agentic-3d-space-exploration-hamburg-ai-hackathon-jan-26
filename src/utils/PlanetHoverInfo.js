@@ -2,6 +2,7 @@
  * PlanetHoverInfo - Displays planet information on mouseover in 3D scene
  * Uses raycasting to detect planet hover events
  */
+import * as THREE from 'three';
 export class PlanetHoverInfo {
     constructor(camera, planets, planetDataService) {
         this.camera = camera;
@@ -11,7 +12,7 @@ export class PlanetHoverInfo {
         this.mouse = { x: 0, y: 0 };
         this.hoveredPlanet = null;
         this.infoPanel = null;
-        
+
         this.init();
     }
 
@@ -24,7 +25,7 @@ export class PlanetHoverInfo {
 
         // Create info panel
         this.createInfoPanel();
-        
+
         // Setup mouse tracking
         this.setupMouseTracking();
     }
@@ -46,11 +47,11 @@ export class PlanetHoverInfo {
             if (event.target.tagName === 'CANVAS') {
                 this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-                
+
                 // Position info panel near cursor
                 this.infoPanel.style.left = `${event.clientX + 20}px`;
                 this.infoPanel.style.top = `${event.clientY - 20}px`;
-                
+
                 this.checkHover();
             } else {
                 this.hideInfo();
@@ -69,18 +70,18 @@ export class PlanetHoverInfo {
 
         if (intersects.length > 0) {
             const intersectedObject = intersects[0].object;
-            
+
             // Find the planet object
-            const planet = this.planets.find(p => 
-                p.mesh === intersectedObject || 
-                p.group === intersectedObject || 
+            const planet = this.planets.find(p =>
+                p.mesh === intersectedObject ||
+                p.group === intersectedObject ||
                 (p.group && p.group.children.includes(intersectedObject))
             );
 
             if (planet && planet.config) {
                 // Get enriched data from NASA dataset if available
-                const enrichedData = this.dataService ? 
-                    this.dataService.getPlanetByName(planet.config.name) : 
+                const enrichedData = this.dataService ?
+                    this.dataService.getPlanetByName(planet.config.name) :
                     null;
 
                 if (enrichedData) {
@@ -88,7 +89,7 @@ export class PlanetHoverInfo {
                 } else {
                     this.showBasicInfo(planet.config);
                 }
-                
+
                 this.hoveredPlanet = planet;
             }
         } else {
@@ -104,7 +105,7 @@ export class PlanetHoverInfo {
         const content = this.infoPanel.querySelector('.hover-content');
 
         header.textContent = planetConfig.name || 'Unknown Planet';
-        
+
         content.innerHTML = `
             <div class="hover-row">
                 <span>Distance:</span>
@@ -131,7 +132,7 @@ export class PlanetHoverInfo {
         const distance = planetData.sy_dist ? (planetData.sy_dist * 3.262).toFixed(1) : 'Unknown';
 
         header.textContent = planetData.pl_name || 'Unknown';
-        
+
         content.innerHTML = `
             <div class="hover-row">
                 <span>Type:</span>

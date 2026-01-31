@@ -12,14 +12,14 @@ export class Spacecraft {
         this.group = new THREE.Group();
 
         // Start in space
-        this.group.position.set(0, 0, 150);
+        this.group.position.set(0, 0, 0);
 
         // Constant forward speed
-        this.forwardSpeed = 1.0; // Increased base speed for better visibility
-        this.defaultSpeed = 1.0;
-        this.boostSpeed = 20; // Reduced boost slightly to match scale
+        this.forwardSpeed = 10.0; // Increased base speed significantly for better sensation
+        this.defaultSpeed = 10.0;
+        this.boostSpeed = 50;
         this.brakeSpeed = 0;  // Stop
-        this.autopilotSpeed = 50; // Autopilot superspeed
+        this.autopilotSpeed = 80; // Faster autopilot
 
         // Steering
         this.steeringForce = 8;
