@@ -18,7 +18,7 @@ export class PlanetDataService {
     async initialize() {
         if (this.clusterIndex) {
             console.log('✓ Cluster index already loaded');
-            return;
+            return this.clusterIndex;
         }
 
         try {
