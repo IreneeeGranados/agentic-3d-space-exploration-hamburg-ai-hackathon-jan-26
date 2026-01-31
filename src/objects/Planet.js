@@ -102,19 +102,19 @@ export class Planet {
             emissive: emissiveMap ? new THREE.Color(0xffffff) : new THREE.Color(baseColor),
             emissiveIntensity: emissiveMap ? 1.0 : (parseFloat(this.config.temperature) > 1000 ? 0.1 : 0.0)
         };
-        
+
         // Only add emissiveMap if it exists
         if (emissiveMap) {
             materialOptions.emissiveMap = emissiveMap;
         }
-        
+
         const material = new THREE.MeshStandardMaterial(materialOptions);
 
         this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.mesh.rotation.z = this.config.tilt;
-        
+
         // Add planet data to userData for click detection
         this.mesh.userData.planetData = {
             pl_name: this.config.pl_name || this.config.name,
@@ -139,6 +139,19 @@ export class Planet {
         } else {
             this.mesh.position.set(this.config.position.x, this.config.position.y, this.config.position.z);
             this.group.add(this.mesh);
+        }
+
+        // Apply Oblateness (Flattening)
+        if (this.config.flattening) {
+            this.mesh.scale.y = 1.0 - this.config.flattening;
+
+            // Atmospheric shells must also be oblate to match
+            if (this.atmosphereMesh) {
+                this.atmosphereMesh.scale.y = 1.0 - this.config.flattening;
+            }
+            if (this.cloudMesh) {
+                this.cloudMesh.scale.y = 1.0 - this.config.flattening;
+            }
         }
 
         // Add enhancements

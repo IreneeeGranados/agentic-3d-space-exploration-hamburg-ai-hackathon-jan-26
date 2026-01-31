@@ -189,7 +189,7 @@ class App {
                     const hit = intersects.find(intersect => {
                         let obj = intersect.object;
                         while (obj) {
-                            if (this.planets.some(p => p.mesh === obj || p.group === obj)) {
+                            if (this.planets && this.planets.some(p => p.mesh === obj || p.group === obj)) {
                                 return true;
                             }
                             // Check if it's an exoplanet mesh
@@ -223,29 +223,14 @@ class App {
             }
         });
 
-        // Speed Controls & Hotkeys (Keyboard)
+        // View Toggle (V)
         window.addEventListener('keydown', (e) => {
-            if (!this.spacecraft) return;
-
-            // Plus key (and NumpadAdd)
-            if (e.key === '+' || e.code === 'NumpadAdd' || e.code === 'Equal') {
-                this.spacecraft.defaultSpeed += 1.0;
-                this.spacecraft.forwardSpeed = this.spacecraft.defaultSpeed;
-                console.log('Speed increased to:', this.spacecraft.defaultSpeed);
-            }
-
-            // Minus key (and NumpadSubtract)
-            if (e.key === '-' || e.code === 'NumpadSubtract' || e.code === 'Minus') {
-                this.spacecraft.defaultSpeed = Math.max(0, this.spacecraft.defaultSpeed - 1.0);
-                this.spacecraft.forwardSpeed = this.spacecraft.defaultSpeed;
-                console.log('Speed decreased to:', this.spacecraft.defaultSpeed);
-            }
-
-            // View Toggle (V)
             if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') {
                 console.log('V Key Pressed');
-                this.spacecraft.toggleView();
-                this.updateViewUI();
+                if (this.spacecraft) {
+                    this.spacecraft.toggleView();
+                    this.updateViewUI();
+                }
             }
         });
 
@@ -281,16 +266,16 @@ class App {
 
     async createSceneObjects() {
         console.log('🌌 Initializing scene...');
-        
+
         // 1. Initialize data service first (needed for all planet loading)
         await this.initializePlanetDataService();
-        
+
         // 2. Create environment
         await this.createEnvironment();
-        
+
         // 3. Load all planets (solar system + exoplanets) through unified field
         await this.loadAllPlanets();
-        
+
         // 4. Create spacecraft
         this.createSpacecraft();
     }
@@ -307,7 +292,7 @@ class App {
         // Create dynamic star field that follows camera
         this.dynamicStarField = new DynamicStarField(20000, 2000);
         this.sceneManager.add(this.dynamicStarField.mesh);
-        
+
         // Create Space Dust for motion sensation
         this.spaceDust = new SpaceDust(2000, 400);
         this.sceneManager.add(this.spaceDust.mesh);
@@ -316,15 +301,15 @@ class App {
 
     async loadAllPlanets() {
         console.log('🪐 Loading all planets from nasa_data/clusters/...');
-        
+
         try {
             // Create unified planet field that handles both solar system and exoplanets
             this.exoplanetField = new ExoplanetField(this.planetDataService);
-            
+
             // Load solar system first
             console.log('  🌍 Loading solar system...');
             await this.planetDataService.loadSolarSystem();
-            
+
             // Then load exoplanets
             console.log('  🌌 Loading exoplanets...');
             await this.exoplanetField.load();
@@ -335,7 +320,7 @@ class App {
 
             const totalPlanets = this.planetDataService.getAllPlanets().length;
             console.log(`✓ Total planets loaded: ${totalPlanets}`);
-            
+
             // Keep empty planets array for backward compatibility with UI components
             this.planets = [];
         } catch (error) {
@@ -357,7 +342,7 @@ class App {
             this.planetDataService,
             (planet) => this.teleportToPlanet(planet)
         );
-        
+
         // Start loading all planets in the navigator
         this.planetNavigator.loadPlanets();
 
@@ -499,45 +484,6 @@ class App {
             const degrees = ((rotation.y * 180 / Math.PI) % 360 + 360) % 360;
             heading.textContent = `${degrees.toFixed(1)}°`;
         }
-
-        // Mission status UI has been removed - autopilot status no longer displayed
-        /*
-        // Update autopilot status
-        if (this.spacecraft.autopilot && this.spacecraft.autopilot.active) {
-            const statusDot = document.getElementById('autopilot-status');
-            const statusText = document.getElementById('autopilot-text');
-            const destCard = document.getElementById('destination-card');
-
-            if (statusDot) statusDot.className = 'status-dot';
-            if (statusText) statusText.textContent = 'Autopilot Active';
-            if (destCard) destCard.style.display = 'block';
-
-            const target = this.spacecraft.autopilot.target;
-            if (target && target.userData && target.userData.planetData) {
-                const data = target.userData.planetData;
-                const destName = document.getElementById('destination-name');
-                const destDistance = document.getElementById('destination-distance');
-                const destHab = document.getElementById('destination-habitability');
-
-                if (destName) destName.textContent = data.name || data.pl_name;
-                if (destDistance) {
-                    const dist = this.spacecraft.mesh.position.distanceTo(target.position);
-                    destDistance.textContent = `${(dist / 10).toFixed(2)} ly`;
-                }
-                if (destHab && data.characteristics) {
-                    destHab.textContent = `${data.characteristics.habitability_percent}%`;
-                }
-            }
-        } else {
-            const statusDot = document.getElementById('autopilot-status');
-            const statusText = document.getElementById('autopilot-text');
-            const destCard = document.getElementById('destination-card');
-
-            if (statusDot) statusDot.className = 'status-dot inactive';
-            if (statusText) statusText.textContent = 'Manual Flight';
-            if (destCard) destCard.style.display = 'none';
-        }
-        */
     }
 
     animate() {
@@ -603,11 +549,11 @@ class App {
      */
     teleportToPlanet(planet) {
         if (!planet) return;
-        
+
         console.log(`🚀 Teleporting to ${planet.pl_name}`);
-        
+
         let targetPosition;
-        
+
         // Solar system planets use position field scaled by 200 (same as ExoplanetField line 177)
         const isSolarPlanet = planet.hostname === 'Sun';
         if (isSolarPlanet && planet.position) {
@@ -626,33 +572,33 @@ class App {
                 coords.z_light_years * 10
             );
         }
-        
+
         if (!targetPosition) {
             console.warn(`Cannot teleport to ${planet.pl_name}: No coordinates available`);
             return;
         }
-        
+
         // Create flash effect overlay
         this.createTeleportFlash();
-        
+
         // Calculate approach position
         const offset = 100;
         const direction = targetPosition.clone().normalize();
         const approachPosition = targetPosition.clone().sub(direction.multiplyScalar(offset));
-        
+
         // Perform teleport during flash peak (200ms)
         setTimeout(() => {
             // Move spacecraft
             this.spacecraft.group.position.copy(approachPosition);
-            
+
             // Reset velocity
             if (this.spacecraft.velocity) {
                 this.spacecraft.velocity.set(0, 0, 0);
             }
-            
+
             // Point spacecraft towards planet
             this.spacecraft.group.lookAt(targetPosition);
-            
+
             console.log(`✓ Teleported to ${planet.pl_name} at`, approachPosition);
         }, 200);
     }
@@ -675,7 +621,7 @@ class App {
             opacity: 0;
             animation: teleportFlash 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         `;
-        
+
         // Add animation if not exists
         if (!document.getElementById('teleport-flash-animation')) {
             const style = document.createElement('style');
@@ -707,19 +653,19 @@ class App {
             `;
             document.head.appendChild(style);
         }
-        
+
         document.body.appendChild(flash);
-        
+
         // Screen shake effect
         const canvas = document.getElementById('canvas');
         if (canvas) {
             canvas.classList.add('camera-shake');
             setTimeout(() => canvas.classList.remove('camera-shake'), 400);
         }
-        
+
         // Play warp sound
         this.playWarpSound();
-        
+
         // Remove flash after animation
         setTimeout(() => {
             flash.remove();
@@ -733,9 +679,9 @@ class App {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
-            
+
             const ctx = new AudioContext();
-            
+
             // Low frequency sweep (whoosh)
             const osc1 = ctx.createOscillator();
             const gain1 = ctx.createGain();
@@ -743,33 +689,33 @@ class App {
             osc1.frequency.setValueAtTime(60, ctx.currentTime);
             osc1.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
             osc1.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.4);
-            
+
             gain1.gain.setValueAtTime(0, ctx.currentTime);
             gain1.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.05);
             gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-            
+
             osc1.connect(gain1);
             gain1.connect(ctx.destination);
-            
+
             // High frequency shimmer
             const osc2 = ctx.createOscillator();
             const gain2 = ctx.createGain();
             osc2.type = 'sine';
             osc2.frequency.setValueAtTime(2000, ctx.currentTime);
             osc2.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
-            
+
             gain2.gain.setValueAtTime(0, ctx.currentTime);
             gain2.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.08);
             gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            
+
             osc2.connect(gain2);
             gain2.connect(ctx.destination);
-            
+
             osc1.start();
             osc2.start();
             osc1.stop(ctx.currentTime + 0.5);
             osc2.stop(ctx.currentTime + 0.5);
-            
+
         } catch (e) {
             console.warn('Web Audio API not supported:', e);
         }
