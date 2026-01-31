@@ -65,6 +65,9 @@ class App {
             // Finish loading
             this.loadingManager.finish();
 
+            // Sync View UI
+            if (this.spacecraft) this.updateViewUI();
+
         } catch (error) {
             console.error('Initialization error:', error);
             this.loadingManager.error(error.message);
@@ -167,8 +170,15 @@ class App {
 
         window.addEventListener('click', (event) => {
             // Calculate mouse position in normalized device coordinates
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
+                // Cockpit Mode: Raycast from center (Crosshair)
+                mouse.x = 0;
+                mouse.y = 0;
+            } else {
+                // Chase Mode: Raycast from cursor
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
 
             if (this.cameraManager && this.cameraManager.camera) {
                 raycaster.setFromCamera(mouse, this.cameraManager.camera);
@@ -422,12 +432,14 @@ class App {
         if (!this.spacecraft) return;
 
         const velocity = this.spacecraft.velocity.length();
-        const position = this.spacecraft.mesh.position;
-        const rotation = this.spacecraft.mesh.rotation;
+        const position = this.spacecraft.group.position;
+        const rotation = this.spacecraft.group.rotation;
 
         // Update velocity
         const velElem = document.getElementById('hud-velocity');
+        const cockpitSpd = document.getElementById('cockpit-speed');
         if (velElem) velElem.textContent = `${velocity.toFixed(2)} u/s`;
+        if (cockpitSpd) cockpitSpd.textContent = `SPD: ${velocity.toFixed(2)}`;
 
         // Update position (convert to light years)
         const posX = document.getElementById('hud-pos-x');
