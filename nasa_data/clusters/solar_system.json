@@ -24,10 +24,10 @@
     },
     "characteristics": {
       "radius_position": "Sub-Earth",
-      "atmosphere_type": "Thin N2/CO2",
-      "principal_material": "Rocky (Silicate)",
+      "atmosphere_type": "Thin CO2 or None",
+      "principal_material": "Rocky (estimated)",
       "toxicity_percent": 60,
-      "habitability_percent": 2,
+      "habitability_percent": 0,
       "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": false,
@@ -100,9 +100,9 @@
       "parsecs": 3.516e-06
     },
     "characteristics": {
-      "radius_position": "Sub-Earth",
-      "atmosphere_type": "Thin/None (Hot)",
-      "principal_material": "Rocky (Silicate)",
+      "radius_position": "Earth-like",
+      "atmosphere_type": "Thin/None (Too Hot)",
+      "principal_material": "Rocky (estimated)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
       "distance_to_earth_ly": 0.0,
@@ -177,11 +177,11 @@
       "parsecs": 0.0
     },
     "characteristics": {
-      "radius_position": "Super-Earth",
-      "atmosphere_type": "Thin N2/CO2",
-      "principal_material": "Rocky/Ice (estimated)",
+      "radius_position": "Earth-like",
+      "atmosphere_type": "N2-O2 or CO2-N2",
+      "principal_material": "Rocky (estimated)",
       "toxicity_percent": 40,
-      "habitability_percent": 68,
+      "habitability_percent": 83,
       "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": false,
@@ -255,10 +255,10 @@
     },
     "characteristics": {
       "radius_position": "Sub-Earth",
-      "atmosphere_type": "Thin N2/CO2",
-      "principal_material": "Rocky (Silicate)",
+      "atmosphere_type": "Thin CO2 or None",
+      "principal_material": "Rocky (estimated)",
       "toxicity_percent": 40,
-      "habitability_percent": 48,
+      "habitability_percent": 43,
       "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": false,
@@ -332,7 +332,7 @@
     },
     "characteristics": {
       "radius_position": "Jupiter-like",
-      "atmosphere_type": "Hydrogen-Helium",
+      "atmosphere_type": "Hydrogen-Helium (Gas Giant)",
       "principal_material": "Gaseous (H/He)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
@@ -408,9 +408,9 @@
       "parsecs": 4.6385e-05
     },
     "characteristics": {
-      "radius_position": "Jupiter-like",
-      "atmosphere_type": "Hydrogen-Helium",
-      "principal_material": "Gaseous (H/He)",
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane (Ice Giant)",
+      "principal_material": "Gas/Ice (H/He/CH4)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
       "distance_to_earth_ly": 0.0,
@@ -485,9 +485,9 @@
       "parsecs": 9.3331e-05
     },
     "characteristics": {
-      "radius_position": "Neptune-like",
-      "atmosphere_type": "Hydrogen-Helium-Methane",
-      "principal_material": "Gas (H/He/CH4)",
+      "radius_position": "Mini-Neptune",
+      "atmosphere_type": "Hydrogen-Helium-Methane (Mini)",
+      "principal_material": "Gas/Ice (H/He/CH4)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
       "distance_to_earth_ly": 0.0,
@@ -562,9 +562,9 @@
       "parsecs": 0.000146213
     },
     "characteristics": {
-      "radius_position": "Neptune-like",
-      "atmosphere_type": "Hydrogen-Helium-Methane",
-      "principal_material": "Gas (H/He/CH4)",
+      "radius_position": "Mini-Neptune",
+      "atmosphere_type": "Hydrogen-Helium-Methane (Mini)",
+      "principal_material": "Gas/Ice (H/He/CH4)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
       "distance_to_earth_ly": 0.0,
@@ -640,10 +640,10 @@
     },
     "characteristics": {
       "radius_position": "Sub-Earth",
-      "atmosphere_type": "Nitrogen-Oxygen (Cold)",
-      "principal_material": "Rocky (Silicate)",
-      "toxicity_percent": 30,
-      "habitability_percent": 26,
+      "atmosphere_type": "Thin/None (Frozen)",
+      "principal_material": "Rocky (estimated)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
       "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": false,

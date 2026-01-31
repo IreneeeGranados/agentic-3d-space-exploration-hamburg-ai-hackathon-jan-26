@@ -221,9 +221,9 @@ class App {
                             // Show exploration dialog with planet info
                             if (this.explorationDialog) {
                                 this.explorationDialog.show(planetData, (planet) => {
-                                    // Teleport callback
+                                    // Teleport callback with warp effect
                                     if (this.teleportManager) {
-                                        this.teleportManager.teleportToPlanet(planet);
+                                        this.teleportManager.teleportWithProgress(planet);
                                     }
                                 });
                             } else if (this.teleportManager) {
@@ -231,7 +231,7 @@ class App {
                                 this.teleportManager.teleportWithProgress(planetData);
                             }
                         } else {
-                            // Solar system planet
+                            // Solar system planet - just log selection, no auto-teleport
                             let selectedObject = hit.object;
                             let selectedPlanet = this.planets.find(p => p.mesh === selectedObject || p.group === selectedObject);
 
@@ -245,14 +245,7 @@ class App {
                             }
 
                             if (selectedPlanet) {
-                                console.log('Planet Selected:', selectedPlanet.config.name);
-                                if (this.teleportManager) {
-                                    this.teleportManager.teleportWithProgress(selectedPlanet.mesh || selectedPlanet.group);
-                                } else {
-                                    const targetPosition = new THREE.Vector3();
-                                    selectedObject.getWorldPosition(targetPosition);
-                                    this.spacecraft.engageAutopilot(targetPosition);
-                                }
+                                console.log('Solar System Planet Selected:', selectedPlanet.config.name, '- Use Navigator panel to teleport');
                             }
                         }
                     }

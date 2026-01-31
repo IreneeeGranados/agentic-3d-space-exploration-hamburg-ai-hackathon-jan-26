@@ -24,7 +24,8 @@ CLUSTERS_DIR = 'nasa_data/clusters'
 def calculate_radius_position(planet):
     """
     Calculate radius position category based on planetary radius.
-    Categories: Super-Earth, Neptune-like, Jupiter-like, Sub-Earth
+    Uses standard exoplanet classification system.
+    Categories: Sub-Earth, Earth-like, Super-Earth, Mini-Neptune, Sub-Neptune, Neptune-like, Sub-Jupiter, Jupiter-like, Super-Jupiter
     """
     # Try to get radius in Earth radii
     radius_earth = planet.get('pl_rade')
@@ -38,15 +39,26 @@ def calculate_radius_position(planet):
     if radius_earth is None or (isinstance(radius_earth, float) and math.isnan(radius_earth)):
         return "Unknown"
     
-    # Categorize by size
-    if radius_earth < 1.0:
-        return "Sub-Earth"
+    # Categorize by size using standard exoplanet classification
+    # Based on NASA Exoplanet Archive and scientific literature
+    if radius_earth < 0.5:
+        return "Sub-Earth"  # Smaller than Mars
+    elif radius_earth < 0.8:
+        return "Sub-Earth"  # Mars to Venus sized
+    elif radius_earth <= 1.25:
+        return "Earth-like"  # Earth-sized (0.8-1.25 Re)
     elif radius_earth < 2.0:
-        return "Super-Earth"
+        return "Super-Earth"  # Rocky worlds larger than Earth
+    elif radius_earth < 4.0:
+        return "Mini-Neptune"  # Small gas/ice worlds
     elif radius_earth < 6.0:
-        return "Neptune-like"
+        return "Sub-Neptune"  # Mid-sized ice giants
+    elif radius_earth < 10.0:
+        return "Neptune-like"  # Neptune-sized
+    elif radius_earth < 14.0:
+        return "Jupiter-like"  # Jupiter-sized (10-14 Re)
     else:
-        return "Jupiter-like"
+        return "Super-Jupiter"  # Larger than Jupiter
 
 
 def infer_atmosphere_type(planet, radius_pos):
@@ -60,25 +72,52 @@ def infer_atmosphere_type(planet, radius_pos):
     # Get temperature if available
     temp = planet.get('pl_eqt')
     
-    # Basic inference logic
-    if radius_pos == "Jupiter-like":
+    # Basic inference logic based on planet type
+    if radius_pos in ["Jupiter-like", "Super-Jupiter"]:
+        if temp and temp > 1000:
+            return "Hydrogen-Helium (Hot Jupiter)"
+        return "Hydrogen-Helium (Gas Giant)"
+    
+    elif radius_pos == "Sub-Jupiter":
         if temp and temp > 1000:
             return "Hydrogen-Helium (Hot)"
         return "Hydrogen-Helium"
     
-    elif radius_pos == "Neptune-like":
-        return "Hydrogen-Helium-Methane"
+    elif radius_pos in ["Neptune-like", "Sub-Neptune"]:
+        return "Hydrogen-Helium-Methane (Ice Giant)"
     
-    elif radius_pos == "Super-Earth" or radius_pos == "Sub-Earth":
+    elif radius_pos == "Mini-Neptune":
+        return "Hydrogen-Helium-Methane (Mini)"
+    
+    elif radius_pos == "Earth-like":
+        if temp and temp > 400:
+            return "Thin/None (Too Hot)"
+        elif temp and temp < 200:
+            return "Thin CO2 (Too Cold)"
+        elif temp and 250 <= temp <= 320:
+            # Potentially habitable temperature
+            return "N2-O2 or CO2-N2"
+        else:
+            return "CO2-N2 (Rocky)"
+    
+    elif radius_pos == "Super-Earth":
         if temp and temp > 500:
             return "Thin/None (Hot)"
         elif temp and temp < 200:
-            return "Nitrogen-Oxygen (Cold)"
+            return "CO2-N2 (Frozen)"
         else:
             # Could be rocky with atmosphere
             if mass_earth and mass_earth > 5:
-                return "Thick CO2/N2"
-            return "Thin N2/CO2"
+                return "Thick CO2-N2"
+            return "CO2-N2 (Rocky)"
+    
+    elif radius_pos == "Sub-Earth":
+        if temp and temp > 500:
+            return "None (Too Hot)"
+        elif temp and temp < 200:
+            return "Thin/None (Frozen)"
+        else:
+            return "Thin CO2 or None"
     
     return "Unknown"
 
@@ -89,26 +128,53 @@ def infer_principal_material(planet, radius_pos):
     """
     density = planet.get('pl_dens')  # g/cm³
     
-    if radius_pos == "Jupiter-like":
+    if radius_pos in ["Jupiter-like", "Super-Jupiter"]:
         return "Gaseous (H/He)"
     
-    elif radius_pos == "Neptune-like":
+    elif radius_pos == "Sub-Jupiter":
+        return "Gaseous (H/He)"
+    
+    elif radius_pos in ["Neptune-like", "Sub-Neptune"]:
         if density and density > 1.5:
-            return "Ice Giant (H2O/CH4)"
-        return "Gas (H/He/CH4)"
+            return "Ice Giant (H2O/CH4/NH3)"
+        return "Gas/Ice (H/He/CH4)"
+    
+    elif radius_pos == "Mini-Neptune":
+        if density and density > 2.0:
+            return "Ice/Rock Mix"
+        return "Gas/Ice (H/He/CH4)"
+    
+    elif radius_pos == "Earth-like":
+        if density:
+            if density > 5.0:
+                return "Rocky (Iron/Silicate)"
+            elif density > 4.0:
+                return "Rocky (Silicate-rich)"
+            elif density > 3.0:
+                return "Rocky (Water-rich)"
+            else:
+                return "Rocky/Ice Mix"
+        return "Rocky (estimated)"
     
     elif radius_pos == "Super-Earth":
         if density:
             if density > 5.0:
-                return "Rocky (Silicate/Iron)"
+                return "Rocky (Iron-core)"
+            elif density > 3.5:
+                return "Rocky (Silicate)"
             elif density > 2.0:
                 return "Rocky-Ice Mix"
             else:
-                return "Gaseous/Ice"
+                return "Ice/Gas Mix"
         return "Rocky/Ice (estimated)"
     
     elif radius_pos == "Sub-Earth":
-        return "Rocky (Silicate)"
+        if density:
+            if density > 5.0:
+                return "Rocky (Iron-rich)"
+            else:
+                return "Rocky (Silicate)"
+        return "Rocky (estimated)"
     
     return "Unknown"
 
@@ -150,15 +216,25 @@ def calculate_habitability(planet, radius_pos, atmosphere, toxicity):
     """
     habitability = 100
     
-    # Size factor
+    # Size factor - based on surface gravity and colonization potential
     if radius_pos == "Sub-Earth":
-        habitability -= 20  # Too small, weak gravity
-    elif radius_pos == "Jupiter-like":
-        habitability -= 70  # Gas giant, no surface
-    elif radius_pos == "Neptune-like":
-        habitability -= 60  # Ice giant
+        habitability -= 25  # Too small, weak gravity, thin atmosphere retention
+    elif radius_pos == "Earth-like":
+        habitability -= 0  # Ideal size for human colonization
     elif radius_pos == "Super-Earth":
-        habitability -= 10  # A bit large but okay
+        habitability -= 15  # Larger but still potentially habitable, high gravity
+    elif radius_pos == "Mini-Neptune":
+        habitability -= 50  # Small gas world, likely no solid surface
+    elif radius_pos == "Sub-Neptune":
+        habitability -= 65  # Ice giant, no solid surface
+    elif radius_pos == "Neptune-like":
+        habitability -= 75  # Ice giant, extreme conditions
+    elif radius_pos == "Sub-Jupiter":
+        habitability -= 80  # Gas giant, no surface
+    elif radius_pos == "Jupiter-like":
+        habitability -= 85  # Large gas giant, no surface
+    elif radius_pos == "Super-Jupiter":
+        habitability -= 90  # Massive gas giant, extreme gravity
     
     # Subtract toxicity
     habitability -= toxicity * 0.8
@@ -166,19 +242,25 @@ def calculate_habitability(planet, radius_pos, atmosphere, toxicity):
     # Temperature factor
     temp = planet.get('pl_eqt')
     if temp:
-        # Ideal range: 250-300K (Earth is ~288K)
+        # Ideal range: 250-320K (Earth is ~288K)
         if 250 <= temp <= 320:
-            habitability += 10
+            habitability += 15  # Perfect temperature for liquid water
+        elif 220 <= temp < 250:
+            habitability += 5  # Cold but manageable
+        elif 320 < temp <= 350:
+            habitability += 5  # Hot but manageable
         elif temp > 400 or temp < 180:
-            habitability -= 30
+            habitability -= 30  # Extreme temperatures
     
-    # Distance factor - closer = easier to reach
+    # Distance factor - closer = easier to reach and colonize
     distance_ly = get_distance_ly(planet)
     if distance_ly:
-        if distance_ly < 50:
-            habitability += 5
+        if distance_ly < 20:
+            habitability += 10  # Very close, easier to reach
+        elif distance_ly < 50:
+            habitability += 5  # Close enough for feasible travel
         elif distance_ly > 1000:
-            habitability -= 10
+            habitability -= 10  # Very far, difficult to reach
     
     # Ensure 0-100 range
     return min(100, max(0, int(habitability)))
@@ -479,7 +561,8 @@ def main():
     print(f"   • Total cluster files updated: {len(cluster_files)}")
     print(f"   • Total planets updated: {total_planets}")
     print(f"\n🎯 New characteristics added to each planet:")
-    print(f"   • Radius Position (Sub-Earth, Super-Earth, Neptune-like, Jupiter-like)")
+    print(f"   • Radius Position (Sub-Earth, Earth-like, Super-Earth, Mini-Neptune,")
+    print(f"     Sub-Neptune, Neptune-like, Sub-Jupiter, Jupiter-like, Super-Jupiter)")
     print(f"   • Atmosphere Type (inferred from physical properties)")
     print(f"   • Principal Material (Rocky, Gaseous, Ice, etc.)")
     print(f"   • Toxicity % (0-100, for human habitability)")
