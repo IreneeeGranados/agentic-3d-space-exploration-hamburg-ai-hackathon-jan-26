@@ -49,6 +49,7 @@
 - [x] `CLUSTER_UPDATE_SUMMARY.md` - Field documentation
 - [x] `COORDINATES_QUICK_REFERENCE.md` - Coordinate guide
 - [x] `UPDATE_COMPLETE.md` - Update summary
+- [x] `FRONTEND_AGENT_README.md` - Frontend integration guide
 - [x] `CHECKLIST.md` - This checklist
 - [x] `AGENTS.md` - Updated with pipeline knowledge
 

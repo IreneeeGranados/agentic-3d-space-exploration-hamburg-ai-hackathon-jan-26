@@ -66,6 +66,11 @@ class PipelineOrchestrator:
         
         steps = [
             {
+                'name': 'Step 0: Download NASA Data',
+                'script': 'pipelines/data_processing/00_download_nasa_data.py',
+                'description': 'Download latest exoplanet data from NASA Exoplanet Archive'
+            },
+            {
                 'name': 'Step 1: Convert NASA Data',
                 'script': 'pipelines/data_processing/01_convert_nasa_data.py',
                 'description': 'Convert raw NASA CSV to frontend-friendly JSON format'
@@ -108,8 +113,13 @@ class PipelineOrchestrator:
             return False
     
     def run_single_step(self, step_number):
-        """Run a single pipeline step by number (1-3)."""
+        """Run a single pipeline step by number (0-3)."""
         steps = {
+            0: {
+                'name': 'Download NASA Data',
+                'script': 'pipelines/data_processing/00_download_nasa_data.py',
+                'description': 'Download latest exoplanet data from NASA Exoplanet Archive'
+            },
             1: {
                 'name': 'Convert NASA Data',
                 'script': 'pipelines/data_processing/01_convert_nasa_data.py',
@@ -129,7 +139,7 @@ class PipelineOrchestrator:
         
         if step_number not in steps:
             self.log(f"❌ Invalid step number: {step_number}")
-            self.log(f"Valid steps: 1, 2, 3")
+            self.log(f"Valid steps: 0, 1, 2, 3")
             return False
         
         step = steps[step_number]
@@ -151,9 +161,10 @@ Examples:
   python main_pipeline.py --full
   
   # Run single step
-  python main_pipeline.py --step 1
-  python main_pipeline.py --step 2
-  python main_pipeline.py --step 3
+  python main_pipeline.py --step 0  # Download data
+  python main_pipeline.py --step 1  # Convert data
+  python main_pipeline.py --step 2  # Cluster planets
+  python main_pipeline.py --step 3  # Enrich data
   
   # Show pipeline info
   python main_pipeline.py --info
@@ -162,8 +173,8 @@ Examples:
     
     parser.add_argument('--full', action='store_true', 
                        help='Run the complete pipeline')
-    parser.add_argument('--step', type=int, choices=[1, 2, 3],
-                       help='Run a specific step (1-3)')
+    parser.add_argument('--step', type=int, choices=[0, 1, 2, 3],
+                       help='Run a specific step (0-3)')
     parser.add_argument('--info', action='store_true',
                        help='Show pipeline information')
     parser.add_argument('--data-dir', default='../nasa_data',
@@ -178,6 +189,12 @@ Examples:
 ╚══════════════════════════════════════════════════════════════════════╝
 
 📋 Pipeline Steps:
+
+0️⃣  Download NASA Data (00_download_nasa_data.py)
+   • Source: NASA Exoplanet Archive API
+   • Outputs: nasa_data/nasa_data.csv
+   • Purpose: Download latest exoplanet data from NASA
+   • Duration: ~30-60 seconds
 
 1️⃣  Convert NASA Data (01_convert_nasa_data.py)
    • Reads: nasa_data/nasa_data.csv
@@ -197,8 +214,8 @@ Examples:
    • Purpose: Add planet characteristics and coordinate systems
    • Duration: ~1-2 minutes
 
-📊 Total Pipeline Time: ~3-6 minutes
-📁 Total Planets Processed: 39,282
+📊 Total Pipeline Time: ~4-7 minutes
+📁 Total Planets Processed: Latest from NASA
 
 🎯 Output Features:
    • Planet characteristics (habitability, toxicity, etc.)
