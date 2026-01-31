@@ -213,7 +213,24 @@ class App {
                 this.spacecraft.forwardSpeed = this.spacecraft.defaultSpeed;
                 console.log('Speed decreased to:', this.spacecraft.defaultSpeed);
             }
+
+            // View Toggle (V)
+            if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') {
+                console.log('V Key Pressed');
+                this.spacecraft.toggleView();
+            }
         });
+
+        // Setup UI Buttons
+        const viewBtn = document.getElementById('btn-toggle-view');
+        if (viewBtn) {
+            viewBtn.addEventListener('click', (e) => {
+                console.log('View Button Clicked');
+                // Prevent focus from sticking to button (which steals keyboard input)
+                viewBtn.blur();
+                if (this.spacecraft) this.spacecraft.toggleView();
+            });
+        }
     }
 
     createSceneObjects() {
