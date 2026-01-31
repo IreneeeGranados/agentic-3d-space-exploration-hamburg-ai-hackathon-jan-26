@@ -34,7 +34,7 @@ export class ExoplanetField {
     async load() {
         if (this.loaded) return;
 
-        console.log('Loading NASA exoplanets incrementally...');
+        console.log('  📦 Loading planet data incrementally...');
 
         // 1. Load nearby planets first for quick display
         const nearby = await this.dataService.loadNearbyFirst();
@@ -46,6 +46,8 @@ export class ExoplanetField {
         const clusterIndex = await this.dataService.initialize();
         const otherClusters = Object.keys(clusterIndex.clusters)
             .filter(name => name !== 'no_position' && !name.startsWith('nearby'));
+        
+        console.log(`  📋 Loading ${otherClusters.length} additional clusters: ${otherClusters.join(', ')}`);
 
         // Load in background
         this.loadClustersProgressively(otherClusters);
@@ -55,6 +57,9 @@ export class ExoplanetField {
      * Load clusters one by one and update visualization
      */
     async loadClustersProgressively(clusterNames) {
+        let loadedCount = 0;
+        const totalClusters = clusterNames.length;
+        
         for (const name of clusterNames) {
             const clusterPlanets = await this.dataService.loadCluster(name);
             if (clusterPlanets && clusterPlanets.length > 0) {
@@ -63,11 +68,14 @@ export class ExoplanetField {
                 // Render only the new batch
                 this.create3DMeshes(clusterPlanets);
 
+                loadedCount++;
+                console.log(`  📦 Progress: ${loadedCount}/${totalClusters} clusters loaded (${this.dataService.getAllPlanets().length} total planets)`);
+
                 // Allow some breathing room between clusters
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
-        console.log('✨ All exoplanet clusters loaded and rendered.');
+        console.log(`✨ All ${totalClusters} clusters loaded! Total: ${this.dataService.getAllPlanets().length} planets rendered.`);
     }
 
     /**
@@ -84,22 +92,38 @@ export class ExoplanetField {
         const distantMaterials = new Map();
         const batchSize = 30; // Smaller batches for smoother execution
         let index = 0;
+        
+        // Solar system planet names - render them with special handling
+        const solarSystemPlanets = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
 
         const processBatch = () => {
             const end = Math.min(index + batchSize, planetBatch.length);
 
             for (; index < end; index++) {
                 const planet = planetBatch[index];
+                
+                // Check if this is a solar system planet
+                const isSolarPlanet = planet.hostname === 'Sun' && solarSystemPlanets.includes(planet.pl_name);
 
                 // Avoid rendering duplicates
                 if (this.renderedPlanets.has(planet.pl_name)) continue;
 
                 const coords = planet.characteristics?.coordinates_3d;
-                if (!coords || coords.x_light_years === null) continue;
+                
+                // Use position field for solar system planets (in AU), coordinates_3d for exoplanets
+                if (isSolarPlanet && planet.position) {
+                    // Solar system planets use position field (in AU, scaled)
+                    // These will be rendered at their actual scaled positions
+                } else if (!coords || coords.x_light_years === null) {
+                    // Exoplanets without valid coordinates_3d - skip
+                    continue;
+                }
 
-                const distLY = planet.sy_dist * 3.26156 || coords.x_light_years;
+                const distLY = planet.sy_dist * 3.26156 || (coords ? coords.x_light_years : 0);
                 const radiusInEarthRadii = planet.pl_rade || 1.0;
-                const radius = radiusInEarthRadii * this.earthRadiusScale;
+                
+                // Solar system planets get larger radii for visibility
+                const radius = isSolarPlanet ? radiusInEarthRadii * 5 : radiusInEarthRadii * this.earthRadiusScale;
 
                 let tier = 3;
                 if (distLY < 25) tier = 1;
@@ -145,15 +169,28 @@ export class ExoplanetField {
                 geometry.scale(radius, radius, radius);
 
                 const mesh = new THREE.Mesh(geometry, material);
-                mesh.position.set(
-                    coords.x_light_years * this.sceneScale,
-                    coords.y_light_years * this.sceneScale,
-                    coords.z_light_years * this.sceneScale
-                );
+                
+                // Position: use position field for solar system, coordinates_3d for exoplanets
+                if (isSolarPlanet && planet.position) {
+                    // Solar system planets use position field (already in AU, scaled)
+                    mesh.position.set(
+                        planet.position.x * 200, // Same scale as before
+                        planet.position.y * 200,
+                        planet.position.z * 200
+                    );
+                } else {
+                    // Exoplanets use coordinates_3d
+                    mesh.position.set(
+                        coords.x_light_years * this.sceneScale,
+                        coords.y_light_years * this.sceneScale,
+                        coords.z_light_years * this.sceneScale
+                    );
+                }
 
                 mesh.userData.planetData = planet;
                 mesh.userData.planet = planet; // Compatibility
                 mesh.userData.planetName = planet.pl_name; // Compatibility
+                mesh.userData.isSolar = isSolarPlanet; // Mark solar system planets
 
                 this.meshGroup.add(mesh);
                 this.renderedPlanets.add(planet.pl_name);

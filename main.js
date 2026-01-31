@@ -4,15 +4,13 @@ import { CameraManager } from './src/core/Camera.js';
 import { RendererManager } from './src/core/Renderer.js';
 import { Planet } from './src/objects/Planet.js';
 import { Star } from './src/objects/Star.js';
-import { StarField } from './src/objects/StarField.js';
-import { loadSolarSystemPlanets } from './src/config/planets.js';
-import { Universe } from './src/objects/Universe.js';
+import { DynamicStarField } from './src/objects/DynamicStarField.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { PlanetDataService } from './src/services/PlanetDataService.js';
 import { ExoplanetField } from './src/objects/ExoplanetField.js';
 import { LoadingManager } from './src/utils/LoadingManager.js';
 import { TeleportManager } from './src/utils/TeleportManager.js';
-import { PlanetSelector } from './src/controls/PlanetSelector.js';
+import { PlanetNavigator } from './src/controls/PlanetNavigator.js';
 import { PlanetHoverInfo } from './src/utils/PlanetHoverInfo.js';
 import { PlanetExplorationDialog } from './src/ui/PlanetExplorationDialog.js';
 import OpenAIService from './src/ai/OpenAIService.js';
@@ -50,22 +48,17 @@ class App {
             this.setupMouse();
             this.loadingManager.completeStep('Controls');
 
-            this.loadingManager.updateStatus('Building Universe', 'Creating stars and planets...');
-            await this.createSceneObjects();
-            await this.loadExoplanets();
-            this.initPlanetSelector();
-            this.initExplorationDialog();
+            // Step 3: Build Universe (environment, all planets)
+            this.loadingManager.updateStatus('Building Universe', 'Loading from NASA data clusters...');
+            await this.createSceneObjects(); // Environment + All Planets (unified)
+            this.initPlanetSelector();       // UI and navigation
+            this.initExplorationDialog();    // Planet info dialog
             this.loadingManager.completeStep('Universe');
 
             // Step 4: Start animation and finalize
             this.loadingManager.updateStatus('Starting Mission', 'Engaging warp drive...');
-
-            // Setup UI controls
             this.setupUIControls();
-
-            // Handle window resize
             window.addEventListener('resize', () => this.onWindowResize());
-
             this.animate();
             this.loadingManager.completeStep('Animation');
 
@@ -91,11 +84,11 @@ class App {
             if (e.code === 'Space') this.keys.brake = true;
 
             // Navigation shortcuts
-            if (e.code === 'KeyT') this.togglePlanetSelector();
+            if (e.code === 'KeyT') this.togglePlanetNavigator();
             if (e.code === 'KeyE') this.toggleExoplanets();
             if (e.code === 'KeyH') this.toggleUI();
             if (e.code === 'KeyI') this.showLastClickedPlanetInfo(); // 'I' for Info
-            if (e.code === 'Escape') this.closePlanetSelector();
+            if (e.code === 'Escape') this.closePlanetNavigator();
         });
 
         window.addEventListener('keyup', (e) => {
@@ -210,10 +203,10 @@ class App {
                     });
 
                     if (hit) {
-                        // Check if it's an exoplanet
+                        // Check if it has planetData (exoplanet OR solar system planet)
                         if (hit.object.userData && hit.object.userData.planetData) {
                             const planetData = hit.object.userData.planetData;
-                            console.log('Exoplanet Selected:', planetData.pl_name);
+                            console.log('🪐 Planet Selected:', planetData.pl_name, planetData.isSolar ? '(Solar System)' : '(Exoplanet)');
 
                             // Store for info dialog
                             this.lastClickedPlanet = planetData;
@@ -231,22 +224,8 @@ class App {
                                 this.teleportManager.teleportWithProgress(planetData);
                             }
                         } else {
-                            // Solar system planet - just log selection, no auto-teleport
-                            let selectedObject = hit.object;
-                            let selectedPlanet = this.planets.find(p => p.mesh === selectedObject || p.group === selectedObject);
-
-                            if (!selectedPlanet) {
-                                let obj = selectedObject;
-                                while (obj) {
-                                    selectedPlanet = this.planets.find(p => p.mesh === obj || p.group === obj);
-                                    if (selectedPlanet) break;
-                                    obj = obj.parent;
-                                }
-                            }
-
-                            if (selectedPlanet) {
-                                console.log('Solar System Planet Selected:', selectedPlanet.config.name, '- Use Navigator panel to teleport');
-                            }
+                            // Object without planetData (shouldn't happen)
+                            console.warn('⚠️ Clicked object has no planetData:', hit.object);
                         }
                     }
                 }
@@ -325,89 +304,101 @@ class App {
     }
 
     async createSceneObjects() {
-        // Create the universe background
-        this.universe = new Universe(4000);
-        this.sceneManager.add(this.universe.mesh);
+        console.log('🌌 Initializing scene...');
+        
+        // 1. Initialize data service first (needed for all planet loading)
+        await this.initializePlanetDataService();
+        
+        // 2. Create environment
+        await this.createEnvironment();
+        
+        // 3. Load all planets (solar system + exoplanets) through unified field
+        await this.loadAllPlanets();
+        
+        // 4. Create spacecraft
+        this.createSpacecraft();
+    }
 
-        // Create background starfield
-        const starField = new StarField(15000, 3500);
-        this.sceneManager.add(starField.mesh);
+    async initializePlanetDataService() {
+        console.log('  📊 Initializing planet data service...');
+        this.planetDataService = new PlanetDataService();
+        await this.planetDataService.initialize();
+        console.log('  ✓ Data service ready');
+    }
 
-        // Create central star (Sun) - REMOVED per user request
-        /*
-        const sun = new Star({
-            radius: 20,
-            color: 0xffff00,
-            emissiveIntensity: 2
-        });
-        this.sceneManager.add(sun.mesh);
-        */
-
-        // Load solar system planets from dataset
-        console.log('🌍 Loading solar system planet data from dataset...');
-        const planetsData = await loadSolarSystemPlanets();
-
-        // Create solar system planets with accurate dimensions from dataset
-        this.planets = planetsData.map(planetData => {
-            console.log(`  ✓ ${planetData.name}: radius=${planetData.radius.toFixed(3)} (${planetData.datasetValues?.pl_rade || 'N/A'} Earth radii)`);
-            const planet = new Planet(planetData);
-            this.sceneManager.add(planet.group);
-            return planet;
-        });
-
-        console.log(`✓ Created ${this.planets.length} solar system planets with dataset dimensions`);
-
-        // Create spacecraft
-        this.spacecraft = new Spacecraft();
-        this.sceneManager.add(this.spacecraft.group);
-
+    async createEnvironment() {
+        console.log('  ✨ Creating star field...');
+        // Create dynamic star field that follows camera
+        this.dynamicStarField = new DynamicStarField(20000, 2000);
+        this.sceneManager.add(this.dynamicStarField.mesh);
+        
         // Create Space Dust for motion sensation
         this.spaceDust = new SpaceDust(2000, 400);
         this.sceneManager.add(this.spaceDust.mesh);
+        console.log('  ✓ Environment created');
     }
 
-    async loadExoplanets() {
-        // Initialize data service
-        this.planetDataService = new PlanetDataService();
+    async loadAllPlanets() {
+        console.log('🪐 Loading all planets from nasa_data/clusters/...');
+        
+        try {
+            // Create unified planet field that handles both solar system and exoplanets
+            this.exoplanetField = new ExoplanetField(this.planetDataService);
+            
+            // Load solar system first
+            console.log('  🌍 Loading solar system...');
+            await this.planetDataService.loadSolarSystem();
+            
+            // Then load exoplanets
+            console.log('  🌌 Loading exoplanets...');
+            await this.exoplanetField.load();
 
-        // Initialize cluster index first
-        await this.planetDataService.initialize();
+            if (this.exoplanetField.mesh) {
+                this.sceneManager.add(this.exoplanetField.mesh);
+            }
 
-        // Create and load NASA exoplanet visualization
-        this.exoplanetField = new ExoplanetField(this.planetDataService);
-        await this.exoplanetField.load();
-
-        if (this.exoplanetField.mesh) {
-            this.sceneManager.add(this.exoplanetField.mesh);
-            console.log('✓ NASA exoplanets added to scene');
+            const totalPlanets = this.planetDataService.getAllPlanets().length;
+            console.log(`✓ Total planets loaded: ${totalPlanets}`);
+            
+            // Keep empty planets array for backward compatibility with UI components
+            this.planets = [];
+        } catch (error) {
+            console.error('✗ Failed to load planets:', error);
+            this.planets = [];
         }
+    }
 
-        console.log(`✓ Total visualization: ${this.planets.length} solar system + ${this.planetDataService.getAllPlanets().length} exoplanets`);
+    createSpacecraft() {
+        console.log('  🚀 Creating spacecraft...');
+        this.spacecraft = new Spacecraft();
+        this.sceneManager.add(this.spacecraft.group);
+        console.log('  ✓ Spacecraft ready');
     }
 
     initPlanetSelector() {
-        // Initialize teleport manager (correct parameters: spacecraft, camera)
+        // Initialize teleport manager
         this.teleportManager = new TeleportManager(
             this.spacecraft,
             this.cameraManager.camera
         );
 
-        // Initialize planet selector UI (correct parameters: dataService, teleportManager, solarSystemPlanets)
-        this.planetSelector = new PlanetSelector(
+        // Initialize planet navigator UI - loads all planets from PlanetDataService
+        this.planetNavigator = new PlanetNavigator(
             this.planetDataService,
-            this.teleportManager,
-            this.planets
+            this.teleportManager
         );
+        
+        // Start loading all planets in the navigator
+        this.planetNavigator.loadPlanets();
 
-        // Initialize planet hover info
+        // Initialize planet hover info (for backward compatibility, kept minimal)
         this.planetHoverInfo = new PlanetHoverInfo(
-            this.sceneManager.scene,
             this.cameraManager.camera,
-            this.canvas,
-            this.planets
+            [], // Empty array since we're using unified system
+            this.planetDataService
         );
 
-        console.log('✓ Planet selector and teleport initialized');
+        console.log('✓ Planet navigator initialized - loading all planets...');
     }
 
     initExplorationDialog() {
@@ -460,15 +451,15 @@ class App {
         if (modalOverlay) modalOverlay.addEventListener('click', () => this.closeModal());
     }
 
-    togglePlanetSelector() {
-        if (this.planetSelector) {
-            this.planetSelector.toggle();
+    togglePlanetNavigator() {
+        if (this.planetNavigator) {
+            this.planetNavigator.toggle();
         }
     }
 
-    closePlanetSelector() {
-        if (this.planetSelector) {
-            this.planetSelector.hide();
+    closePlanetNavigator() {
+        if (this.planetNavigator) {
+            this.planetNavigator.hide();
         }
     }
 
@@ -543,6 +534,8 @@ class App {
             heading.textContent = `${degrees.toFixed(1)}°`;
         }
 
+        // Mission status UI has been removed - autopilot status no longer displayed
+        /*
         // Update autopilot status
         if (this.spacecraft.autopilot && this.spacecraft.autopilot.active) {
             const statusDot = document.getElementById('autopilot-status');
@@ -578,6 +571,7 @@ class App {
             if (statusText) statusText.textContent = 'Manual Flight';
             if (destCard) destCard.style.display = 'none';
         }
+        */
     }
 
     animate() {
@@ -585,9 +579,9 @@ class App {
 
         const deltaTime = this.clock.getDelta();
 
-        // Update universe rotation
-        if (this.universe) {
-            this.universe.update();
+        // Update dynamic star field to follow camera
+        if (this.dynamicStarField && this.spacecraft) {
+            this.dynamicStarField.update(this.spacecraft.group.position);
         }
 
         // Update all solar system planets
@@ -641,6 +635,7 @@ class App {
         this.planets?.forEach(planet => planet.dispose());
         this.rendererManager.dispose();
         this.exoplanetField?.dispose();
+        this.dynamicStarField?.dispose();
     }
 }
 

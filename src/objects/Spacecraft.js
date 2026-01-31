@@ -136,17 +136,9 @@ export class Spacecraft {
         starboardLight.position.set(-4, -0.5, 2);
         this.mesh.add(starboardLight);
 
-        const bulbGeo = new THREE.SphereGeometry(0.1);
-        const redMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const greenMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-
-        this.portBulb = new THREE.Mesh(bulbGeo, redMat);
-        this.portBulb.position.copy(portLight.position);
-        this.mesh.add(this.portBulb);
-
-        this.starboardBulb = new THREE.Mesh(bulbGeo, greenMat);
-        this.starboardBulb.position.copy(starboardLight.position);
-        this.mesh.add(this.starboardBulb);
+        // Store light references for blinking (without visible bulb meshes)
+        this.portLight = portLight;
+        this.starboardLight = starboardLight;
     }
 
     engageAutopilot(targetVector) {
@@ -325,10 +317,10 @@ export class Spacecraft {
         }
 
         // Blink Nav Lights
-        if (this.portBulb && this.starboardBulb) {
+        if (this.portLight && this.starboardLight) {
             const blink = Math.floor(this.animationTime * 2) % 2 === 0;
-            this.portBulb.material.color.setHex(blink ? 0xff0000 : 0x330000);
-            this.starboardBulb.material.color.setHex(blink ? 0x00ff00 : 0x003300);
+            this.portLight.intensity = blink ? 1 : 0.1;
+            this.starboardLight.intensity = blink ? 1 : 0.1;
         }
     }
 
