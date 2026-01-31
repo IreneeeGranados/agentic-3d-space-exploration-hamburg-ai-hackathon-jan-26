@@ -1,8 +1,4 @@
-/**
- * Main Application Entry Point
- * Initializes the 3D space exploration application
- */
-
+import * as THREE from 'three';
 import { SceneManager } from './src/core/Scene.js';
 import { CameraManager } from './src/core/Camera.js';
 import { RendererManager } from './src/core/Renderer.js';
@@ -52,6 +48,8 @@ class App {
             if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = true;
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = true;
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
+            if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = true;
+            if (e.code === 'Space') this.keys.brake = true;
         });
 
         window.addEventListener('keyup', (e) => {
@@ -59,6 +57,8 @@ class App {
             if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = false;
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = false;
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = false;
+            if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = false;
+            if (e.code === 'Space') this.keys.brake = false;
         });
     }
 
@@ -108,7 +108,8 @@ class App {
             cursor.style.top = `${e.clientY}px`;
 
             // Add active style (glow red when steering hard)
-            if (Math.abs(this.mouse.x) > 0.3 || Math.abs(this.mouse.y) > 0.3) {
+            // Tweak to match actual deadzone of 0.15
+            if (Math.abs(this.mouse.x) > 0.15 || Math.abs(this.mouse.y) > 0.15) {
                 cursor.style.borderBottomColor = '#ff0055';
                 cursor.style.filter = 'drop-shadow(0 0 15px #ff0055)';
             } else {
@@ -120,9 +121,98 @@ class App {
         // Hide default cursor on canvas hover
         this.canvas.style.cursor = 'none';
 
-        // Handle pointer lock click (optional, but good for immersive flight)
-        this.canvas.addEventListener('click', () => {
-            this.canvas.requestPointerLock();
+        // Raycasting for planet selection
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Use window listener to ensure we catch clicks over overlay elements if necessary
+        window.addEventListener('click', (event) => {
+            console.log('Window Click Detected', event.clientX, event.clientY);
+
+            // Calculate mouse position in normalized device coordinates (-1 to +1) for raycasting
+            // Use window dimensions since we want full screen raycasting potentially
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            if (this.cameraManager && this.cameraManager.camera) {
+                raycaster.setFromCamera(mouse, this.cameraManager.camera);
+
+                // Get all planet meshes to check for intersection
+                // Ensure we are checking children recursively if needed
+                const planetMeshes = this.planets.map(p => p.mesh);
+
+                // Allow recursive checking in case mesh has children
+                const intersects = raycaster.intersectObjects(this.sceneManager.scene.children, true);
+
+                if (intersects.length > 0) {
+                    // Filter for planets only
+                    // We need to traverse up from the intersection object to see if it belongs to a planet
+                    const hit = intersects.find(intersect => {
+                        let obj = intersect.object;
+                        // Check if this object or any parent is one of our planets
+                        while (obj) {
+                            if (this.planets.some(p => p.mesh === obj || p.group === obj)) {
+                                return true;
+                            }
+                            obj = obj.parent;
+                        }
+                        return false;
+                    });
+
+                    if (hit) {
+                        let selectedObject = hit.object;
+                        // Trace back to the planet object
+                        let selectedPlanet = this.planets.find(p => p.mesh === selectedObject || p.group === selectedObject);
+
+                        // If direct match failed, try walking up parents
+                        if (!selectedPlanet) {
+                            let obj = selectedObject;
+                            while (obj) {
+                                selectedPlanet = this.planets.find(p => p.mesh === obj || p.group === obj);
+                                if (selectedPlanet) break;
+                                obj = obj.parent;
+                            }
+                        }
+
+                        if (selectedPlanet) {
+                            console.log('Planet Selected via Raycast:', selectedPlanet.config.name);
+
+                            // Get world position
+                            const targetPosition = new THREE.Vector3();
+                            selectedObject.getWorldPosition(targetPosition);
+
+                            this.spacecraft.engageAutopilot(targetPosition);
+
+                            // Update HUD with selection
+                            const hud = document.getElementById('hud-status');
+                            if (hud) hud.textContent = `Autopilot: ${selectedPlanet.config.name}`;
+                        }
+                    } else {
+                        console.log('Raycast did not hit a planet. Hit:', intersects[0].object.type);
+                    }
+                } else {
+                    console.log('Raycast hit nothing.');
+                }
+            }
+        });
+
+        // Speed Controls (Keyboard)
+        window.addEventListener('keydown', (e) => {
+            if (!this.spacecraft) return;
+
+            // Plus key (and NumpadAdd)
+            if (e.key === '+' || e.code === 'NumpadAdd' || e.code === 'Equal') {
+                this.spacecraft.defaultSpeed += 1.0;
+                this.spacecraft.forwardSpeed = this.spacecraft.defaultSpeed;
+                console.log('Speed increased to:', this.spacecraft.defaultSpeed);
+            }
+
+            // Minus key (and NumpadSubtract)
+            if (e.key === '-' || e.code === 'NumpadSubtract' || e.code === 'Minus') {
+                this.spacecraft.defaultSpeed = Math.max(0, this.spacecraft.defaultSpeed - 1.0);
+                this.spacecraft.forwardSpeed = this.spacecraft.defaultSpeed;
+                console.log('Speed decreased to:', this.spacecraft.defaultSpeed);
+            }
         });
     }
 
@@ -170,7 +260,6 @@ class App {
             this.planets.forEach(planet => planet.update());
         }
 
-        // Control spacecraft
         // Control spacecraft
         if (this.spacecraft) {
             // Steer spacecraft with keyboard and mouse
