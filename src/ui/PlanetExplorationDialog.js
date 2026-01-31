@@ -107,7 +107,6 @@ export class PlanetExplorationDialog {
             
             <div class="exploration-dialog-footer">
                 <button class="exploration-btn" id="exploration-close-btn">Close</button>
-                <button class="exploration-btn primary" id="exploration-teleport">Teleport to Planet</button>
             </div>
         `;
         
@@ -138,14 +137,6 @@ export class PlanetExplorationDialog {
         document.getElementById('exploration-close-btn').addEventListener('click', () => this.hide());
         this.overlay.addEventListener('click', () => this.hide());
         
-        // Teleport button
-        document.getElementById('exploration-teleport').addEventListener('click', () => {
-            if (this.currentPlanet && this.onTeleport) {
-                this.onTeleport(this.currentPlanet);
-                this.hide();
-            }
-        });
-        
         // Tab switching
         this.elements.tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -172,11 +163,9 @@ export class PlanetExplorationDialog {
     /**
      * Show dialog with planet data
      * @param {Object} planetData - Planet information
-     * @param {Function} onTeleport - Callback for teleport action
      */
-    async show(planetData, onTeleport = null) {
+    async show(planetData) {
         this.currentPlanet = planetData;
-        this.onTeleport = onTeleport;
         
         // Update header
         this.elements.title.textContent = planetData.pl_name || 'Unknown Planet';
@@ -253,7 +242,9 @@ export class PlanetExplorationDialog {
         const fields = [
             {
                 label: 'Distance',
-                value: planetData.sy_dist ? `${(planetData.sy_dist * 3.262).toFixed(2)} light-years` : 'Unknown',
+                value: planetData.sy_dist !== undefined && planetData.sy_dist !== null 
+                    ? `${(planetData.sy_dist * 3.262).toFixed(4)} light-years`
+                    : 'Unknown',
                 highlight: false
             },
             {
