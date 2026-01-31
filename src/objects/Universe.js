@@ -39,9 +39,9 @@ export class Universe {
     }
 
     update() {
-        // Very slow rotation to make the space feel alive
-        this.mesh.rotation.y += 0.0001;
-        this.mesh.rotation.x += 0.00005;
+        // Disabled rotation for "Straight Deep Space Navigation" experience
+        // this.mesh.rotation.y += 0.0001;
+        // this.mesh.rotation.x += 0.00005;
     }
 
     dispose() {

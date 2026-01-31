@@ -1,30 +1,40 @@
-/**
- * Procedural Texture Generator
- * Creates realistic planet textures using canvas and noise algorithms
- */
-
 import * as THREE from 'three';
+
+// Texture cache to prevent redundant generation
+const textureCache = new Map();
+
+/**
+ * Helper to round colors for better cache hit rates
+ */
+function getCacheKey(type, params) {
+    return `${type}_${JSON.stringify(params)}`;
+}
 
 /**
  * Simple noise function (approximation)
  * For production, consider using a proper noise library
  */
 function noise2D(x, y) {
-    const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+    const nx = x * 12.9898 + y * 78.233;
+    const n = Math.sin(nx) * 43758.5453;
     return n - Math.floor(n);
 }
 
 /**
  * Fractal Brownian Motion for natural-looking noise
  */
-function fbm(x, y, octaves = 4) {
+function fbm(x, y, octaves = 6) {
     let value = 0;
     let amplitude = 0.5;
     let frequency = 1;
 
     for (let i = 0; i < octaves; i++) {
-        value += amplitude * noise2D(x * frequency, y * frequency);
-        frequency *= 2;
+        // Add domain warping for more organic patterns
+        const ox = noise2D(x * frequency, y * frequency) * 0.1;
+        const oy = noise2D(x * frequency + 1.2, y * frequency + 3.4) * 0.1;
+
+        value += amplitude * noise2D(x * frequency + ox, y * frequency + oy);
+        frequency *= 2.1;
         amplitude *= 0.5;
     }
 
@@ -32,9 +42,74 @@ function fbm(x, y, octaves = 4) {
 }
 
 /**
+ * Helper to get color based on composition and temperature
+ */
+export function getColorByComposition(composition, temperature) {
+    const comp = (composition || '').toLowerCase();
+    const temp = temperature || 300; // Default to Earth-like temp
+
+    // 1. Extreme Heat (Lava/Molten Worlds)
+    if (temp > 1200 && (comp.includes('rocky') || comp.includes('silicates') || comp.includes('iron'))) {
+        return { base: 0x1a1a1a, detail: 0xff4500 }; // Charred black with lava orange
+    }
+
+    // 2. Gas Giants & Hot Jupiters
+    if (comp.includes('gas') || comp.includes('hydrogen') || comp.includes('helium')) {
+        if (temp > 1000) return { base: 0xff8c00, detail: 0xffd700 }; // Hot Jupiter (Deep Orange/Gold)
+        if (temp < 150) return { base: 0xa0c4ff, detail: 0x1a75ff };  // Cold Gas Giant (Bright Blue)
+        return { base: 0xc88b3a, detail: 0xe6a85c }; // Jupiter-like (Banded browns)
+    }
+
+    // 3. Ice Giants & Water Worlds
+    if (comp.includes('ice') || comp.includes('methane') || comp.includes('ammonia') || comp.includes('water')) {
+        if (comp.includes('water') || comp.includes('ocean')) {
+            return { base: 0x00416a, detail: 0x0077be }; // Deep Ocean Blue
+        }
+        if (temp < 100) return { base: 0x4169e1, detail: 0x00008b }; // Deep Blue Ice
+        return { base: 0x4fd0e7, detail: 0x00ced1 }; // Cyan/Turquoise
+    }
+
+    // 4. Rocky / Terrestrial Planets
+    if (comp.includes('rocky') || comp.includes('silicates') || comp.includes('iron') || comp.includes('metal')) {
+        // Snowball planets
+        if (temp < 200) return { base: 0xf0f8ff, detail: 0xb0c4de }; // Frozen/White
+
+        // Iron/Metallic (like Mercury)
+        if (comp.includes('iron') || comp.includes('metal')) {
+            return { base: 0x4a4a4a, detail: 0x708090 }; // Slate Grey / Gunmetal
+        }
+
+        // Sulfur/Volcanic (like Io)
+        if (comp.includes('sulfur')) {
+            return { base: 0xefdfbb, detail: 0xe1ad21 }; // Yellow/Mustard
+        }
+
+        // Oxidized (like Mars)
+        if (comp.includes('oxide') || comp.includes('rust')) {
+            return { base: 0xcd5c5c, detail: 0x8b3a3a }; // Reddish
+        }
+
+        return { base: 0x8c7853, detail: 0x6b5d4f }; // Generic Rocky (Dusty brown)
+    }
+
+    // 5. Special Case: Earth-like default
+    if (comp.includes('habitabl') || comp.includes('vegetation')) {
+        return { base: 0x228b22, detail: 0x1e90ff }; // Forest Green / Sea Blue
+    }
+
+    // Default
+    return { base: 0x888888, detail: 0x666666 };
+}
+
+
+/**
  * Generate a rocky planet texture (Earth, Mars, Mercury, Venus type)
  */
 export function generateRockyTexture(baseColor, detailColor, size = 512) {
+    // Check cache first
+    const cacheKey = getCacheKey('rocky', { baseColor, detailColor, size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -72,6 +147,7 @@ export function generateRockyTexture(baseColor, detailColor, size = 512) {
     texture.wrapT = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;
 
+    textureCache.set(cacheKey, texture);
     return texture;
 }
 
@@ -79,6 +155,10 @@ export function generateRockyTexture(baseColor, detailColor, size = 512) {
  * Generate a gas giant texture (Jupiter, Saturn type)
  */
 export function generateGasGiantTexture(colors, size = 512) {
+    // Check cache first
+    const cacheKey = getCacheKey('gas', { colors, size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -116,6 +196,7 @@ export function generateGasGiantTexture(colors, size = 512) {
     texture.wrapT = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;
 
+    textureCache.set(cacheKey, texture);
     return texture;
 }
 
@@ -123,6 +204,10 @@ export function generateGasGiantTexture(colors, size = 512) {
  * Generate an ice giant texture (Uranus, Neptune type)
  */
 export function generateIceGiantTexture(baseColor, size = 512) {
+    // Check cache first
+    const cacheKey = getCacheKey('ice', { baseColor, size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -163,6 +248,7 @@ export function generateIceGiantTexture(baseColor, size = 512) {
     texture.wrapT = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;
 
+    textureCache.set(cacheKey, texture);
     return texture;
 }
 
@@ -251,5 +337,32 @@ export function generatePanelTexture(size = 512, color = '#cccccc') {
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
 
+    return texture;
+}
+
+/**
+ * Generate a circular radial gradient texture for stars/dust
+ */
+export function generateStarTexture(size = 64) {
+    const cacheKey = `star_${size}`;
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Create radial gradient
+    const center = size / 2;
+    const gradient = ctx.createRadialGradient(center, center, 0, center, center, center);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    textureCache.set(cacheKey, texture);
     return texture;
 }

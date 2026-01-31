@@ -5,7 +5,7 @@ import { RendererManager } from './src/core/Renderer.js';
 import { Planet } from './src/objects/Planet.js';
 import { Star } from './src/objects/Star.js';
 import { StarField } from './src/objects/StarField.js';
-import { PLANETS_DATA, loadSolarSystemPlanets } from './src/config/planets.js';
+import { loadSolarSystemPlanets } from './src/config/planets.js';
 import { Universe } from './src/objects/Universe.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { PlanetDataService } from './src/services/PlanetDataService.js';
@@ -14,6 +14,7 @@ import { LoadingManager } from './src/utils/LoadingManager.js';
 import { TeleportManager } from './src/utils/TeleportManager.js';
 import { PlanetSelector } from './src/controls/PlanetSelector.js';
 import { PlanetHoverInfo } from './src/utils/PlanetHoverInfo.js';
+import { SpaceDust } from './src/objects/SpaceDust.js';
 
 class App {
     constructor() {
@@ -34,6 +35,7 @@ class App {
             this.sceneManager = new SceneManager();
             this.cameraManager = new CameraManager(this.canvas);
             this.rendererManager = new RendererManager(this.canvas);
+            this.clock = new THREE.Clock();
             this.loadingManager.completeStep('Engine');
 
             // Step 2: Setup controls
@@ -208,7 +210,7 @@ class App {
                             console.log('Exoplanet Selected:', planetData.pl_name);
 
                             if (this.teleportManager) {
-                                this.teleportManager.teleportToPlanet(planetData);
+                                this.teleportManager.teleportWithProgress(planetData);
                             }
                         } else {
                             // Solar system planet
@@ -226,9 +228,13 @@ class App {
 
                             if (selectedPlanet) {
                                 console.log('Planet Selected:', selectedPlanet.config.name);
-                                const targetPosition = new THREE.Vector3();
-                                selectedObject.getWorldPosition(targetPosition);
-                                this.spacecraft.engageAutopilot(targetPosition);
+                                if (this.teleportManager) {
+                                    this.teleportManager.teleportWithProgress(selectedPlanet.mesh || selectedPlanet.group);
+                                } else {
+                                    const targetPosition = new THREE.Vector3();
+                                    selectedObject.getWorldPosition(targetPosition);
+                                    this.spacecraft.engageAutopilot(targetPosition);
+                                }
                             }
                         }
                     }
@@ -236,7 +242,7 @@ class App {
             }
         });
 
-        // Speed Controls (Keyboard)
+        // Speed Controls & Hotkeys (Keyboard)
         window.addEventListener('keydown', (e) => {
             if (!this.spacecraft) return;
 
@@ -259,6 +265,21 @@ class App {
                 console.log('V Key Pressed');
                 this.spacecraft.toggleView();
                 this.updateViewUI();
+            }
+
+            // Random Habitable Warp (R)
+            if (e.code === 'KeyR' || e.key === 'r' || e.key === 'R') {
+                console.log('R Key Pressed - Initiating Random Warp...');
+                if (this.planetDataService && this.teleportManager) {
+                    const habitablePlanets = this.planetDataService.filterByHabitability(70);
+                    if (habitablePlanets.length > 0) {
+                        const randomPlanet = habitablePlanets[Math.floor(Math.random() * habitablePlanets.length)];
+                        this.teleportManager.teleportWithProgress(randomPlanet);
+                    } else {
+                        const anyPlanet = this.planetDataService.getRandomPlanet();
+                        if (anyPlanet) this.teleportManager.teleportWithProgress(anyPlanet);
+                    }
+                }
             }
         });
 
@@ -301,13 +322,15 @@ class App {
         const starField = new StarField(15000, 3500);
         this.sceneManager.add(starField.mesh);
 
-        // Create central star (Sun)
+        // Create central star (Sun) - REMOVED per user request
+        /*
         const sun = new Star({
             radius: 20,
             color: 0xffff00,
             emissiveIntensity: 2
         });
         this.sceneManager.add(sun.mesh);
+        */
 
         // Load solar system planets from dataset
         console.log('🌍 Loading solar system planet data from dataset...');
@@ -326,6 +349,10 @@ class App {
         // Create spacecraft
         this.spacecraft = new Spacecraft();
         this.sceneManager.add(this.spacecraft.group);
+
+        // Create Space Dust for motion sensation
+        this.spaceDust = new SpaceDust(2000, 400);
+        this.sceneManager.add(this.spaceDust.mesh);
     }
 
     async loadExoplanets() {
@@ -354,10 +381,11 @@ class App {
             this.cameraManager.camera
         );
 
-        // Initialize planet selector UI (correct parameters: dataService, teleportManager)
+        // Initialize planet selector UI (correct parameters: dataService, teleportManager, solarSystemPlanets)
         this.planetSelector = new PlanetSelector(
             this.planetDataService,
-            this.teleportManager
+            this.teleportManager,
+            this.planets
         );
 
         // Initialize planet hover info
@@ -496,7 +524,7 @@ class App {
     animate() {
         requestAnimationFrame(() => this.animate());
 
-        const deltaTime = 0.016; // ~60 FPS
+        const deltaTime = this.clock.getDelta();
 
         // Update universe rotation
         if (this.universe) {
@@ -526,6 +554,11 @@ class App {
 
             // Update HUD display
             this.updateHUD();
+
+            // Update Space Dust
+            if (this.spaceDust) {
+                this.spaceDust.update(this.spacecraft.group.position);
+            }
         }
 
         // Update planet hover info

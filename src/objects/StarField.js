@@ -4,6 +4,7 @@
  */
 
 import * as THREE from 'three';
+import { generateStarTexture } from '../utils/textureGenerator.js';
 
 export class StarField {
     constructor(count = 10000, radius = 1000) {
@@ -68,14 +69,15 @@ export class StarField {
             new THREE.Float32BufferAttribute(sizes, 1)
         );
 
-        // Create points material with vertex colors and custom sizing if possible
-        // Note: sizeAttenuation makes stars smaller as they get further
+        // Create points material with circular texture
         const material = new THREE.PointsMaterial({
-            size: 1.2,
+            size: 1.5,
+            map: generateStarTexture(64),
             vertexColors: true,
             sizeAttenuation: true,
             transparent: true,
             opacity: 0.9,
+            alphaTest: 0.05,
             blending: THREE.AdditiveBlending
         });
 
