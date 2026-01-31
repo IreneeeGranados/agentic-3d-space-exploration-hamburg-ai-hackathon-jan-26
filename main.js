@@ -63,6 +63,32 @@ class App {
     }
 
     setupMouse() {
+        console.log('Initializing Mouse Controls...');
+
+        // ensure cursor exists (create it if missing to guarantee visibility)
+        let cursor = document.getElementById('flight-cursor');
+        if (!cursor) {
+            console.log('Creating cursor element dynamically...');
+            cursor = document.createElement('div');
+            cursor.id = 'flight-cursor';
+            document.body.appendChild(cursor);
+        }
+
+        // FORCE styles via JS to override any CSS issues
+        Object.assign(cursor.style, {
+            position: 'fixed', // Fixed to viewport
+            width: '40px',
+            height: '40px',
+            borderLeft: '20px solid transparent',
+            borderRight: '20px solid transparent',
+            borderBottom: '40px solid #00d4ff',
+            transform: 'translate(-50%, -50%) rotate(45deg)', // Point up-left ish
+            pointerEvents: 'none',
+            zIndex: '100000',
+            display: 'block',
+            filter: 'drop-shadow(0 0 10px #00d4ff)'
+        });
+
         // Track mouse position relative to center (for steering)
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
@@ -70,7 +96,6 @@ class App {
             const centerY = rect.height / 2;
 
             // Normalize -1 to 1 based on distance from center
-            // Sensitive zone: full steering at 50% distance to edge
             this.mouse.x = (e.clientX - rect.left - centerX) / (centerX * 0.8);
             this.mouse.y = (e.clientY - rect.top - centerY) / (centerY * 0.8);
 
@@ -78,18 +103,17 @@ class App {
             this.mouse.x = Math.max(-1, Math.min(1, this.mouse.x));
             this.mouse.y = Math.max(-1, Math.min(1, this.mouse.y));
 
-            // Update visual cursor
-            const cursor = document.getElementById('flight-cursor');
-            if (cursor) {
-                cursor.style.left = `${e.clientX}px`;
-                cursor.style.top = `${e.clientY}px`;
+            // Update visual cursor position
+            cursor.style.left = `${e.clientX}px`;
+            cursor.style.top = `${e.clientY}px`;
 
-                // Add active style if steering hard
-                if (Math.abs(this.mouse.x) > 0.3 || Math.abs(this.mouse.y) > 0.3) {
-                    cursor.classList.add('flight-cursor-active');
-                } else {
-                    cursor.classList.remove('flight-cursor-active');
-                }
+            // Add active style (glow red when steering hard)
+            if (Math.abs(this.mouse.x) > 0.3 || Math.abs(this.mouse.y) > 0.3) {
+                cursor.style.borderBottomColor = '#ff0055';
+                cursor.style.filter = 'drop-shadow(0 0 15px #ff0055)';
+            } else {
+                cursor.style.borderBottomColor = '#00d4ff';
+                cursor.style.filter = 'drop-shadow(0 0 10px #00d4ff)';
             }
         });
 

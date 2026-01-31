@@ -13,7 +13,7 @@ export class Spacecraft {
         this.group.position.set(0, 0, 150);
 
         // Constant forward speed
-        this.forwardSpeed = 80; // Faster movement to see motion
+        this.forwardSpeed = 15; // Slowed down for easier control
 
         // Steering
         this.steeringForce = 8;
@@ -100,15 +100,13 @@ export class Spacecraft {
         let steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
         let steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
 
-        // Add mouse influence (if mouse is active)
-        // Mouse X controls Yaw (turn left/right)
-        // Mouse Y controls Pitch (turn up/down)
-        if (Math.abs(mouseInput.x) > 0.1) steerX -= mouseInput.x * 2; // Mouse moves cursor, ship follows
-        if (Math.abs(mouseInput.y) > 0.1) steerY += mouseInput.y * 2; // Inverted Y for natural flight feel? Or standard?
-        // Let's use: Mouse Up -> Pitch Down (like plane stick push) -> steerY positive?
-        // Wait: keys.up = Pitch Down?
-        // Logic: rotateZ negative rotates "Up" relative to standard?
-        // Let's stick to simple: Mouse moves to point on screen, ship turns towards it.
+        // Add mouse influence (FIXED DIRECTION)
+        // Mouse Right (+X) -> Positive SteerX -> rotateY negative (Right Turn)
+        if (Math.abs(mouseInput.x) > 0.1) steerX += mouseInput.x * 2;
+
+        // Mouse Up (-Y) -> Negative MouseY -> Positive SteerY -> rotateZ positive (Pitch Up)
+        // "Non-inverted" flight control: Mouse Up on screen = Nose Up
+        if (Math.abs(mouseInput.y) > 0.1) steerY -= mouseInput.y * 2;
 
         // Apply steering rotation
         const rotSpeed = 1.2 * deltaTime;

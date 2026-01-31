@@ -166,3 +166,89 @@ strong {
         max-width: calc(100vw - 40px);
     }
 }
+
+/* Flight HUD */
+.hud-panel {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    z-index: 100;
+}
+
+.hud-item {
+    margin-bottom: 8px;
+}
+
+.hud-label {
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-right: 8px;
+}
+
+.hud-value {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 18px;
+    color: #00d4ff;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.hud-unit {
+    color: #8888ff;
+    font-size: 11px;
+}
+
+/* Custom Flight Cursor (Arrow) */
+.flight-cursor {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* Pure CSS Arrow */
+    width: 0;
+    height: 0;
+    background: transparent;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 40px solid #00d4ff;
+
+    transform: translate(-50%, -50%) rotate(45deg);
+    /* Pointing up-right? No, standard rotate */
+    /* Rotate to point forward/up? */
+    /* Triangle points UP by default with border-bottom */
+    /* We want it pointing "forward" into the screen? Or pointing where mouse is? */
+    /* Standard cursor points top-left. */
+    /* Let's keep it simple: A distinct arrowhead */
+
+    pointer-events: none;
+    z-index: 99999;
+    /* Super high Z-index */
+    transition: transform 0.1s ease;
+    filter: drop-shadow(0 0 10px #00d4ff);
+    display: block;
+    /* Ensure visibility */
+}
+
+.flight-cursor::after {
+    content: none;
+    /* Remove dot */
+}
+
+/* Active state (when steering) */
+.flight-cursor-active {
+    filter: drop-shadow(0 0 15px #ff0055);
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1.2);
+    /* Change color via filter hue rotate? or just keep cyan but glowing red? */
+    /* Let's make it clearly active */
+}
+
+/* Hide default cursor on canvas */
+#canvas {
+    cursor: none;
+}
