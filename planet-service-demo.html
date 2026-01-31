@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Service Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #4a90e2;
+            text-shadow: 0 0 20px rgba(74, 144, 226, 0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .stats {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        .planets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .planet-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .planet-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            border-color: #4a90e2;
+        }
+        
+        .planet-card.loading {
+            opacity: 0.6;
+        }
+        
+        .planet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .planet-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge.ready {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .badge.loading {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .planet-type {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .planet-description {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .planet-specs {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .planet-specs div {
+            margin-bottom: 5px;
+        }
+        
+        .ai-description {
+            background: rgba(74, 144, 226, 0.1);
+            border-left: 3px solid #4a90e2;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+            font-style: italic;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #4a90e2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 4px;
+        }
+        
+        .log-entry.success { color: #27ae60; }
+        .log-entry.error { color: #e74c3c; }
+        .log-entry.info { color: #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Planet Service Demo</h1>
+        <p class="subtitle">Efficient batch loading and AI description generation</p>
+        
+        <div class="controls">
+            <button id="loadBtn">Load Planets</button>
+            <button id="preloadBtn" disabled>Preload All Descriptions</button>
+            <button id="clearBtn" disabled>Clear Cache</button>
+            <button id="statsBtn" disabled>Show Stats</button>
+        </div>
+        
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-value" id="totalPlanets">0</div>
+                <div class="stat-label">Total Planets</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="cachedCount">0</div>
+                <div class="stat-label">Cached</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="cacheRate">0%</div>
+                <div class="stat-label">Cache Rate</div>
+            </div>
+        </div>
+        
+        <div class="planets-grid" id="planetsGrid"></div>
+        
+        <div class="log" id="log"></div>
+    </div>
+    
+    <script type="module">
+        import { planetService } from './src/services/FrontendPlanetService.js';
+        import { PLANETS_DATA } from './src/config/planets.js';
+        
+        // Elements
+        const loadBtn = document.getElementById('loadBtn');
+        const preloadBtn = document.getElementById('preloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const statsBtn = document.getElementById('statsBtn');
+        const planetsGrid = document.getElementById('planetsGrid');
+        const logEl = document.getElementById('log');
+        const statsEl = document.getElementById('stats');
+        
+        // Logger
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        // Update stats display
+        function updateStats() {
+            const stats = planetService.getStats();
+            document.getElementById('totalPlanets').textContent = stats.totalPlanets;
+            document.getElementById('cachedCount').textContent = stats.cachedDescriptions;
+            document.getElementById('cacheRate').textContent = stats.cacheRate;
+            statsEl.style.display = stats.totalPlanets > 0 ? 'flex' : 'none';
+        }
+        
+        // Render planets
+        function renderPlanets() {
+            const planets = planetService.getAllPlanetsData();
+            planetsGrid.innerHTML = planets.map(planet => `
+                <div class="planet-card ${planet.hasDescription ? '' : 'loading'}" data-planet="${planet.name}">
+                    <div class="planet-header">
+                        <div class="planet-name">${planet.name}</div>
+                        <div class="badge ${planet.hasDescription ? 'ready' : 'loading'}">
+                            ${planet.hasDescription ? '✨ AI Ready' : '⏳ Loading...'}
+                        </div>
+                    </div>
+                    <div class="planet-type">${planet.planetType || 'Unknown'}</div>
+                    <div class="planet-description">${planet.description}</div>
+                    <div class="planet-specs">
+                        <div><strong>Composition:</strong> ${planet.aiData?.composition || 'Unknown'}</div>
+                        <div><strong>Atmosphere:</strong> ${planet.aiData?.atmosphere || 'Unknown'}</div>
+                        <div><strong>Temperature:</strong> ${planet.aiData?.surfaceTemp || 'Unknown'}</div>
+                    </div>
+                    ${planet.aiDescription ? `
+                        <div class="ai-description">
+                            ${planet.aiDescription}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            // Add click handlers
+            document.querySelectorAll('.planet-card').forEach(card => {
+                card.addEventListener('click', async () => {
+                    const name = card.dataset.planet;
+                    log(`Clicked ${name}`, 'info');
+                    
+                    if (!card.querySelector('.ai-description')) {
+                        const desc = await planetService.getDescription(name);
+                        log(`Loaded description for ${name}`, 'success');
+                        renderPlanets();
+                        updateStats();
+                    }
+                });
+            });
+        }
+        
+        // Load planets
+        loadBtn.addEventListener('click', () => {
+            log('Initializing Planet Service...', 'info');
+            
+            // Note: In real app, API key would come from import.meta.env.VITE_OPENAI_API_KEY
+            // For this demo, it will use fallback descriptions
+            planetService.init();
+            planetService.loadPlanets(PLANETS_DATA);
+            
+            log(`✅ Loaded ${PLANETS_DATA.length} planets`, 'success');
+            
+            renderPlanets();
+            updateStats();
+            
+            loadBtn.disabled = true;
+            preloadBtn.disabled = false;
+            clearBtn.disabled = false;
+            statsBtn.disabled = false;
+        });
+        
+        // Preload all
+        preloadBtn.addEventListener('click', async () => {
+            preloadBtn.disabled = true;
+            log('🤖 Starting preload of all descriptions...', 'info');
+            
+            const results = await planetService.preloadDescriptions();
+            
+            log(`✅ Preload complete: ${results.success} success, ${results.failed} failed`, 'success');
+            
+            renderPlanets();
+            updateStats();
+            preloadBtn.disabled = false;
+        });
+        
+        // Clear cache
+        clearBtn.addEventListener('click', () => {
+            planetService.clearCache();
+            log('🗑️  Cache cleared', 'info');
+            renderPlanets();
+            updateStats();
+        });
+        
+        // Show stats
+        statsBtn.addEventListener('click', () => {
+            const stats = planetService.getStats();
+            log(`📊 Stats: ${JSON.stringify(stats)}`, 'info');
+        });
+        
+        log('Ready! Click "Load Planets" to start.', 'info');
+    </script>
+</body>
+</html>
