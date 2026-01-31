@@ -1,158 +1,142 @@
 /**
- * AIService - OpenAI Integration for Planet Descriptions
- * Generates descriptive text about planets based on JSON data
+ * AIService - Unified AI Interface
+ * Combines OpenAI (text generation) and ElevenLabs (text-to-speech) services
  */
 
-import OpenAI from 'openai';
+import OpenAIService from './OpenAIService.js';
+import ElevenLabsService from './ElevenLabsService.js';
 
 class AIService {
-  constructor(apiKey) {
-    if (!apiKey) {
-      throw new Error('OpenAI API key is required');
+  constructor(openAIKey, elevenLabsKey = null) {
+    // Initialize OpenAI service (required)
+    this.openAI = new OpenAIService(openAIKey);
+    
+    // Initialize ElevenLabs service (optional)
+    this.elevenLabs = elevenLabsKey ? new ElevenLabsService(elevenLabsKey) : null;
+  }
+
+  /**
+   * Configure OpenAI behavior
+   * @param {Object} options - Configuration options for OpenAI
+   */
+  configureOpenAI(options) {
+    this.openAI.configure(options);
+  }
+
+  /**
+   * Configure ElevenLabs behavior
+   * @param {Object} options - Configuration options for ElevenLabs
+   */
+  configureElevenLabs(options) {
+    if (!this.elevenLabs) {
+      throw new Error('ElevenLabs service not initialized. Provide API key in constructor.');
     }
-    
-    this.client = new OpenAI({
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true // Note: For production, use a backend proxy
-    });
-    
-    this.config = {
-      model: 'gpt-3.5-turbo',
-      temperature: 0.7,
-      max_tokens: 300
-    };
-    
-    this.cache = new Map();
+    this.elevenLabs.configure(options);
   }
 
   /**
-   * Configure AI behavior
-   * @param {Object} options - Configuration options (model, temperature, max_tokens)
-   */
-  configure(options) {
-    this.config = { ...this.config, ...options };
-  }
-
-  /**
-   * Build a prompt from planet data
-   * @param {Object} planetData - Planet information as JSON
-   * @returns {string} Formatted prompt
-   */
-  buildPrompt(planetData) {
-    const planetInfo = JSON.stringify(planetData, null, 2);
-    
-    return `You are an expert astronomer and science communicator. Based on the following planet data, create an engaging and informative description (2-3 paragraphs) that would captivate someone exploring this celestial body in a 3D space visualization.
-
-Planet Data:
-${planetInfo}
-
-Write a vivid, scientifically-inspired description that highlights the unique characteristics, atmosphere, and interesting facts about this planet. Make it immersive and educational.`;
-  }
-
-  /**
-   * Generate a description for a planet
+   * Generate a description for a planet using OpenAI
    * @param {Object} planetData - Planet information as JSON
    * @param {boolean} useCache - Whether to use cached results (default: true)
    * @returns {Promise<string>} Generated description
    */
   async generatePlanetDescription(planetData, useCache = true) {
-    try {
-      // Generate cache key
-      const cacheKey = JSON.stringify(planetData);
-      
-      // Check cache
-      if (useCache && this.cache.has(cacheKey)) {
-        console.log('Using cached description for planet:', planetData.name);
-        return this.cache.get(cacheKey);
-      }
-
-      console.log('Generating AI description for planet:', planetData.name);
-      
-      // Build prompt
-      const prompt = this.buildPrompt(planetData);
-      
-      // Call OpenAI API
-      const response = await this.client.chat.completions.create({
-        model: this.config.model,
-        temperature: this.config.temperature,
-        max_tokens: this.config.max_tokens,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert astronomer and science communicator who creates vivid, educational descriptions of celestial bodies.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      });
-
-      // Extract description
-      const description = response.choices[0]?.message?.content?.trim();
-      
-      if (!description) {
-        throw new Error('No description generated from OpenAI');
-      }
-
-      // Cache the result
-      this.cache.set(cacheKey, description);
-      
-      return description;
-      
-    } catch (error) {
-      console.error('Error generating planet description:', error);
-      
-      // Handle specific error types
-      if (error.status === 401) {
-        throw new Error('Invalid OpenAI API key. Please check your credentials.');
-      } else if (error.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
-      } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-        throw new Error('Network error. Please check your internet connection.');
-      }
-      
-      // Return fallback description
-      return this.getFallbackDescription(planetData);
-    }
+    return this.openAI.generatePlanetDescription(planetData, useCache);
   }
 
   /**
-   * Generate fallback description when AI fails
-   * @param {Object} planetData - Planet information
-   * @returns {string} Basic description
+   * Convert text to speech using ElevenLabs
+   * @param {string} text - Text to convert to speech
+   * @param {boolean} useCache - Whether to use cached audio (default: true)
+   * @returns {Promise<ArrayBuffer>} Audio data
    */
-  getFallbackDescription(planetData) {
-    const { name, type, size, temperature, moons, atmosphere } = planetData;
-    
-    return `${name} is a ${type || 'mysterious'} planet${size ? ` with a relative size of ${size}` : ''}. ${
-      temperature ? `Surface temperatures average around ${temperature}°C. ` : ''
-    }${moons ? `It has ${moons} moon${moons > 1 ? 's' : ''}. ` : ''}${
-      atmosphere ? `The atmosphere is composed of ${atmosphere}.` : ''
-    }`;
+  async textToSpeech(text, useCache = true) {
+    if (!this.elevenLabs) {
+      throw new Error('ElevenLabs service not initialized. Provide API key in constructor.');
+    }
+    return this.elevenLabs.textToSpeech(text, useCache);
   }
 
   /**
-   * Clear the cache
+   * Convert text to speech and play it immediately
+   * @param {string} text - Text to convert and play
+   * @param {boolean} useCache - Whether to use cached audio (default: true)
+   * @returns {Promise<HTMLAudioElement>} Audio element playing the speech
+   */
+  async textToSpeechAndPlay(text, useCache = true) {
+    if (!this.elevenLabs) {
+      throw new Error('ElevenLabs service not initialized. Provide API key in constructor.');
+    }
+    return this.elevenLabs.textToSpeechAndPlay(text, useCache);
+  }
+
+  /**
+   * Generate planet description and convert to speech
+   * @param {Object} planetData - Planet information
+   * @param {boolean} playImmediately - Whether to play audio immediately (default: false)
+   * @param {boolean} useCache - Whether to use cached results (default: true)
+   * @returns {Promise<{description: string, audio: ArrayBuffer|HTMLAudioElement}>}
+   */
+  async generatePlanetDescriptionWithSpeech(planetData, playImmediately = false, useCache = true) {
+    if (!this.elevenLabs) {
+      throw new Error('ElevenLabs service not initialized. Provide API key in constructor.');
+    }
+
+    // Generate description
+    const description = await this.generatePlanetDescription(planetData, useCache);
+    
+    // Convert to speech
+    const audio = playImmediately 
+      ? await this.textToSpeechAndPlay(description, useCache)
+      : await this.textToSpeech(description, useCache);
+    
+    return { description, audio };
+  }
+
+  /**
+   * Get available ElevenLabs voices
+   * @returns {Promise<Array>} List of available voices
+   */
+  async getVoices() {
+    if (!this.elevenLabs) {
+      throw new Error('ElevenLabs service not initialized. Provide API key in constructor.');
+    }
+    return this.elevenLabs.getVoices();
+  }
+
+  /**
+   * Get ElevenLabs subscription info
+   * @returns {Promise<Object>} Subscription information
+   */
+  async getSubscriptionInfo() {
+    if (!this.elevenLabs) {
+      throw new Error('ElevenLabs service not initialized. Provide API key in constructor.');
+    }
+    return this.elevenLabs.getSubscriptionInfo();
+  }
+
+  /**
+   * Clear all caches
    */
   clearCache() {
-    this.cache.clear();
-    console.log('AI description cache cleared');
+    this.openAI.clearCache();
+    if (this.elevenLabs) {
+      this.elevenLabs.clearCache();
+    }
+    console.log('All AI service caches cleared');
   }
 
   /**
-   * Get cache statistics
-   * @returns {Object} Cache info
+   * Get cache statistics from all services
+   * @returns {Object} Combined cache info
    */
   getCacheStats() {
     return {
-      size: this.cache.size,
-      entries: Array.from(this.cache.keys()).map(key => {
-        const data = JSON.parse(key);
-        return data.name || 'Unknown';
-      })
+      openAI: this.openAI.getCacheStats(),
+      elevenLabs: this.elevenLabs ? this.elevenLabs.getCacheStats() : null
     };
   }
 }
 
 export default AIService;
+export { OpenAIService, ElevenLabsService };
