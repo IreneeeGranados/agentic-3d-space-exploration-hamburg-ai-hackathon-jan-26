@@ -369,3 +369,77 @@ strong {
 .data-line {
     margin-bottom: 5px;
 }
+
+/* Warp HUD Overlay */
+.warp-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, rgba(0, 20, 40, 0.4) 0%, rgba(0, 0, 0, 0.9) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+    transition: opacity 0.5s ease;
+}
+
+.warp-hud.hidden {
+    display: none;
+    opacity: 0;
+}
+
+.warp-container {
+    text-align: center;
+    width: 400px;
+    padding: 30px;
+    background: rgba(0, 10, 20, 0.8);
+    border: 2px solid #00d4ff;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.3), inset 0 0 15px rgba(0, 212, 255, 0.1);
+}
+
+.warp-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: #4fc3f7;
+    margin-bottom: 25px;
+    text-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+}
+
+.warp-progress-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 40, 80, 0.5);
+    border-radius: 3px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.warp-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #00d4ff, #4fc3f7, #ffffff);
+    box-shadow: 0 0 10px #00d4ff;
+    transition: width 0.1s linear;
+}
+
+.warp-percentage {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 48px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+}
+
+.warp-status {
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    color: #00d4ff;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}

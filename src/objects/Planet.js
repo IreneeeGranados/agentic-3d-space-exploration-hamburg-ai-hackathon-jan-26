@@ -8,7 +8,8 @@ import {
     generateRockyTexture,
     generateGasGiantTexture,
     generateIceGiantTexture,
-    generateNormalMap
+    generateNormalMap,
+    getColorByComposition
 } from '../utils/textureGenerator.js';
 
 export class Planet {
@@ -26,6 +27,13 @@ export class Planet {
             orbitSpeed: config.orbitSpeed || 0,
             rotationSpeed: config.rotationSpeed || 0.01,
             tilt: config.tilt || 0,
+            atmosphere: config.atmosphere || {
+                enabled: false,
+                color: 0x4a90e2,
+                density: 0.1
+            },
+            composition: config.aiData?.composition || config.characteristics?.principal_material || 'rocky',
+            temperature: (config.aiData?.surfaceTemp || config.pl_eqt || '300').toString(),
             ...config
         };
 
@@ -42,17 +50,23 @@ export class Planet {
             64
         );
 
-        // Generate procedural texture based on planet type
+        // Generate procedural texture based on planet type/composition
         let texture, normalMap;
 
+        // Get colors from composition
+        const colors = getColorByComposition(this.config.composition, parseFloat(this.config.temperature));
+        const baseColor = this.config.color || colors.base;
+        const detailColor = this.config.detailColor || colors.detail;
+
         if (this.config.planetType === 'rocky') {
-            texture = generateRockyTexture(this.config.color, this.config.detailColor);
+            texture = generateRockyTexture(baseColor, detailColor);
             normalMap = generateNormalMap(512, 2.0);
         } else if (this.config.planetType === 'gasGiant') {
-            texture = generateGasGiantTexture(this.config.gasColors);
+            const gasColors = this.config.gasColors || [new THREE.Color(baseColor).getHex(), new THREE.Color(detailColor).getHex(), 0xffffff];
+            texture = generateGasGiantTexture(gasColors);
             normalMap = generateNormalMap(512, 0.5);
         } else if (this.config.planetType === 'iceGiant') {
-            texture = generateIceGiantTexture(this.config.color);
+            texture = generateIceGiantTexture(baseColor);
             normalMap = generateNormalMap(512, 0.3);
         }
 
@@ -61,7 +75,9 @@ export class Planet {
             map: texture,
             normalMap: normalMap,
             roughness: this.config.planetType === 'iceGiant' ? 0.4 : 0.9,
-            metalness: 0.1
+            metalness: 0.1,
+            emissive: new THREE.Color(baseColor),
+            emissiveIntensity: parseFloat(this.config.temperature) > 1000 ? 0.1 : 0.0
         });
 
         this.mesh = new THREE.Mesh(geometry, material);
@@ -72,6 +88,11 @@ export class Planet {
 
         // Apply axial tilt
         this.mesh.rotation.z = this.config.tilt;
+
+        // Add atmosphere if enabled
+        if (this.config.atmosphere && this.config.atmosphere.enabled) {
+            this.createAtmosphere();
+        }
 
         // Position the planet
         if (this.config.orbitRadius > 0) {
@@ -94,6 +115,50 @@ export class Planet {
             data: this.config
         };
     }
+
+    createAtmosphere() {
+        const atmosphereConfig = this.config.atmosphere;
+        const radius = this.config.radius * 1.05; // Slightly larger than planet
+
+        const geometry = new THREE.SphereGeometry(radius, 64, 64);
+
+        // Fresnel-like Shader Material for atmospheric glow
+        const material = new THREE.ShaderMaterial({
+            uniforms: {
+                atmosphereColor: { value: new THREE.Color(atmosphereConfig.color || 0x4a90e2) },
+                coefficient: { value: 0.1 },
+                power: { value: 4.0 }
+            },
+            vertexShader: `
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    vPosition = vec3(modelViewMatrix * vec4(position, 1.0));
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 atmosphereColor;
+                uniform float coefficient;
+                uniform float power;
+                varying vec3 vNormal;
+                varying vec3 vPosition;
+                void main() {
+                    vec3 viewDirection = normalize(-vPosition);
+                    float intensity = pow(coefficient + dot(vNormal, viewDirection), power);
+                    gl_FragColor = vec4(atmosphereColor, intensity);
+                }
+            `,
+            side: THREE.BackSide,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+
+        this.atmosphereMesh = new THREE.Mesh(geometry, material);
+        this.group.add(this.atmosphereMesh);
+    }
+
 
     update() {
         // Rotate planet on its axis

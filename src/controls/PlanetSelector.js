@@ -3,14 +3,15 @@
  * Works with existing NASA mission control HTML interface
  */
 export class PlanetSelector {
-    constructor(planetDataService, teleportManager) {
+    constructor(planetDataService, teleportManager, solarSystemPlanets = []) {
         this.dataService = planetDataService;
         this.teleportManager = teleportManager;
+        this.solarSystemPlanets = solarSystemPlanets;
         this.isVisible = false;
         this.selectedPlanet = null;
         this.filteredPlanets = [];
         this.currentFilter = 'all';
-        
+
         this.init();
     }
 
@@ -20,12 +21,12 @@ export class PlanetSelector {
         this.searchInput = document.getElementById('planet-search');
         this.planetList = document.getElementById('planet-list');
         this.filterButtons = document.querySelectorAll('.filter-btn');
-        
+
         if (!this.container) {
             console.error('Planet selector container not found in HTML');
             return;
         }
-        
+
         this.attachEventListeners();
         this.loadPlanets();
     }
@@ -35,7 +36,7 @@ export class PlanetSelector {
         if (this.searchInput) {
             this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
         }
-        
+
         // Filter buttons
         this.filterButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -45,12 +46,12 @@ export class PlanetSelector {
                 this.applyFilters();
             });
         });
-        
+
         // Modal controls
         const modalClose = document.getElementById('modal-close');
         const modalTeleport = document.getElementById('modal-teleport');
         const modalOverlay = document.getElementById('modal-overlay');
-        
+
         if (modalClose) modalClose.addEventListener('click', () => this.closeModal());
         if (modalOverlay) modalOverlay.addEventListener('click', () => this.closeModal());
         if (modalTeleport) modalTeleport.addEventListener('click', () => {
@@ -67,22 +68,22 @@ export class PlanetSelector {
             if (this.planetList) {
                 this.planetList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Loading planets...</div>';
             }
-            
+
             // Ensure clusters are loaded
             if (!this.dataService.clusterIndex) {
                 console.log('Initializing planet data service...');
                 await this.dataService.initialize();
             }
-            
+
             // Get all planets from data service
             this.filteredPlanets = this.dataService.getAllPlanets();
-            
+
             // If no planets loaded yet, load them now
             if (this.filteredPlanets.length === 0) {
                 console.log('Loading nearby planets...');
                 await this.dataService.loadNearbyFirst();
                 this.filteredPlanets = this.dataService.getAllPlanets();
-                
+
                 // Load all clusters in background
                 this.dataService.loadAllClusters().then(() => {
                     this.filteredPlanets = this.dataService.getAllPlanets();
@@ -92,7 +93,7 @@ export class PlanetSelector {
                     }
                 });
             }
-            
+
             console.log(`✓ Planet selector has ${this.filteredPlanets.length} planets available`);
             this.renderPlanetList();
         } catch (error) {
@@ -110,33 +111,49 @@ export class PlanetSelector {
     applyFilters() {
         const searchQuery = this.searchInput?.value.toLowerCase() || '';
         const allPlanets = this.dataService.getAllPlanets();
-        
-        // Start with all planets
-        let filtered = [...allPlanets];
-        
-        // Apply search filter
-        if (searchQuery) {
-            filtered = filtered.filter(p => 
-                p.pl_name?.toLowerCase().includes(searchQuery) ||
-                p.hostname?.toLowerCase().includes(searchQuery)
-            );
-        }
-        
-        // Apply category filter
+
+        // Start with relevant planets based on category
+        let filtered = [];
+
         if (this.currentFilter === 'solar') {
-            // No exoplanets in selector, only for canvas
-            filtered = [];
-        } else if (this.currentFilter === 'nearby') {
-            filtered = filtered.filter(p => {
-                const dist = p.sy_dist || 0;
-                return dist > 0 && dist < 100; // Within 100 parsecs (~326 light years)
-            });
-        } else if (this.currentFilter === 'habitable') {
-            filtered = filtered.filter(p => 
-                p.characteristics?.habitability_percent > 50
+            // Map solar system planets to a structure compatible with the selector
+            filtered = this.solarSystemPlanets.map(p => ({
+                pl_name: p.config.name,
+                hostname: 'Sun',
+                sy_dist: 0,
+                characteristics: {
+                    habitability_percent: p.config.aiData?.habitability || 0,
+                    radius_position: p.config.planetType,
+                    atmosphere_type: p.config.aiData?.atmosphere || 'Unknown'
+                },
+                // Add reference to the actual mesh for teleportation
+                isSolar: true,
+                object: p.mesh || p.group
+            }));
+        } else {
+            filtered = [...allPlanets];
+
+            // Apply category filter for exoplanets
+            if (this.currentFilter === 'nearby') {
+                filtered = filtered.filter(p => {
+                    const dist = p.sy_dist || 0;
+                    return dist > 0 && dist < 100;
+                });
+            } else if (this.currentFilter === 'habitable') {
+                filtered = filtered.filter(p =>
+                    p.characteristics?.habitability_percent > 50
+                );
+            }
+        }
+
+        // Apply search filter to whatever is currently filtered
+        if (searchQuery) {
+            filtered = filtered.filter(p =>
+                p.pl_name?.toLowerCase().includes(searchQuery) ||
+                (p.hostname && p.hostname.toLowerCase().includes(searchQuery))
             );
         }
-        
+
         this.filteredPlanets = filtered;
         this.renderPlanetList();
     }
@@ -146,25 +163,25 @@ export class PlanetSelector {
             console.error('❌ Planet list container not found');
             return;
         }
-        
+
         console.log(`Rendering ${this.filteredPlanets.length} planets in list`);
-        
+
         if (this.filteredPlanets.length === 0) {
             this.planetList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-dim);">No planets found</div>';
             return;
         }
-        
+
         // Show first 50 planets for performance
         const planetsToShow = this.filteredPlanets.slice(0, 50);
         console.log(`Showing first ${planetsToShow.length} planets`);
-        
+
         this.planetList.innerHTML = planetsToShow.map(planet => {
             const chars = planet.characteristics || {};
             const habitability = chars.habitability_percent || 0;
             const distance = planet.sy_dist ? (planet.sy_dist * 3.262).toFixed(1) : '?';
-            
+
             const habitabilityClass = habitability > 70 ? 'high' : habitability > 40 ? 'medium' : 'low';
-            
+
             return `
                 <div class="planet-item" data-planet-name="${planet.pl_name}">
                     <div class="planet-item-name">${planet.pl_name}</div>
@@ -175,19 +192,31 @@ export class PlanetSelector {
                 </div>
             `;
         }).join('');
-        
+
         // Add click handlers
         this.planetList.querySelectorAll('.planet-item').forEach(item => {
             const planetName = item.dataset.planetName;
-            const planet = this.dataService.getPlanetByName(planetName);
-            
-            item.addEventListener('click', () => {
+
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                console.log(`[DEBUG] Planet item clicked: ${planetName}`);
+                // Find planet in current filtered list (handles both exoplanets and solar)
+                const planet = this.filteredPlanets.find(p => p.pl_name === planetName);
+
                 if (planet) {
-                    this.selectPlanet(planet);
+                    console.log(`[DEBUG] Planet found, initiating teleport: ${planetName}`);
+                    this.teleport(planet);
+
+                    // Hide the selector after choosing a destination
+                    setTimeout(() => this.hide(), 500);
+                } else {
+                    console.error(`[DEBUG] Planet NOT found in filtered list: ${planetName}`, this.filteredPlanets);
                 }
             });
         });
-        
+
         // Show count
         if (this.filteredPlanets.length > 50) {
             this.planetList.innerHTML += `
@@ -196,7 +225,7 @@ export class PlanetSelector {
                 </div>
             `;
         }
-        
+
         console.log('✓ Planet list rendered successfully');
     }
 
@@ -211,17 +240,17 @@ export class PlanetSelector {
         const modalName = document.getElementById('modal-planet-name');
         const modalType = document.getElementById('modal-planet-type');
         const modalBody = document.getElementById('modal-body');
-        
+
         if (!modal || !overlay) return;
-        
+
         const chars = planet.characteristics || {};
         const coords = chars.coordinates_3d || {};
         const distance = planet.sy_dist ? (planet.sy_dist * 3.262).toFixed(2) : 'Unknown';
-        
+
         // Update modal header
         if (modalName) modalName.textContent = planet.pl_name || 'Unknown';
         if (modalType) modalType.textContent = chars.radius_position || 'Unknown Type';
-        
+
         // Update modal body
         if (modalBody) {
             modalBody.innerHTML = `
@@ -288,7 +317,7 @@ export class PlanetSelector {
                 </div>
             `;
         }
-        
+
         // Show modal
         modal.classList.add('visible');
         overlay.classList.add('visible');
@@ -302,18 +331,27 @@ export class PlanetSelector {
     }
 
     teleport(planet) {
-        // Validate planet has coordinates
+        // Handle Solar System planets
+        if (planet.isSolar && planet.object) {
+            console.log('Initiating solar teleport to:', planet.pl_name);
+            this.teleportManager.teleportWithProgress(planet.object, () => {
+                console.log(`Successfully teleported to ${planet.pl_name}`);
+            });
+            return;
+        }
+
+        // Validate exoplanet has coordinates
         if (!planet.characteristics?.coordinates_3d?.x_light_years) {
             alert(`Cannot teleport to ${planet.pl_name}: No 3D coordinates available.`);
             console.warn('Planet missing coordinates:', planet);
             return;
         }
 
-        console.log('Initiating teleport to:', planet.pl_name);
-        
-        // Use teleport manager with visual effect
-        this.teleportManager.teleportWithEffect(planet, () => {
-            console.log(`Successfully teleported to ${planet.pl_name}`);
+        console.log(`[DEBUG] Initiating exoplanet teleport to: ${planet.pl_name}`);
+
+        // Use teleport manager with progress visual effect
+        this.teleportManager.teleportWithProgress(planet, () => {
+            console.log(`[DEBUG] Successfully teleported to ${planet.pl_name}`);
         });
     }
 
@@ -321,10 +359,10 @@ export class PlanetSelector {
         if (this.container) {
             this.isVisible = true;
             this.container.classList.remove('hidden');
-            
+
             console.log('Opening planet selector...');
             console.log(`Currently have ${this.filteredPlanets.length} planets loaded`);
-            
+
             // Always try to load/refresh planets when showing
             this.loadPlanets();
         }
