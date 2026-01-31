@@ -282,4 +282,5 @@ class ElevenLabsService {
   }
 }
 
+export { ElevenLabsService };
 export default ElevenLabsService;

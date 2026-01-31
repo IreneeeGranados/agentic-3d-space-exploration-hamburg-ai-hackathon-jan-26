@@ -1,14 +1,27 @@
 # 3D Space Exploration - Hamburg AI Hackathon
 
-An interactive 3D space exploration application built with Three.js, featuring modular architecture and designed for AI/data integration.
+An interactive 3D space exploration application built with Three.js, featuring modular architecture and AI-powered planet exploration.
 
 ## 🚀 Features
 
-- **Interactive 3D Solar System**: Explore planets with realistic orbits and rotations
+- **Interactive 3D Space**: Explore 39,000+ exoplanets with realistic visualization
+- **AI-Powered Exploration**: Click planets to see AI-generated descriptions (OpenAI)
+- **Audio Narration**: Text-to-speech planet descriptions (Eleven Labs)
+- **Smart Clustering**: Efficiently renders thousands of planets using spatial optimization
+- **Spacecraft Controls**: First-person and chase camera modes with autopilot
 - **Modular Architecture**: Clean, maintainable code following best practices
-- **AI-Ready**: Structured for integration with OpenAI and Eleven Labs
-- **Extensible**: Easy to add exoplanet datasets and custom celestial objects
-- **Responsive Controls**: Mouse/trackpad navigation with OrbitControls
+- **Responsive UI**: NASA mission control inspired interface
+
+## ✨ New: Planet Exploration Dialog
+
+Click any planet to open an immersive exploration dialog featuring:
+- 📊 **Overview Tab**: Key metrics (distance, habitability, composition)
+- 🔬 **Characteristics Tab**: Detailed astronomical data and coordinates
+- 🤖 **AI Description Tab**: Engaging AI-generated descriptions (optional)
+- 🔊 **Audio Narration**: Text-to-speech narration (optional)
+- 🚀 **Instant Teleport**: Jump to any planet with one click
+
+**Quick Start**: See [DIALOG_QUICK_START.md](DIALOG_QUICK_START.md) for setup instructions!
 
 ## 📁 Project Structure
 
