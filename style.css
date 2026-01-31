@@ -208,11 +208,35 @@ strong {
 /* Custom Flight Cursor (Arrow) */
 .hud-controls {
     display: flex;
-    /* Kept for the text wrapper */
+    flex-direction: column;
+    gap: 5px;
     margin-top: 5px;
 }
 
-/* Removed .hud-btn styles as buttons are removed */
+.hud-btn {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #00d4ff;
+    padding: 5px 10px;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 5px;
+    pointer-events: auto;
+    /* Ensure clickable */
+}
+
+.hud-btn:hover {
+    background: rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.hud-btn:active {
+    transform: translateY(1px);
+}
 
 .flight-cursor {
     position: absolute;
