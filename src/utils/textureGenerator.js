@@ -210,3 +210,46 @@ export function generateNormalMap(size = 512, strength = 1.0) {
 
     return texture;
 }
+
+/**
+ * Generate a tech panel texture for spacecraft hulls
+ */
+export function generatePanelTexture(size = 512, color = '#cccccc') {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Fill background
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, size, size);
+
+    // Draw panels
+    ctx.strokeStyle = '#aaaaaa';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+
+    const gridSize = 64;
+    for (let y = 0; y < size; y += gridSize) {
+        for (let x = 0; x < size; x += gridSize) {
+            // Random fluctuations to make it look less perfect
+            if (Math.random() > 0.2) {
+                ctx.strokeRect(x, y, gridSize, gridSize);
+
+                // Add little details inside
+                if (Math.random() > 0.5) {
+                    ctx.fillStyle = '#999999';
+                    const detSize = gridSize / 4;
+                    ctx.fillRect(x + detSize, y + detSize, detSize, detSize);
+                    ctx.fillStyle = color; // Reset
+                }
+            }
+        }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+
+    return texture;
+}
