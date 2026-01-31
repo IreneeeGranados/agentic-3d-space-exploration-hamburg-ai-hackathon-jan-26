@@ -9,12 +9,9 @@ import { RendererManager } from './src/core/Renderer.js';
 import { Planet } from './src/objects/Planet.js';
 import { Star } from './src/objects/Star.js';
 import { StarField } from './src/objects/StarField.js';
-import { setupOrbitControls } from './src/controls/OrbitControls.js';
 import { PLANETS_DATA } from './src/config/planets.js';
 import { Universe } from './src/objects/Universe.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
-import { CameraController } from './src/controls/CameraController.js';
-import { setupPlanetSelector } from './src/utils/helpers.js';
 import { aiService } from './src/services/AIService.js';
 import { isAIConfigured, isNarrationConfigured } from './src/config/config.js';
 
@@ -30,24 +27,16 @@ class App {
         this.cameraManager = new CameraManager(this.canvas);
         this.rendererManager = new RendererManager(this.canvas);
 
-        // Setup controls
-        this.controls = setupOrbitControls(
-            this.cameraManager.camera,
-            this.rendererManager.renderer.domElement
-        );
+        // Keyboard state
+        this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
+        this.setupControls();
 
-        // Setup camera controller for travel mode (spacecraft will be linked later)
-        this.cameraController = new CameraController(
-            this.cameraManager.camera,
-            this.controls,
-            null  // Spacecraft not created yet
-        );
+        // Mouse state for rotation
+        this.mouse = { x: 0, y: 0 };
+        this.setupMouse();
 
         // Create scene objects
         this.createSceneObjects();
-
-        // Setup planet selector (click to travel)
-        this.setupInteractions();
 
         // Start animation loop
         this.animate();
@@ -82,11 +71,40 @@ class App {
 
         // Create spacecraft in foreground
         this.spacecraft = new Spacecraft();
-        this.spacecraft.attachToCamera(this.cameraManager.camera);
+        // this.spacecraft.attachCamera(this.cameraManager.camera);
         this.sceneManager.add(this.spacecraft.group);
 
-        // Update camera controller with spacecraft reference
-        this.cameraController.spacecraft = this.spacecraft;
+        // Update camera controller with spacecraft reference (disabled)
+        // this.cameraController.spacecraft = this.spacecraft;
+    }
+
+    setupControls() {
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = true;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = true;
+            if (e.code === 'KeyA') this.keys.left = true;
+            if (e.code === 'KeyD') this.keys.right = true;
+            if (e.code === 'KeyQ') this.keys.up = true;
+            if (e.code === 'KeyE') this.keys.down = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = false;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = false;
+            if (e.code === 'KeyA') this.keys.left = false;
+            if (e.code === 'KeyD') this.keys.right = false;
+            if (e.code === 'KeyQ') this.keys.up = false;
+            if (e.code === 'KeyE') this.keys.down = false;
+        });
+    }
+
+    setupMouse() {
+        this.canvas.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            // Normalize to -1 to 1
+            this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        });
     }
 
     setupInteractions() {
@@ -179,8 +197,7 @@ class App {
     animate() {
         requestAnimationFrame(() => this.animate());
 
-        // Update controls
-        this.controls.update();
+        const deltaTime = 0.016; // ~60 FPS
 
         // Update universe rotation
         if (this.universe) {
@@ -192,9 +209,24 @@ class App {
             this.planets.forEach(planet => planet.update());
         }
 
-        // Update spacecraft animation (pass camera reference)
+        // Control spacecraft
         if (this.spacecraft) {
-            this.spacecraft.update(0.016, this.cameraManager.camera);
+            // Move spacecraft based on keyboard
+            this.spacecraft.move(this.keys, deltaTime);
+
+            // Rotate spacecraft based on mouse
+            const rotation = {
+                pitch: this.mouse.y,
+                yaw: this.mouse.x,
+                roll: (this.keys.left ? -1 : 0) + (this.keys.right ? 1 : 0)
+            };
+            this.spacecraft.rotate(rotation, deltaTime);
+
+            // Update spacecraft animation
+            this.spacecraft.update(deltaTime);
+
+            // Update camera to follow spacecraft
+            this.spacecraft.updateCamera(this.cameraManager.camera);
         }
 
         // Render the scene
@@ -202,6 +234,22 @@ class App {
             this.sceneManager.scene,
             this.cameraManager.camera
         );
+    }
+
+    updateHUD() {
+        // Update speed
+        const speedElement = document.getElementById('hud-speed');
+        if (speedElement && this.spacecraft) {
+            const speed = this.spacecraft.getSpeed();
+            speedElement.textContent = speed.toFixed(1);
+        }
+
+        // Update coordinates
+        const coordsElement = document.getElementById('hud-coords');
+        if (coordsElement && this.spacecraft) {
+            const pos = this.spacecraft.getPosition();
+            coordsElement.textContent = `${pos.x.toFixed(0)}, ${pos.y.toFixed(0)}, ${pos.z.toFixed(0)}`;
+        }
     }
 
     onWindowResize() {

@@ -1,6 +1,6 @@
 /**
  * Spacecraft Class
- * Camera-relative spacecraft with navigation capabilities
+ * Simple player-controlled spacecraft
  */
 
 import * as THREE from 'three';
@@ -9,23 +9,18 @@ export class Spacecraft {
     constructor() {
         this.group = new THREE.Group();
 
-        // Set initial position (will be overridden when camera attached)
-        this.group.position.set(-30, -15, 80);
+        // Start in space
+        this.group.position.set(0, 0, 150);
 
-        // Camera-relative positioning
-        this.camera = null;
-        this.cameraOffset = new THREE.Vector3(-15, -5, -40); // left, down, in front
-
-        // Navigation state
-        this.navigationState = 'idle'; // 'idle', 'traveling', 'arriving'
-        this.targetPosition = null;
-        this.travelDuration = 0;
-        this.travelElapsed = 0;
+        // Simple physics
+        this.velocity = new THREE.Vector3(0, 0, 0);
+        this.speed = 0;
+        this.maxSpeed = 30;
+        this.acceleration = 15;
+        this.friction = 0.95;
 
         // Animation
         this.animationTime = 0;
-        this.baseRotation = { x: 0, y: 0, z: 0 };
-        this.currentBankAngle = 0;
 
         this.createSpacecraft();
     }
@@ -43,7 +38,7 @@ export class Spacecraft {
         fuselage.castShadow = true;
         this.group.add(fuselage);
 
-        // Cockpit (front)
+        // Cockpit
         const cockpitGeometry = new THREE.SphereGeometry(2, 16, 16, 0, Math.PI);
         const cockpitMaterial = new THREE.MeshStandardMaterial({
             color: 0x3399ff,
@@ -58,7 +53,7 @@ export class Spacecraft {
         cockpit.castShadow = true;
         this.group.add(cockpit);
 
-        // Wings (left and right)
+        // Wings
         const wingGeometry = new THREE.BoxGeometry(12, 0.3, 4);
         const wingMaterial = new THREE.MeshStandardMaterial({
             color: 0x888888,
@@ -76,27 +71,7 @@ export class Spacecraft {
         rightWing.castShadow = true;
         this.group.add(rightWing);
 
-        // Engine nacelles (left and right)
-        const engineGeometry = new THREE.CylinderGeometry(0.8, 1.2, 4, 12);
-        const engineMaterial = new THREE.MeshStandardMaterial({
-            color: 0x444444,
-            metalness: 0.9,
-            roughness: 0.1
-        });
-
-        const leftEngine = new THREE.Mesh(engineGeometry, engineMaterial);
-        leftEngine.position.set(-3, 0, -6);
-        leftEngine.rotation.z = Math.PI / 2;
-        leftEngine.castShadow = true;
-        this.group.add(leftEngine);
-
-        const rightEngine = new THREE.Mesh(engineGeometry, engineMaterial);
-        rightEngine.position.set(-3, 0, 6);
-        rightEngine.rotation.z = Math.PI / 2;
-        rightEngine.castShadow = true;
-        this.group.add(rightEngine);
-
-        // Engine glow (emissive)
+        // Engine glow
         const glowGeometry = new THREE.CylinderGeometry(0.6, 0.9, 1.5, 12);
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
@@ -115,147 +90,96 @@ export class Spacecraft {
         rightGlow.rotation.z = Math.PI / 2;
         this.group.add(rightGlow);
         this.rightGlow = rightGlow;
-
-        // Store metadata
-        this.group.userData = { type: 'spacecraft' };
     }
 
     /**
-     * Attach spacecraft to camera
+     * Move spacecraft based on keyboard input
      */
-    attachToCamera(camera) {
-        this.camera = camera;
-    }
+    move(keys, deltaTime) {
+        // Forward/backward
+        if (keys.forward) {
+            this.speed = Math.min(this.speed + this.acceleration * deltaTime, this.maxSpeed);
+        } else if (keys.backward) {
+            this.speed = Math.max(this.speed - this.acceleration * deltaTime, -this.maxSpeed * 0.5);
+        } else {
+            // Apply friction when no input
+            this.speed *= this.friction;
+            if (Math.abs(this.speed) < 0.1) this.speed = 0;
+        }
 
-    /**
-     * Set navigation target (planet position)
-     */
-    setNavigationTarget(targetPosition, duration = 2.5) {
-        this.targetPosition = targetPosition.clone();
-        this.navigationState = 'traveling';
-        this.travelDuration = duration;
-        this.travelElapsed = 0;
-        console.log('Spacecraft navigating to:', targetPosition);
-    }
+        // Get forward direction
+        const forward = new THREE.Vector3(1, 0, 0);
+        forward.applyQuaternion(this.group.quaternion);
 
-    /**
-     * Clear navigation target
-     */
-    clearNavigationTarget() {
-        this.navigationState = 'arriving';
-        this.targetPosition = null;
-        console.log('Spacecraft arrived at destination');
-    }
+        // Update velocity
+        this.velocity.copy(forward).multiplyScalar(this.speed);
 
-    /**
-     * Update camera-relative position
-     */
-    updateCameraRelativePosition(deltaTime) {
-        if (!this.camera) return;
+        // Update position
+        this.group.position.add(this.velocity.clone().multiplyScalar(deltaTime));
 
-        // Get camera's direction vectors
-        const forward = new THREE.Vector3(0, 0, -1);
-        const right = new THREE.Vector3(1, 0, 0);
-        const up = new THREE.Vector3(0, 1, 0);
-
-        forward.applyQuaternion(this.camera.quaternion);
-        right.applyQuaternion(this.camera.quaternion);
-        up.applyQuaternion(this.camera.quaternion);
-
-        // Calculate target position in camera space
-        const targetPosition = this.camera.position.clone();
-        targetPosition.add(forward.multiplyScalar(this.cameraOffset.z));
-        targetPosition.add(right.multiplyScalar(this.cameraOffset.x));
-        targetPosition.add(up.multiplyScalar(this.cameraOffset.y));
-
-        // Smooth interpolation to avoid jitter
-        this.group.position.lerp(targetPosition, 0.1);
-    }
-
-    /**
-     * Update spacecraft rotation to bank toward target
-     */
-    updateNavigationRotation(deltaTime) {
-        if (this.navigationState === 'traveling' && this.targetPosition) {
-            // Calculate direction to target
-            const direction = new THREE.Vector3()
-                .subVectors(this.targetPosition, this.group.position)
-                .normalize();
-
-            // Create target look-at quaternion
-            const targetQuaternion = new THREE.Quaternion();
-            const lookAtMatrix = new THREE.Matrix4();
-            lookAtMatrix.lookAt(this.group.position, this.targetPosition, new THREE.Vector3(0, 1, 0));
-            targetQuaternion.setFromRotationMatrix(lookAtMatrix);
-
-            // Apply banking based on navigation
-            const bankAngle = 0.2; // Max bank angle in radians
-            this.currentBankAngle = THREE.MathUtils.lerp(this.currentBankAngle, bankAngle, deltaTime * 2);
-
-            // Smoothly rotate toward target
-            this.group.quaternion.slerp(targetQuaternion, deltaTime * 1.5);
-
-            // Add roll/bank
-            this.group.rotation.z += this.currentBankAngle * Math.sin(this.animationTime * 2);
-
-            // Track travel progress
-            this.travelElapsed += deltaTime;
-
-        } else if (this.navigationState === 'arriving' || this.navigationState === 'idle') {
-            // Level out
-            this.currentBankAngle = THREE.MathUtils.lerp(this.currentBankAngle, 0, deltaTime * 3);
-
-            // Return to idle rotation
-            const idleQuaternion = new THREE.Quaternion();
-            this.group.quaternion.slerp(idleQuaternion, deltaTime * 2);
-
-            if (this.navigationState === 'arriving' && this.currentBankAngle < 0.01) {
-                this.navigationState = 'idle';
-            }
+        // Update engine glow based on speed
+        if (this.leftGlow && this.rightGlow) {
+            const intensity = 0.5 + (Math.abs(this.speed) / this.maxSpeed) * 0.5;
+            this.leftGlow.material.opacity = intensity;
+            this.rightGlow.material.opacity = intensity;
         }
     }
 
     /**
-     * Update idle animations
+     * Rotate spacecraft based on mouse/keys
      */
-    updateIdleAnimation(deltaTime) {
+    rotate(rotation, deltaTime) {
+        const rotSpeed = 1.5 * deltaTime;
+
+        // Pitch (up/down)
+        if (rotation.pitch !== 0) {
+            this.group.rotateZ(-rotation.pitch * rotSpeed);
+        }
+
+        // Yaw (left/right)
+        if (rotation.yaw !== 0) {
+            this.group.rotateY(-rotation.yaw * rotSpeed);
+        }
+
+        // Roll
+        if (rotation.roll !== 0) {
+            this.group.rotateX(rotation.roll * rotSpeed);
+        }
+    }
+
+    /**
+     * Update camera to follow spacecraft (third-person view)
+     */
+    updateCamera(camera) {
+        // Camera position behind and above spacecraft
+        const offset = new THREE.Vector3(-20, 5, 0);
+        offset.applyQuaternion(this.group.quaternion);
+        offset.add(this.group.position);
+
+        // Smooth camera movement
+        camera.position.lerp(offset, 0.1);
+
+        // Look at spacecraft
+        camera.lookAt(this.group.position);
+    }
+
+    update(deltaTime) {
         this.animationTime += deltaTime;
 
-        // Gentle bobbing (only in idle state)
-        if (this.navigationState === 'idle') {
-            const bobAmount = 0.2;
-            const bobOffset = Math.sin(this.animationTime * 2) * bobAmount;
-            // Apply bob as local offset
-            this.group.position.y += bobOffset * deltaTime;
-        }
-
-        // Pulse engine glow (always active, more intense during travel)
-        const baseIntensity = this.navigationState === 'traveling' ? 0.9 : 0.6;
-        const pulseRange = this.navigationState === 'traveling' ? 0.1 : 0.2;
-        const glowIntensity = baseIntensity + Math.sin(this.animationTime * 5) * pulseRange;
-
+        // Pulse engine glow
         if (this.leftGlow && this.rightGlow) {
-            this.leftGlow.material.opacity = glowIntensity;
-            this.rightGlow.material.opacity = glowIntensity;
+            const pulse = Math.sin(this.animationTime * 5) * 0.1;
+            this.leftGlow.material.opacity = Math.min(this.leftGlow.material.opacity + pulse * deltaTime, 1.0);
+            this.rightGlow.material.opacity = Math.min(this.rightGlow.material.opacity + pulse * deltaTime, 1.0);
         }
     }
 
-    /**
-     * Main update method
-     */
-    update(deltaTime = 0.016, camera = null) {
-        if (camera) {
-            this.camera = camera;
-        }
+    getPosition() {
+        return this.group.position.clone();
+    }
 
-        // Update position relative to camera
-        this.updateCameraRelativePosition(deltaTime);
-
-        // Update rotation based on navigation state
-        this.updateNavigationRotation(deltaTime);
-
-        // Update idle animations
-        this.updateIdleAnimation(deltaTime);
+    getSpeed() {
+        return Math.abs(this.speed);
     }
 
     dispose() {

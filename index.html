@@ -34,13 +34,31 @@
             </div>
 
             <div class="panel controls-panel">
-                <h3>Controls</h3>
+                <h3>Flight Controls</h3>
                 <ul>
-                    <li><strong>Click Planet:</strong> Travel & get AI insights</li>
-                    <li><strong>Left Click + Drag:</strong> Rotate view</li>
-                    <li><strong>Right Click + Drag:</strong> Pan view</li>
-                    <li><strong>Scroll:</strong> Zoom in/out</li>
+                    <li><strong>W/↑:</strong> Thrust Forward</li>
+                    <li><strong>S/↓:</strong> Reverse Thrust</li>
+                    <li><strong>Mouse:</strong> Pitch & Yaw</li>
+                    <li><strong>A/D:</strong> Roll Left/Right</li>
+                    <li><strong>Space:</strong> Boost (2x speed)</li>
+                    <li><strong>Shift:</strong> Slow Mode (0.3x)</li>
                 </ul>
+                <p style="font-size: 12px; margin-top: 10px; opacity: 0.7;">
+                    Click canvas to lock mouse for immersive flight
+                </p>
+            </div>
+
+            <!-- Flight HUD -->
+            <div id="flight-hud" class="hud-panel">
+                <div class="hud-item">
+                    <span class="hud-label">Speed:</span>
+                    <span id="hud-speed" class="hud-value">0</span>
+                    <span class="hud-unit">m/s</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Coordinates:</span>
+                    <span id="hud-coords" class="hud-value">0, 0, 0</span>
+                </div>
             </div>
         </div>
     </div>
