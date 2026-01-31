@@ -6,67 +6,195 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Space Exploration - Hamburg AI Hackathon</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="loading.css">
+    <link rel="stylesheet" href="ui-style.css">
 </head>
 
 <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-stars"></div>
+        <div class="loading-content">
+            <h1 class="loading-title">SPACE ODYSSEY</h1>
+            <p class="loading-subtitle">Preparing your cosmic journey...</p>
+            
+            <div class="loading-rocket-container">
+                <div class="loading-rocket">🚀</div>
+                <div class="loading-trail"></div>
+            </div>
+            
+            <div class="loading-progress">
+                <div class="loading-progress-bar"></div>
+            </div>
+            
+            <p class="loading-status" id="loading-status">Initializing...</p>
+            <p class="loading-detail" id="loading-detail">Loading cluster index...</p>
+        </div>
+    </div>
+
     <div id="app">
         <canvas id="canvas"></canvas>
+        
+        <!-- TOP LEFT: Flight HUD -->
+        <div id="flight-hud" class="ui-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Flight Systems</h2>
+            </div>
+            
+            <div class="hud-section">
+                <div class="hud-label">Velocity</div>
+                <div class="hud-value large accent" id="hud-velocity">0.00 u/s</div>
+            </div>
 
-        <!-- UI Overlay -->
-        <div id="ui-overlay">
-            <div class="panel info-panel">
-                <h2>Space Exploration</h2>
-                <p id="planet-info">Click on a planet to learn more</p>
-
-                <!-- AI Description Section -->
-                <div id="ai-description" class="ai-section" style="display: none;">
-                    <h4>AI Insights</h4>
-                    <p id="ai-content" class="ai-content"></p>
-                    <div id="loading-spinner" class="spinner" style="display: none;">
-                        <div class="spinner-ring"></div>
-                        Generating AI description...
+            <div class="hud-section">
+                <div class="hud-label">Position (Light Years)</div>
+                <div class="hud-grid">
+                    <div class="hud-grid-item">
+                        <div class="hud-label">X</div>
+                        <div class="hud-value" id="hud-pos-x">0.0</div>
                     </div>
-                    <!-- Narration Controls -->
-                    <button id="narrate-btn" class="btn-narrate" style="display: none;">
-                        🔊 Listen
-                    </button>
+                    <div class="hud-grid-item">
+                        <div class="hud-label">Y</div>
+                        <div class="hud-value" id="hud-pos-y">0.0</div>
+                    </div>
+                    <div class="hud-grid-item">
+                        <div class="hud-label">Z</div>
+                        <div class="hud-value" id="hud-pos-z">0.0</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="panel controls-panel">
-                <h3>Spacecraft Controls</h3>
-                <ul>
-                    <li><strong>Spacecraft moves forward automatically</strong></li>
-                    <li><strong>↑ / W:</strong> Pitch Down (Dive)</li>
-                    <li><strong>↓ / S:</strong> Pitch Up (Climb)</li>
-                    <li><strong>← / A:</strong> Turn Left</li>
-                    <li><strong>→ / D:</strong> Turn Right</li>
-                </ul>
+            <div class="hud-section">
+                <div class="hud-label">Heading</div>
+                <div class="hud-value" id="hud-heading">0.0°</div>
             </div>
-
-            <!-- Flight HUD -->
-            <div id="flight-hud" class="hud-panel">
-                <div class="hud-item">
-                    <span class="hud-label">Status:</span>
-                    <span id="hud-status" class="hud-value">Manual Control</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">Speed:</span>
-                    <span id="hud-speed" class="hud-value">0</span>
-                    <span class="hud-unit">m/s</span>
-                </div>
-                <div class="hud-item hud-controls">
-                    <span style="font-size: 11px; color: #aaa;">Speed: [ + ] / [ - ]</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label">Coordinates:</span>
-                    <span id="hud-coords" class="hud-value">0, 0, 0</span>
-                </div>
-            </div>
-
-            <!-- Flight Cursor -->
-            <div id="flight-cursor" class="flight-cursor"></div>
         </div>
+
+        <!-- TOP RIGHT: Mission Status -->
+        <div id="mission-status" class="ui-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Mission Status</h2>
+            </div>
+
+            <div class="status-indicator">
+                <div class="status-dot inactive" id="autopilot-status"></div>
+                <span id="autopilot-text">Manual Flight</span>
+            </div>
+
+            <div class="destination-card" id="destination-card" style="display: none;">
+                <div class="destination-name" id="destination-name">--</div>
+                <div class="destination-info">
+                    <span>Distance: <span id="destination-distance">--</span></span>
+                    <span>ETA: <span id="destination-eta">--</span></span>
+                </div>
+                <div class="destination-info" style="margin-top: 8px;">
+                    <span>Habitability: <span id="destination-habitability">--</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM LEFT: Controls Reference -->
+        <div id="controls-panel" class="ui-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Controls</h2>
+            </div>
+
+            <div class="control-group">
+                <div class="control-group-title">Flight</div>
+                <div class="control-item">
+                    <span class="control-key">W/S</span>
+                    <span class="control-description">Pitch</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">A/D</span>
+                    <span class="control-description">Roll</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">MOUSE</span>
+                    <span class="control-description">Steer</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">SHIFT</span>
+                    <span class="control-description">Boost</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">SPACE</span>
+                    <span class="control-description">Brake</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-group-title">Navigation</div>
+                <div class="control-item">
+                    <span class="control-key">T</span>
+                    <span class="control-description">Planet Selector</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">E</span>
+                    <span class="control-description">Toggle Exoplanets</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">CLICK</span>
+                    <span class="control-description">Autopilot to Planet</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-group-title">View</div>
+                <div class="control-item">
+                    <span class="control-key">+/-</span>
+                    <span class="control-description">Speed Adjust</span>
+                </div>
+                <div class="control-item">
+                    <span class="control-key">H</span>
+                    <span class="control-description">Toggle UI</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM RIGHT: Planet Selector -->
+        <div id="planet-selector" class="ui-panel hidden">
+            <div class="panel-header">
+                <h2 class="panel-title">Planet Navigator</h2>
+                <p class="panel-subtitle">Select destination</p>
+            </div>
+
+            <div class="search-container">
+                <input type="text" class="search-input" id="planet-search" placeholder="Search planets...">
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="solar">Solar</button>
+                <button class="filter-btn" data-filter="nearby">Nearby</button>
+                <button class="filter-btn" data-filter="habitable">Habitable</button>
+            </div>
+
+            <div class="planet-list" id="planet-list">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Planet Details Modal -->
+        <div class="modal-overlay" id="modal-overlay"></div>
+        <div id="planet-modal" class="ui-panel">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-planet-name">Planet Name</h2>
+                <p class="modal-subtitle" id="modal-planet-type">Planet Type</p>
+            </div>
+            
+            <div class="modal-body" id="modal-body">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-btn" id="modal-close">Close</button>
+                <button class="modal-btn primary" id="modal-teleport">Teleport</button>
+            </div>
+        </div>
+
+        <!-- Toggle UI Button -->
+        <button class="toggle-btn" id="toggle-ui-btn">UI</button>
     </div>
 
     <!-- Three.js Library -->

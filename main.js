@@ -8,38 +8,68 @@ import { StarField } from './src/objects/StarField.js';
 import { PLANETS_DATA } from './src/config/planets.js';
 import { Universe } from './src/objects/Universe.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
-import { aiService } from './src/services/AIService.js';
+import { PlanetDataService } from './src/services/PlanetDataService.js';
+import { ExoplanetField } from './src/objects/ExoplanetField.js';
+import { LoadingManager } from './src/utils/LoadingManager.js';
+import { TeleportManager } from './src/utils/TeleportManager.js';
+import { PlanetSelector } from './src/controls/PlanetSelector.js';
+import { PlanetHoverInfo } from './src/utils/PlanetHoverInfo.js';
 
 class App {
     constructor() {
         this.canvas = document.getElementById('canvas');
+        this.loadingManager = new LoadingManager();
+        this.uiVisible = true;
+        this.exoplanetsVisible = true;
         this.init();
     }
 
-    init() {
-        // Initialize core components
-        this.sceneManager = new SceneManager();
-        this.cameraManager = new CameraManager(this.canvas);
-        this.rendererManager = new RendererManager(this.canvas);
+    async init() {
+        // Start loading sequence
+        this.loadingManager.start(4); // 4 main steps
+        
+        try {
+            // Step 1: Initialize core components
+            this.loadingManager.updateStatus('Initializing Engine', 'Setting up 3D renderer...');
+            this.sceneManager = new SceneManager();
+            this.cameraManager = new CameraManager(this.canvas);
+            this.rendererManager = new RendererManager(this.canvas);
+            this.loadingManager.completeStep('Engine');
 
-        // Keyboard state
-        this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
-        this.setupControls();
+            // Step 2: Setup controls
+            this.loadingManager.updateStatus('Configuring Controls', 'Mapping keyboard and mouse...');
+            this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
+            this.setupControls();
+            this.mouse = { x: 0, y: 0 };
+            this.setupMouse();
+            this.loadingManager.completeStep('Controls');
 
-        // Mouse state for steering
-        this.mouse = { x: 0, y: 0 };
-        this.setupMouse();
+            // Step 3: Create scene objects
+            this.loadingManager.updateStatus('Building Universe', 'Creating stars and planets...');
+            this.createSceneObjects();
+            await this.loadExoplanets();
+            this.initPlanetSelector();
+            this.loadingManager.completeStep('Universe');
 
-        // Create scene objects
-        this.createSceneObjects();
+            // Step 4: Start animation and finalize
+            this.loadingManager.updateStatus('Starting Mission', 'Engaging warp drive...');
+            
+            // Setup UI controls
+            this.setupUIControls();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => this.onWindowResize());
+            
+            this.animate();
+            this.loadingManager.completeStep('Animation');
 
-        // Start animation loop
-        this.animate();
-
-        // Handle window resize
-        window.addEventListener('resize', () => this.onWindowResize());
-
-        console.log('App Initialized');
+            // Finish loading
+            this.loadingManager.finish();
+            
+        } catch (error) {
+            console.error('Initialization error:', error);
+            this.loadingManager.error(error.message);
+        }
     }
 
     setupControls() {
@@ -50,6 +80,12 @@ class App {
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = true;
             if (e.code === 'Space') this.keys.brake = true;
+            
+            // Navigation shortcuts
+            if (e.code === 'KeyT') this.togglePlanetSelector();
+            if (e.code === 'KeyE') this.toggleExoplanets();
+            if (e.code === 'KeyH') this.toggleUI();
+            if (e.code === 'Escape') this.closePlanetSelector();
         });
 
         window.addEventListener('keyup', (e) => {
@@ -121,37 +157,29 @@ class App {
         // Hide default cursor on canvas hover
         this.canvas.style.cursor = 'none';
 
-        // Raycasting for planet selection
+        // Raycasting for planet selection (engage autopilot)
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        // Use window listener to ensure we catch clicks over overlay elements if necessary
         window.addEventListener('click', (event) => {
-            console.log('Window Click Detected', event.clientX, event.clientY);
-
-            // Calculate mouse position in normalized device coordinates (-1 to +1) for raycasting
-            // Use window dimensions since we want full screen raycasting potentially
+            // Calculate mouse position in normalized device coordinates
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             if (this.cameraManager && this.cameraManager.camera) {
                 raycaster.setFromCamera(mouse, this.cameraManager.camera);
-
-                // Get all planet meshes to check for intersection
-                // Ensure we are checking children recursively if needed
-                const planetMeshes = this.planets.map(p => p.mesh);
-
-                // Allow recursive checking in case mesh has children
                 const intersects = raycaster.intersectObjects(this.sceneManager.scene.children, true);
 
                 if (intersects.length > 0) {
-                    // Filter for planets only
-                    // We need to traverse up from the intersection object to see if it belongs to a planet
+                    // Check if we hit a solar system planet
                     const hit = intersects.find(intersect => {
                         let obj = intersect.object;
-                        // Check if this object or any parent is one of our planets
                         while (obj) {
                             if (this.planets.some(p => p.mesh === obj || p.group === obj)) {
+                                return true;
+                            }
+                            // Check if it's an exoplanet mesh
+                            if (obj.userData && obj.userData.planetData) {
                                 return true;
                             }
                             obj = obj.parent;
@@ -160,38 +188,36 @@ class App {
                     });
 
                     if (hit) {
-                        let selectedObject = hit.object;
-                        // Trace back to the planet object
-                        let selectedPlanet = this.planets.find(p => p.mesh === selectedObject || p.group === selectedObject);
+                        // Check if it's an exoplanet
+                        if (hit.object.userData && hit.object.userData.planetData) {
+                            const planetData = hit.object.userData.planetData;
+                            console.log('Exoplanet Selected:', planetData.pl_name);
+                            
+                            if (this.teleportManager) {
+                                this.teleportManager.teleportToPlanet(planetData);
+                            }
+                        } else {
+                            // Solar system planet
+                            let selectedObject = hit.object;
+                            let selectedPlanet = this.planets.find(p => p.mesh === selectedObject || p.group === selectedObject);
 
-                        // If direct match failed, try walking up parents
-                        if (!selectedPlanet) {
-                            let obj = selectedObject;
-                            while (obj) {
-                                selectedPlanet = this.planets.find(p => p.mesh === obj || p.group === obj);
-                                if (selectedPlanet) break;
-                                obj = obj.parent;
+                            if (!selectedPlanet) {
+                                let obj = selectedObject;
+                                while (obj) {
+                                    selectedPlanet = this.planets.find(p => p.mesh === obj || p.group === obj);
+                                    if (selectedPlanet) break;
+                                    obj = obj.parent;
+                                }
+                            }
+
+                            if (selectedPlanet) {
+                                console.log('Planet Selected:', selectedPlanet.config.name);
+                                const targetPosition = new THREE.Vector3();
+                                selectedObject.getWorldPosition(targetPosition);
+                                this.spacecraft.engageAutopilot(targetPosition);
                             }
                         }
-
-                        if (selectedPlanet) {
-                            console.log('Planet Selected via Raycast:', selectedPlanet.config.name);
-
-                            // Get world position
-                            const targetPosition = new THREE.Vector3();
-                            selectedObject.getWorldPosition(targetPosition);
-
-                            this.spacecraft.engageAutopilot(targetPosition);
-
-                            // Update HUD with selection
-                            const hud = document.getElementById('hud-status');
-                            if (hud) hud.textContent = `Autopilot: ${selectedPlanet.config.name}`;
-                        }
-                    } else {
-                        console.log('Raycast did not hit a planet. Hit:', intersects[0].object.type);
                     }
-                } else {
-                    console.log('Raycast hit nothing.');
                 }
             }
         });
@@ -233,16 +259,183 @@ class App {
         });
         this.sceneManager.add(sun.mesh);
 
-        // Create planets
+        // Create solar system planets (the 8 original planets)
         this.planets = PLANETS_DATA.map(planetData => {
             const planet = new Planet(planetData);
             this.sceneManager.add(planet.group);
             return planet;
         });
 
+        console.log(`✓ Created ${this.planets.length} solar system planets`);
+
         // Create spacecraft
         this.spacecraft = new Spacecraft();
         this.sceneManager.add(this.spacecraft.group);
+    }
+
+    async loadExoplanets() {
+        // Initialize data service
+        this.planetDataService = new PlanetDataService();
+        
+        // Initialize cluster index first
+        await this.planetDataService.initialize();
+        
+        // Create and load NASA exoplanet visualization
+        this.exoplanetField = new ExoplanetField(this.planetDataService);
+        await this.exoplanetField.load();
+        
+        if (this.exoplanetField.mesh) {
+            this.sceneManager.add(this.exoplanetField.mesh);
+            console.log('✓ NASA exoplanets added to scene');
+        }
+        
+        console.log(`✓ Total visualization: ${this.planets.length} solar system + ${this.planetDataService.getAllPlanets().length} exoplanets`);
+    }
+
+    initPlanetSelector() {
+        // Initialize teleport manager (correct parameters: spacecraft, camera)
+        this.teleportManager = new TeleportManager(
+            this.spacecraft,
+            this.cameraManager.camera
+        );
+
+        // Initialize planet selector UI (correct parameters: dataService, teleportManager)
+        this.planetSelector = new PlanetSelector(
+            this.planetDataService,
+            this.teleportManager
+        );
+
+        // Initialize planet hover info
+        this.planetHoverInfo = new PlanetHoverInfo(
+            this.sceneManager.scene,
+            this.cameraManager.camera,
+            this.canvas,
+            this.planets
+        );
+
+        console.log('✓ Planet selector and teleport initialized');
+    }
+
+    setupUIControls() {
+        // Toggle UI button
+        const toggleBtn = document.getElementById('toggle-ui-btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => this.toggleUI());
+        }
+
+        // Modal controls
+        const modalClose = document.getElementById('modal-close');
+        const modalOverlay = document.getElementById('modal-overlay');
+        if (modalClose) modalClose.addEventListener('click', () => this.closeModal());
+        if (modalOverlay) modalOverlay.addEventListener('click', () => this.closeModal());
+    }
+
+    togglePlanetSelector() {
+        const selector = document.getElementById('planet-selector');
+        if (selector) {
+            selector.classList.toggle('hidden');
+        }
+    }
+
+    closePlanetSelector() {
+        const selector = document.getElementById('planet-selector');
+        if (selector) {
+            selector.classList.add('hidden');
+        }
+    }
+
+    toggleExoplanets() {
+        this.exoplanetsVisible = !this.exoplanetsVisible;
+        if (this.exoplanetField && this.exoplanetField.mesh) {
+            this.exoplanetField.mesh.visible = this.exoplanetsVisible;
+        }
+        console.log(`Exoplanets ${this.exoplanetsVisible ? 'shown' : 'hidden'}`);
+    }
+
+    toggleUI() {
+        this.uiVisible = !this.uiVisible;
+        const panels = document.querySelectorAll('.ui-panel:not(#planet-modal)');
+        panels.forEach(panel => {
+            if (this.uiVisible) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        });
+        const toggleBtn = document.getElementById('toggle-ui-btn');
+        if (toggleBtn) {
+            toggleBtn.style.opacity = this.uiVisible ? '1' : '0.3';
+        }
+    }
+
+    closeModal() {
+        const modal = document.getElementById('planet-modal');
+        const overlay = document.getElementById('modal-overlay');
+        if (modal) modal.classList.remove('visible');
+        if (overlay) overlay.classList.remove('visible');
+    }
+
+    updateHUD() {
+        if (!this.spacecraft) return;
+
+        const velocity = this.spacecraft.velocity.length();
+        const position = this.spacecraft.mesh.position;
+        const rotation = this.spacecraft.mesh.rotation;
+
+        // Update velocity
+        const velElem = document.getElementById('hud-velocity');
+        if (velElem) velElem.textContent = `${velocity.toFixed(2)} u/s`;
+
+        // Update position (convert to light years)
+        const posX = document.getElementById('hud-pos-x');
+        const posY = document.getElementById('hud-pos-y');
+        const posZ = document.getElementById('hud-pos-z');
+        if (posX) posX.textContent = (position.x / 10).toFixed(2);
+        if (posY) posY.textContent = (position.y / 10).toFixed(2);
+        if (posZ) posZ.textContent = (position.z / 10).toFixed(2);
+
+        // Update heading
+        const heading = document.getElementById('hud-heading');
+        if (heading) {
+            const degrees = ((rotation.y * 180 / Math.PI) % 360 + 360) % 360;
+            heading.textContent = `${degrees.toFixed(1)}°`;
+        }
+
+        // Update autopilot status
+        if (this.spacecraft.autopilot && this.spacecraft.autopilot.active) {
+            const statusDot = document.getElementById('autopilot-status');
+            const statusText = document.getElementById('autopilot-text');
+            const destCard = document.getElementById('destination-card');
+            
+            if (statusDot) statusDot.className = 'status-dot';
+            if (statusText) statusText.textContent = 'Autopilot Active';
+            if (destCard) destCard.style.display = 'block';
+
+            const target = this.spacecraft.autopilot.target;
+            if (target && target.userData && target.userData.planetData) {
+                const data = target.userData.planetData;
+                const destName = document.getElementById('destination-name');
+                const destDistance = document.getElementById('destination-distance');
+                const destHab = document.getElementById('destination-habitability');
+                
+                if (destName) destName.textContent = data.name || data.pl_name;
+                if (destDistance) {
+                    const dist = this.spacecraft.mesh.position.distanceTo(target.position);
+                    destDistance.textContent = `${(dist / 10).toFixed(2)} ly`;
+                }
+                if (destHab && data.characteristics) {
+                    destHab.textContent = `${data.characteristics.habitability_percent}%`;
+                }
+            }
+        } else {
+            const statusDot = document.getElementById('autopilot-status');
+            const statusText = document.getElementById('autopilot-text');
+            const destCard = document.getElementById('destination-card');
+            
+            if (statusDot) statusDot.className = 'status-dot inactive';
+            if (statusText) statusText.textContent = 'Manual Flight';
+            if (destCard) destCard.style.display = 'none';
+        }
     }
 
     animate() {
@@ -255,9 +448,14 @@ class App {
             this.universe.update();
         }
 
-        // Update all planets
+        // Update all solar system planets
         if (this.planets) {
             this.planets.forEach(planet => planet.update());
+        }
+
+        // Update exoplanet field
+        if (this.exoplanetField) {
+            this.exoplanetField.update(deltaTime);
         }
 
         // Control spacecraft
@@ -270,9 +468,14 @@ class App {
 
             // Update camera to follow spacecraft
             this.spacecraft.updateCamera(this.cameraManager.camera);
-
-            // Update HUD
+            
+            // Update HUD display
             this.updateHUD();
+        }
+        
+        // Update planet hover info
+        if (this.planetHoverInfo) {
+            this.planetHoverInfo.update();
         }
 
         // Render the scene
@@ -280,20 +483,6 @@ class App {
             this.sceneManager.scene,
             this.cameraManager.camera
         );
-    }
-
-    updateHUD() {
-        const speedElement = document.getElementById('hud-speed');
-        if (speedElement && this.spacecraft) {
-            const speed = this.spacecraft.getSpeed();
-            speedElement.textContent = speed.toFixed(1);
-        }
-
-        const coordsElement = document.getElementById('hud-coords');
-        if (coordsElement && this.spacecraft) {
-            const pos = this.spacecraft.getPosition();
-            coordsElement.textContent = `${pos.x.toFixed(0)}, ${pos.y.toFixed(0)}, ${pos.z.toFixed(0)}`;
-        }
     }
 
     onWindowResize() {
@@ -304,6 +493,7 @@ class App {
     dispose() {
         this.planets?.forEach(planet => planet.dispose());
         this.rendererManager.dispose();
+        this.exoplanetField?.dispose();
     }
 }
 

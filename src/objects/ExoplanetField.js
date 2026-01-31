@@ -100,7 +100,8 @@ export class ExoplanetField {
             );
 
             // Store planet data reference
-            mesh.userData.planet = planet;
+            mesh.userData.planetData = planet; // For teleport click handler
+            mesh.userData.planet = planet; // For compatibility
             mesh.userData.planetName = planet.pl_name;
 
             this.meshGroup.add(mesh);

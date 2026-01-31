@@ -1,6 +1,6 @@
 /**
- * PlanetSelector - Vaporwave UI control for planet selection and teleportation
- * Follows modular architecture with separation of concerns
+ * PlanetSelector - NASA UI control for planet selection and teleportation
+ * Works with existing NASA mission control HTML interface
  */
 export class PlanetSelector {
     constructor(planetDataService, teleportManager) {
@@ -9,120 +9,87 @@ export class PlanetSelector {
         this.isVisible = false;
         this.selectedPlanet = null;
         this.filteredPlanets = [];
-        this.hoveredPlanet = null;
+        this.currentFilter = 'all';
         
         this.init();
     }
 
     init() {
-        this.createUI();
-        this.attachEventListeners();
-    }
-
-    createUI() {
-        this.container = document.createElement('div');
-        this.container.id = 'planet-selector';
-        this.container.className = 'planet-selector hidden';
+        // Use existing HTML elements
+        this.container = document.getElementById('planet-selector');
+        this.searchInput = document.getElementById('planet-search');
+        this.planetList = document.getElementById('planet-list');
+        this.filterButtons = document.querySelectorAll('.filter-btn');
         
-        this.container.innerHTML = `
-            <div class="vaporwave-container">
-                <div class="vw-grid-bg"></div>
-                
-                <div class="selector-header">
-                    <h1 class="vw-title">
-                        <span class="glitch" data-text="◢ PLANET SELECTOR ◣">◢ PLANET SELECTOR ◣</span>
-                    </h1>
-                    <button class="vw-close-btn" id="close-selector">×</button>
-                </div>
-
-                <div class="selector-controls">
-                    <div class="search-bar">
-                        <span class="search-icon">🔍</span>
-                        <input 
-                            type="text" 
-                            id="planet-search" 
-                            placeholder="SEARCH EXOPLANETS..."
-                            class="vw-input"
-                        />
-                    </div>
-                    
-                    <div class="filter-controls">
-                        <div class="filter-group">
-                            <label class="vw-label">HABITABILITY</label>
-                            <input type="range" id="habitability-filter" min="0" max="100" value="0" class="vw-slider" />
-                            <span class="vw-value" id="habitability-value">0%+</span>
-                        </div>
-                        
-                        <div class="filter-group">
-                            <label class="vw-label">MAX DISTANCE</label>
-                            <input type="range" id="distance-filter" min="10" max="1000" value="1000" class="vw-slider" />
-                            <span class="vw-value" id="distance-value">1000 ly</span>
-                        </div>
-
-                        <button id="reset-filters" class="vw-btn secondary">RESET</button>
-                    </div>
-                </div>
-
-                <div class="planet-list-container">
-                    <div id="planet-count" class="planet-count">INITIALIZING...</div>
-                    <div id="planet-list" class="planet-list">
-                        <div class="loading-animation">
-                            <div class="vw-spinner"></div>
-                            <p>LOADING EXOPLANET DATABASE...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="selected-planet-info" class="selected-planet-info hidden">
-                    <h3 class="vw-subtitle">▸ SELECTED DESTINATION</h3>
-                    <div id="planet-details" class="detail-grid"></div>
-                    <button id="teleport-btn" class="vw-btn primary pulse">
-                        ⚡ INITIATE TELEPORT ⚡
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(this.container);
+        if (!this.container) {
+            console.error('Planet selector container not found in HTML');
+            return;
+        }
+        
+        this.attachEventListeners();
+        this.loadPlanets();
     }
 
     attachEventListeners() {
-        document.getElementById('close-selector').addEventListener('click', () => this.hide());
-        document.getElementById('planet-search').addEventListener('input', (e) => this.handleSearch(e.target.value));
+        // Search input
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
+        }
         
-        document.getElementById('habitability-filter').addEventListener('input', (e) => {
-            document.getElementById('habitability-value').textContent = `${e.target.value}%+`;
-            this.applyFilters();
+        // Filter buttons
+        this.filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.currentFilter = btn.dataset.filter;
+                this.applyFilters();
+            });
         });
-
-        document.getElementById('distance-filter').addEventListener('input', (e) => {
-            document.getElementById('distance-value').textContent = `${e.target.value} ly`;
-            this.applyFilters();
-        });
-
-        document.getElementById('reset-filters').addEventListener('click', () => this.resetFilters());
-        document.getElementById('teleport-btn').addEventListener('click', () => {
-            if (this.selectedPlanet) this.teleport(this.selectedPlanet);
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isVisible) this.hide();
+        
+        // Modal controls
+        const modalClose = document.getElementById('modal-close');
+        const modalTeleport = document.getElementById('modal-teleport');
+        const modalOverlay = document.getElementById('modal-overlay');
+        
+        if (modalClose) modalClose.addEventListener('click', () => this.closeModal());
+        if (modalOverlay) modalOverlay.addEventListener('click', () => this.closeModal());
+        if (modalTeleport) modalTeleport.addEventListener('click', () => {
+            if (this.selectedPlanet) {
+                this.teleport(this.selectedPlanet);
+                this.closeModal();
+            }
         });
     }
 
     async loadPlanets() {
         try {
-            await this.dataService.loadNearbyFirst();
-            this.filteredPlanets = this.dataService.getAllPlanets();
-            this.renderPlanetList();
+            // Ensure clusters are loaded
+            if (!this.dataService.clusterIndex) {
+                console.log('Initializing planet data service...');
+                await this.dataService.initialize();
+            }
             
-            this.dataService.loadAllClusters().then(() => {
+            // Get all planets from data service
+            this.filteredPlanets = this.dataService.getAllPlanets();
+            
+            // If no planets loaded yet, load them now
+            if (this.filteredPlanets.length === 0) {
+                console.log('Loading nearby planets...');
+                await this.dataService.loadNearbyFirst();
                 this.filteredPlanets = this.dataService.getAllPlanets();
-                this.renderPlanetList();
-            });
+                
+                // Load all clusters in background
+                this.dataService.loadAllClusters().then(() => {
+                    this.filteredPlanets = this.dataService.getAllPlanets();
+                    console.log(`Updated planet selector with ${this.filteredPlanets.length} total planets`);
+                    this.renderPlanetList();
+                });
+            }
+            
+            console.log(`Planet selector loaded ${this.filteredPlanets.length} planets`);
+            this.renderPlanetList();
         } catch (error) {
             console.error('Error loading planets:', error);
-            document.getElementById('planet-count').textContent = 'ERROR LOADING DATA';
         }
     }
 
@@ -131,230 +98,224 @@ export class PlanetSelector {
     }
 
     applyFilters() {
-        const searchQuery = document.getElementById('planet-search').value;
-        const minHabitability = parseInt(document.getElementById('habitability-filter').value);
-        const maxDistance = parseInt(document.getElementById('distance-filter').value);
-
-        this.filteredPlanets = this.dataService.filter({
-            name: searchQuery,
-            minHabitability: minHabitability,
-            maxDistance: maxDistance
-        });
-
-        this.renderPlanetList();
-    }
-
-    resetFilters() {
-        document.getElementById('planet-search').value = '';
-        document.getElementById('habitability-filter').value = '0';
-        document.getElementById('distance-filter').value = '1000';
-        document.getElementById('habitability-value').textContent = '0%+';
-        document.getElementById('distance-value').textContent = '1000 ly';
+        const searchQuery = this.searchInput?.value.toLowerCase() || '';
+        const allPlanets = this.dataService.getAllPlanets();
         
-        this.filteredPlanets = this.dataService.getAllPlanets();
+        // Start with all planets
+        let filtered = [...allPlanets];
+        
+        // Apply search filter
+        if (searchQuery) {
+            filtered = filtered.filter(p => 
+                p.pl_name?.toLowerCase().includes(searchQuery) ||
+                p.hostname?.toLowerCase().includes(searchQuery)
+            );
+        }
+        
+        // Apply category filter
+        if (this.currentFilter === 'solar') {
+            // No exoplanets in selector, only for canvas
+            filtered = [];
+        } else if (this.currentFilter === 'nearby') {
+            filtered = filtered.filter(p => {
+                const dist = p.sy_dist || 0;
+                return dist > 0 && dist < 100; // Within 100 parsecs (~326 light years)
+            });
+        } else if (this.currentFilter === 'habitable') {
+            filtered = filtered.filter(p => 
+                p.characteristics?.habitability_percent > 50
+            );
+        }
+        
+        this.filteredPlanets = filtered;
         this.renderPlanetList();
     }
 
     renderPlanetList() {
-        const listContainer = document.getElementById('planet-list');
-        const countElement = document.getElementById('planet-count');
+        if (!this.planetList) return;
         
-        countElement.textContent = `${this.filteredPlanets.length} PLANETS FOUND`;
-
         if (this.filteredPlanets.length === 0) {
-            listContainer.innerHTML = '<div class="no-results">NO PLANETS MATCH CRITERIA</div>';
+            this.planetList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-dim);">No planets found</div>';
             return;
         }
-
-        const planetsToShow = this.filteredPlanets.slice(0, 100);
         
-        listContainer.innerHTML = planetsToShow.map(planet => this.createPlanetCard(planet)).join('');
-
-        listContainer.querySelectorAll('.planet-card').forEach(card => {
-            const planetName = card.dataset.planetName;
+        // Show first 50 planets for performance
+        const planetsToShow = this.filteredPlanets.slice(0, 50);
+        
+        this.planetList.innerHTML = planetsToShow.map(planet => {
+            const chars = planet.characteristics || {};
+            const habitability = chars.habitability_percent || 0;
+            const distance = planet.sy_dist ? (planet.sy_dist * 3.262).toFixed(1) : '?';
+            
+            const habitabilityClass = habitability > 70 ? 'high' : habitability > 40 ? 'medium' : 'low';
+            
+            return `
+                <div class="planet-item" data-planet-name="${planet.pl_name}">
+                    <div class="planet-item-name">${planet.pl_name}</div>
+                    <div class="planet-item-info">
+                        <span class="planet-item-distance">${distance} ly</span>
+                        <span class="planet-item-habitability ${habitabilityClass}">${habitability}%</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Add click handlers
+        this.planetList.querySelectorAll('.planet-item').forEach(item => {
+            const planetName = item.dataset.planetName;
             const planet = this.dataService.getPlanetByName(planetName);
             
-            card.addEventListener('click', () => this.selectPlanet(planet));
-            card.addEventListener('mouseenter', () => this.showPlanetTooltip(planet, card));
-            card.addEventListener('mouseleave', () => this.hidePlanetTooltip());
+            item.addEventListener('click', () => {
+                if (planet) {
+                    this.selectPlanet(planet);
+                }
+            });
         });
-
-        if (this.filteredPlanets.length > 100) {
-            listContainer.innerHTML += `
-                <div class="more-results">
-                    DISPLAYING 100 OF ${this.filteredPlanets.length} RESULTS
-                    <br>REFINE SEARCH FOR MORE
+        
+        // Show count
+        if (this.filteredPlanets.length > 50) {
+            this.planetList.innerHTML += `
+                <div style="padding: 12px; text-align: center; color: var(--text-dim); font-size: 11px;">
+                    Showing 50 of ${this.filteredPlanets.length} planets
                 </div>
             `;
         }
     }
 
-    createPlanetCard(planet) {
-        const chars = planet.characteristics || {};
-        const habitability = chars.habitability_percent || 0;
-        const distance = planet.sy_dist ? (planet.sy_dist * 3.262).toFixed(1) : 'Unknown';
-        const planetType = chars.radius_position || 'Unknown';
-        
-        const habitabilityClass = habitability > 70 ? 'high' : habitability > 40 ? 'medium' : 'low';
-        
-        return `
-            <div class="planet-card" data-planet-name="${planet.pl_name}">
-                <div class="card-glow"></div>
-                <div class="planet-card-header">
-                    <h4 class="planet-name">${planet.pl_name || 'UNKNOWN'}</h4>
-                    <span class="planet-distance">${distance} ly</span>
-                </div>
-                <div class="planet-stats">
-                    <div class="stat">
-                        <span class="stat-label">TYPE</span>
-                        <span class="stat-value">${planetType}</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-label">HABITABILITY</span>
-                        <div class="stat-bar ${habitabilityClass}">
-                            <div class="stat-bar-fill" style="width: ${habitability}%"></div>
-                            <div class="stat-bar-glow" style="width: ${habitability}%"></div>
-                        </div>
-                        <span class="stat-percentage">${habitability}%</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
     selectPlanet(planet) {
         this.selectedPlanet = planet;
-        
-        document.querySelectorAll('.planet-card').forEach(card => card.classList.remove('selected'));
-        const selectedCard = document.querySelector(`[data-planet-name="${planet.pl_name}"]`);
-        if (selectedCard) selectedCard.classList.add('selected');
-
-        this.showPlanetDetails(planet);
+        this.showPlanetModal(planet);
     }
 
-    showPlanetDetails(planet) {
-        const infoPanel = document.getElementById('selected-planet-info');
-        const detailsContainer = document.getElementById('planet-details');
+    showPlanetModal(planet) {
+        const modal = document.getElementById('planet-modal');
+        const overlay = document.getElementById('modal-overlay');
+        const modalName = document.getElementById('modal-planet-name');
+        const modalType = document.getElementById('modal-planet-type');
+        const modalBody = document.getElementById('modal-body');
         
-        infoPanel.classList.remove('hidden');
-
+        if (!modal || !overlay) return;
+        
         const chars = planet.characteristics || {};
         const coords = chars.coordinates_3d || {};
         const distance = planet.sy_dist ? (planet.sy_dist * 3.262).toFixed(2) : 'Unknown';
         
-        detailsContainer.innerHTML = `
-            <div class="detail-item">
-                <span class="detail-label">NAME</span>
-                <span class="detail-value">${planet.pl_name || 'Unknown'}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">CLASSIFICATION</span>
-                <span class="detail-value">${chars.radius_position || 'Unknown'}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">DISTANCE</span>
-                <span class="detail-value">${distance} LY</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">HABITABILITY</span>
-                <span class="detail-value ${this.getHabitabilityClass(chars.habitability_percent)}">${chars.habitability_percent || 0}%</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">TOXICITY</span>
-                <span class="detail-value ${this.getToxicityClass(chars.toxicity_percent)}">${chars.toxicity_percent || 0}%</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">ATMOSPHERE</span>
-                <span class="detail-value">${chars.atmosphere_type || 'Unknown'}</span>
-            </div>
-            <div class="detail-item full-width">
-                <span class="detail-label">COORDINATES</span>
-                <span class="detail-value mono">
-                    X: ${coords.x_light_years?.toFixed(1) || '?'} 
-                    Y: ${coords.y_light_years?.toFixed(1) || '?'} 
-                    Z: ${coords.z_light_years?.toFixed(1) || '?'}
-                </span>
-            </div>
-        `;
+        // Update modal header
+        if (modalName) modalName.textContent = planet.pl_name || 'Unknown';
+        if (modalType) modalType.textContent = chars.radius_position || 'Unknown Type';
+        
+        // Update modal body
+        if (modalBody) {
+            modalBody.innerHTML = `
+                <div class="modal-section">
+                    <div class="modal-section-title">Physical Properties</div>
+                    <div class="modal-grid">
+                        <div class="modal-field">
+                            <div class="modal-field-label">Radius</div>
+                            <div class="modal-field-value">${planet.pl_rade?.toFixed(2) || '?'} R⊕</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Mass</div>
+                            <div class="modal-field-value">${planet.pl_bmasse?.toFixed(2) || '?'} M⊕</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Distance</div>
+                            <div class="modal-field-value">${distance} ly</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Host Star</div>
+                            <div class="modal-field-value">${planet.hostname || 'Unknown'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Habitability Assessment</div>
+                    <div class="modal-grid">
+                        <div class="modal-field">
+                            <div class="modal-field-label">Habitability</div>
+                            <div class="modal-field-value">${chars.habitability_percent || 0}%</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Toxicity</div>
+                            <div class="modal-field-value">${chars.toxicity_percent || 0}%</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Atmosphere</div>
+                            <div class="modal-field-value">${chars.atmosphere_type || 'Unknown'}</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Material</div>
+                            <div class="modal-field-value">${chars.principal_material || 'Unknown'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">Coordinates (Light Years)</div>
+                    <div class="modal-grid">
+                        <div class="modal-field">
+                            <div class="modal-field-label">X</div>
+                            <div class="modal-field-value">${coords.x_light_years?.toFixed(2) || '?'}</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Y</div>
+                            <div class="modal-field-value">${coords.y_light_years?.toFixed(2) || '?'}</div>
+                        </div>
+                        <div class="modal-field">
+                            <div class="modal-field-label">Z</div>
+                            <div class="modal-field-value">${coords.z_light_years?.toFixed(2) || '?'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Show modal
+        modal.classList.add('visible');
+        overlay.classList.add('visible');
     }
 
-    showPlanetTooltip(planet, cardElement) {
-        this.hoveredPlanet = planet;
-        
-        let tooltip = document.getElementById('planet-tooltip');
-        if (!tooltip) {
-            tooltip = document.createElement('div');
-            tooltip.id = 'planet-tooltip';
-            tooltip.className = 'planet-tooltip';
-            document.body.appendChild(tooltip);
-        }
-
-        const chars = planet.characteristics || {};
-        const orbPeriod = planet.pl_orbper ? `${(planet.pl_orbper / 365).toFixed(1)} years` : 'Unknown';
-        const mass = planet.pl_bmasse ? `${planet.pl_bmasse.toFixed(1)} M⊕` : 'Unknown';
-        const radius = planet.pl_rade ? `${planet.pl_rade.toFixed(1)} R⊕` : 'Unknown';
-        
-        tooltip.innerHTML = `
-            <div class="tooltip-header">${planet.pl_name}</div>
-            <div class="tooltip-content">
-                <div class="tooltip-row"><span>Host Star:</span> ${planet.hostname || 'Unknown'}</div>
-                <div class="tooltip-row"><span>Discovered:</span> ${planet.disc_year || 'Unknown'}</div>
-                <div class="tooltip-row"><span>Method:</span> ${planet.discoverymethod || 'Unknown'}</div>
-                <div class="tooltip-row"><span>Mass:</span> ${mass}</div>
-                <div class="tooltip-row"><span>Radius:</span> ${radius}</div>
-                <div class="tooltip-row"><span>Orbital Period:</span> ${orbPeriod}</div>
-                <div class="tooltip-row"><span>Material:</span> ${chars.principal_material || 'Unknown'}</div>
-                <div class="tooltip-row"><span>Orbit Type:</span> ${chars.orbit_type || 'Unknown'}</div>
-            </div>
-        `;
-
-        const rect = cardElement.getBoundingClientRect();
-        tooltip.style.left = `${rect.right + 10}px`;
-        tooltip.style.top = `${rect.top}px`;
-        tooltip.classList.add('visible');
-    }
-
-    hidePlanetTooltip() {
-        const tooltip = document.getElementById('planet-tooltip');
-        if (tooltip) {
-            tooltip.classList.remove('visible');
-        }
-        this.hoveredPlanet = null;
+    closeModal() {
+        const modal = document.getElementById('planet-modal');
+        const overlay = document.getElementById('modal-overlay');
+        if (modal) modal.classList.remove('visible');
+        if (overlay) overlay.classList.remove('visible');
     }
 
     teleport(planet) {
         // Validate planet has coordinates
         if (!planet.characteristics?.coordinates_3d?.x_light_years) {
-            alert(`Cannot teleport to ${planet.pl_name}: No 3D coordinates available in dataset.`);
+            alert(`Cannot teleport to ${planet.pl_name}: No 3D coordinates available.`);
             console.warn('Planet missing coordinates:', planet);
             return;
         }
 
+        console.log('Initiating teleport to:', planet.pl_name);
+        
+        // Use teleport manager with visual effect
         this.teleportManager.teleportWithEffect(planet, () => {
-            console.log(`Teleported to ${planet.pl_name}`);
-            
-            const hudStatus = document.getElementById('hud-status');
-            if (hudStatus) hudStatus.textContent = `En Route: ${planet.pl_name}`;
+            console.log(`Successfully teleported to ${planet.pl_name}`);
         });
-
-        this.hide();
     }
 
     show() {
-        this.isVisible = true;
-        this.container.classList.remove('hidden');
-        
-        if (this.dataService.getAllPlanets().length === 0) {
-            this.loadPlanets();
-        } else {
-            this.renderPlanetList();
+        if (this.container) {
+            this.isVisible = true;
+            this.container.classList.remove('hidden');
+            
+            // Reload planets if needed
+            if (this.filteredPlanets.length === 0) {
+                this.loadPlanets();
+            }
         }
     }
 
     hide() {
-        this.isVisible = false;
-        this.container.classList.add('hidden');
-        this.hidePlanetTooltip();
+        if (this.container) {
+            this.isVisible = false;
+            this.container.classList.add('hidden');
+        }
     }
 
     toggle() {
@@ -365,24 +326,7 @@ export class PlanetSelector {
         }
     }
 
-    getHabitabilityClass(value) {
-        if (!value) return '';
-        if (value > 70) return 'value-high';
-        if (value > 40) return 'value-medium';
-        return 'value-low';
-    }
-
-    getToxicityClass(value) {
-        if (!value) return '';
-        if (value > 70) return 'value-danger';
-        if (value > 40) return 'value-warning';
-        return 'value-safe';
-    }
-
     dispose() {
-        this.hidePlanetTooltip();
-        if (this.container && this.container.parentNode) {
-            this.container.parentNode.removeChild(this.container);
-        }
+        this.closeModal();
     }
 }

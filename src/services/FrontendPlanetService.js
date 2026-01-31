@@ -272,52 +272,73 @@ Write 2 engaging paragraphs highlighting what makes this planet unique and fasci
 export const planetService = new FrontendPlanetService();
 export default FrontendPlanetService;
 
-// Import ClusterLoader (dynamic import to avoid issues if file doesn't exist yet in some envs)
+// Import ClusterLoader (dynamic import with promise to handle async initialization)
 let clusterLoader = null;
-import('/nasa_data/cluster-loader.js').then(module => {
+let clusterLoaderReady = false;
+let clusterLoaderPromise = null;
+
+// Initialize ClusterLoader
+clusterLoaderPromise = import('/nasa_data/cluster-loader.js').then(module => {
     const { ClusterLoader } = module;
     clusterLoader = new ClusterLoader('/nasa_data/clusters');
+    clusterLoaderReady = true;
+    console.log('✅ ClusterLoader module loaded');
+    return clusterLoader;
 }).catch(err => {
     console.warn('Could not load ClusterLoader:', err);
+    clusterLoaderReady = false;
+    return null;
 });
+
+// Wait for ClusterLoader to be ready
+async function waitForClusterLoader(maxWait = 5000) {
+    const start = Date.now();
+    while (!clusterLoaderReady && (Date.now() - start) < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return clusterLoaderReady;
+}
 
 // Extend FrontendPlanetService to handle NASA data
 FrontendPlanetService.prototype.loadNasaData = async function () {
-    if (!clusterLoader) {
-        console.error('ClusterLoader not initialized');
+    // Wait for ClusterLoader to be ready
+    const ready = await waitForClusterLoader();
+    if (!ready || !clusterLoader) {
+        console.error('❌ ClusterLoader not initialized after waiting');
         return [];
     }
 
     try {
         await clusterLoader.init();
-        console.log('NASA Cluster Loader initialized');
+        console.log('✅ NASA Cluster Loader initialized');
 
         // Load nearby planets first (high priority)
         const nearbyPlanets = await clusterLoader.loadNearby();
-        console.log(`Loaded ${nearbyPlanets.length} nearby NASA planets`);
+        console.log(`🪐 Loaded ${nearbyPlanets.length} nearby NASA planets`);
 
-        // Print info as requested
-        console.groupCollapsed('🪐 NASA Exoplanet Data (Nearby)');
-        console.table(nearbyPlanets.map(p => ({
-            Name: p.name,
-            Distance: p.distance_light_years + ' ly',
-            Radius: p.radius?.earth_radii + ' Earths',
-            Temp: p.stellar_data?.temperature_k + ' K'
-        })));
-        console.groupEnd();
+        // Print sample info (using correct field names from FRONTEND_AGENT_README)
+        if (nearbyPlanets.length > 0) {
+            console.groupCollapsed('🪐 NASA Exoplanet Data Sample (first 5)');
+            console.table(nearbyPlanets.slice(0, 5).map(p => ({
+                Name: p.pl_name,
+                Host: p.hostname,
+                Distance: (p.characteristics?.distance_to_earth_ly?.toFixed(2) || '?') + ' ly',
+                Type: p.characteristics?.radius_position || 'Unknown',
+                Habitability: (p.characteristics?.habitability_percent || 0) + '%'
+            })));
+            console.groupEnd();
+        }
 
-        // Normalize and store in our service
+        // Normalize and store in our service using correct field names
         nearbyPlanets.forEach(p => {
-            // Adapt NASA data format to our app's expected format if needed
-            // For now, we store the raw object but ensuring name is key
-            this.planetsData.set(p.name, {
+            this.planetsData.set(p.pl_name, {
                 ...p,
-                // Add mapping for standard properties if they differ significantly
-                description: `Exoplanet ${p.name} located ${p.distance_light_years} light years from Earth.`,
+                name: p.pl_name, // Alias for compatibility
+                description: `Exoplanet ${p.pl_name} in the ${p.hostname} system, ${p.characteristics?.distance_to_earth_ly?.toFixed(2) || 'unknown'} light years from Earth.`,
                 aiData: {
-                    composition: p.composition?.primary || 'Unknown',
-                    atmosphere: 'Unknown', // NASA data might not have this detailed
-                    surfaceTemp: p.stellar_data?.temperature_k ? `${p.stellar_data.temperature_k} K` : 'Unknown'
+                    composition: p.characteristics?.principal_material || 'Unknown',
+                    atmosphere: p.characteristics?.atmosphere_type || 'Unknown',
+                    surfaceTemp: p.pl_eqt ? `${p.pl_eqt} K` : 'Unknown'
                 }
             });
         });
@@ -327,7 +348,7 @@ FrontendPlanetService.prototype.loadNasaData = async function () {
 
         return nearbyPlanets;
     } catch (error) {
-        console.error('Error loading NASA data:', error);
+        console.error('❌ Error loading NASA data:', error);
         return [];
     }
 };
@@ -337,7 +358,6 @@ FrontendPlanetService.prototype.loadBackgroundClusters = function () {
 
     // Example: Preload medium distance clusters
     const mediumClusters = ['medium_quad1', 'medium_quad2', 'medium_quad3', 'medium_quad4'];
-    console.log('Initiating background load of medium distance clusters...');
+    console.log('📦 Initiating background load of medium distance clusters...');
     clusterLoader.preloadClusters(mediumClusters);
 };
-
