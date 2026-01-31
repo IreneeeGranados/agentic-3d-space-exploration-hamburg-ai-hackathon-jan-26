@@ -27,7 +27,7 @@ class App {
     async init() {
         // Start loading sequence
         this.loadingManager.start(4); // 4 main steps
-        
+
         try {
             // Step 1: Initialize core components
             this.loadingManager.updateStatus('Initializing Engine', 'Setting up 3D renderer...');
@@ -53,19 +53,22 @@ class App {
 
             // Step 4: Start animation and finalize
             this.loadingManager.updateStatus('Starting Mission', 'Engaging warp drive...');
-            
+
             // Setup UI controls
             this.setupUIControls();
-            
+
             // Handle window resize
             window.addEventListener('resize', () => this.onWindowResize());
-            
+
             this.animate();
             this.loadingManager.completeStep('Animation');
 
             // Finish loading
             this.loadingManager.finish();
-            
+
+            // Sync View UI
+            if (this.spacecraft) this.updateViewUI();
+
         } catch (error) {
             console.error('Initialization error:', error);
             this.loadingManager.error(error.message);
@@ -80,7 +83,7 @@ class App {
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = true;
             if (e.code === 'Space') this.keys.brake = true;
-            
+
             // Navigation shortcuts
             if (e.code === 'KeyT') this.togglePlanetSelector();
             if (e.code === 'KeyE') this.toggleExoplanets();
@@ -168,8 +171,15 @@ class App {
 
         window.addEventListener('click', (event) => {
             // Calculate mouse position in normalized device coordinates
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
+                // Cockpit Mode: Raycast from center (Crosshair)
+                mouse.x = 0;
+                mouse.y = 0;
+            } else {
+                // Chase Mode: Raycast from cursor
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
 
             if (this.cameraManager && this.cameraManager.camera) {
                 raycaster.setFromCamera(mouse, this.cameraManager.camera);
@@ -197,7 +207,7 @@ class App {
                         if (hit.object.userData && hit.object.userData.planetData) {
                             const planetData = hit.object.userData.planetData;
                             console.log('Exoplanet Selected:', planetData.pl_name);
-                            
+
                             if (this.teleportManager) {
                                 this.teleportManager.teleportToPlanet(planetData);
                             }
@@ -317,19 +327,19 @@ class App {
     async loadExoplanets() {
         // Initialize data service
         this.planetDataService = new PlanetDataService();
-        
+
         // Initialize cluster index first
         await this.planetDataService.initialize();
-        
+
         // Create and load NASA exoplanet visualization
         this.exoplanetField = new ExoplanetField(this.planetDataService);
         await this.exoplanetField.load();
-        
+
         if (this.exoplanetField.mesh) {
             this.sceneManager.add(this.exoplanetField.mesh);
             console.log('✓ NASA exoplanets added to scene');
         }
-        
+
         console.log(`✓ Total visualization: ${this.planets.length} solar system + ${this.planetDataService.getAllPlanets().length} exoplanets`);
     }
 
@@ -418,12 +428,14 @@ class App {
         if (!this.spacecraft) return;
 
         const velocity = this.spacecraft.velocity.length();
-        const position = this.spacecraft.mesh.position;
-        const rotation = this.spacecraft.mesh.rotation;
+        const position = this.spacecraft.group.position;
+        const rotation = this.spacecraft.group.rotation;
 
         // Update velocity
         const velElem = document.getElementById('hud-velocity');
+        const cockpitSpd = document.getElementById('cockpit-speed');
         if (velElem) velElem.textContent = `${velocity.toFixed(2)} u/s`;
+        if (cockpitSpd) cockpitSpd.textContent = `SPD: ${velocity.toFixed(2)}`;
 
         // Update position (convert to light years)
         const posX = document.getElementById('hud-pos-x');
@@ -445,7 +457,7 @@ class App {
             const statusDot = document.getElementById('autopilot-status');
             const statusText = document.getElementById('autopilot-text');
             const destCard = document.getElementById('destination-card');
-            
+
             if (statusDot) statusDot.className = 'status-dot';
             if (statusText) statusText.textContent = 'Autopilot Active';
             if (destCard) destCard.style.display = 'block';
@@ -456,7 +468,7 @@ class App {
                 const destName = document.getElementById('destination-name');
                 const destDistance = document.getElementById('destination-distance');
                 const destHab = document.getElementById('destination-habitability');
-                
+
                 if (destName) destName.textContent = data.name || data.pl_name;
                 if (destDistance) {
                     const dist = this.spacecraft.mesh.position.distanceTo(target.position);
@@ -470,7 +482,7 @@ class App {
             const statusDot = document.getElementById('autopilot-status');
             const statusText = document.getElementById('autopilot-text');
             const destCard = document.getElementById('destination-card');
-            
+
             if (statusDot) statusDot.className = 'status-dot inactive';
             if (statusText) statusText.textContent = 'Manual Flight';
             if (destCard) destCard.style.display = 'none';
@@ -507,11 +519,11 @@ class App {
 
             // Update camera to follow spacecraft
             this.spacecraft.updateCamera(this.cameraManager.camera);
-            
+
             // Update HUD display
             this.updateHUD();
         }
-        
+
         // Update planet hover info
         if (this.planetHoverInfo) {
             this.planetHoverInfo.update();
