@@ -13,7 +13,6 @@ import { PLANETS_DATA } from './src/config/planets.js';
 import { Universe } from './src/objects/Universe.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { aiService } from './src/services/AIService.js';
-import { isAIConfigured, isNarrationConfigured } from './src/config/config.js';
 
 class App {
     constructor() {
@@ -31,10 +30,6 @@ class App {
         this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
         this.setupControls();
 
-        // Mouse state for rotation
-        this.mouse = { x: 0, y: 0 };
-        this.setupMouse();
-
         // Create scene objects
         this.createSceneObjects();
 
@@ -43,14 +38,32 @@ class App {
 
         // Handle window resize
         window.addEventListener('resize', () => this.onWindowResize());
+
+        console.log('App Initialized');
+    }
+
+    setupControls() {
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.up = true; // Pitch down (dive)
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = true; // Pitch up (climb)
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = true;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.up = false;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = false;
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = false;
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = false;
+        });
     }
 
     createSceneObjects() {
-        // Create the universe background (nebulae, galaxies)
+        // Create the universe background
         this.universe = new Universe(4000);
         this.sceneManager.add(this.universe.mesh);
 
-        // Create background starfield (layer on top for depth)
+        // Create background starfield
         const starField = new StarField(15000, 3500);
         this.sceneManager.add(starField.mesh);
 
@@ -62,136 +75,16 @@ class App {
         });
         this.sceneManager.add(sun.mesh);
 
-        // Create planets from configuration
+        // Create planets
         this.planets = PLANETS_DATA.map(planetData => {
             const planet = new Planet(planetData);
             this.sceneManager.add(planet.group);
             return planet;
         });
 
-        // Create spacecraft in foreground
+        // Create spacecraft
         this.spacecraft = new Spacecraft();
-        // this.spacecraft.attachCamera(this.cameraManager.camera);
         this.sceneManager.add(this.spacecraft.group);
-
-        // Update camera controller with spacecraft reference (disabled)
-        // this.cameraController.spacecraft = this.spacecraft;
-    }
-
-    setupControls() {
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = true;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = true;
-            if (e.code === 'KeyA') this.keys.left = true;
-            if (e.code === 'KeyD') this.keys.right = true;
-            if (e.code === 'KeyQ') this.keys.up = true;
-            if (e.code === 'KeyE') this.keys.down = true;
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = false;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = false;
-            if (e.code === 'KeyA') this.keys.left = false;
-            if (e.code === 'KeyD') this.keys.right = false;
-            if (e.code === 'KeyQ') this.keys.up = false;
-            if (e.code === 'KeyE') this.keys.down = false;
-        });
-    }
-
-    setupMouse() {
-        this.canvas.addEventListener('mousemove', (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            // Normalize to -1 to 1
-            this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-            this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-        });
-    }
-
-    setupInteractions() {
-        setupPlanetSelector(
-            this.cameraManager.camera,
-            this.canvas,
-            this.planets,
-            (planet) => this.onPlanetClick(planet),
-            (planet) => this.onPlanetHover(planet)
-        );
-    }
-
-    async onPlanetClick(planet) {
-        console.log('Traveling to:', planet.config.name);
-        this.cameraController.travelToPlanet(planet);
-
-        // Update basic planet info
-        const infoPanel = document.getElementById('planet-info');
-        if (infoPanel) {
-            infoPanel.innerHTML = `
-                <strong>${planet.config.name}</strong><br>
-                ${planet.config.description}<br>
-                <em>Composition: ${planet.config.aiData.composition}</em>
-            `;
-        }
-
-        // Show AI section
-        const aiSection = document.getElementById('ai-description');
-        const aiContent = document.getElementById('ai-content');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const narrateBtn = document.getElementById('narrate-btn');
-
-        if (aiSection) {
-            aiSection.style.display = 'block';
-        }
-
-        // Show loading state
-        if (loadingSpinner) {
-            loadingSpinner.style.display = 'flex';
-        }
-        if (aiContent) {
-            aiContent.textContent = '';
-        }
-        if (narrateBtn) {
-            narrateBtn.style.display = 'none';
-        }
-
-        // Fetch AI description
-        try {
-            const description = await aiService.getPlanetDescription(planet.config);
-
-            if (aiContent) {
-                aiContent.textContent = description;
-            }
-            if (loadingSpinner) {
-                loadingSpinner.style.display = 'none';
-            }
-
-            // Setup narration if available
-            if (isNarrationConfigured() && narrateBtn) {
-                narrateBtn.style.display = 'block';
-                narrateBtn.onclick = async () => {
-                    const audioUrl = await aiService.narratePlanetInfo(description);
-                    if (audioUrl) {
-                        aiService.playNarration(audioUrl);
-                    }
-                };
-            }
-
-        } catch (error) {
-            console.error('Error getting AI description:', error);
-            if (aiContent) {
-                aiContent.textContent = 'Unable to generate AI description at this time.';
-            }
-            if (loadingSpinner) {
-                loadingSpinner.style.display = 'none';
-            }
-        }
-    }
-
-    onPlanetHover(planet) {
-        if (planet) {
-            const infoPanel = document.getElementById('planet-info');
-            if (infoPanel) {
-                infoPanel.innerHTML = `Hover: ${planet.config.name} - Click to travel`;
-            }
-        }
     }
 
     animate() {
@@ -204,29 +97,24 @@ class App {
             this.universe.update();
         }
 
-        // Update all planets (rotation, orbit)
+        // Update all planets
         if (this.planets) {
             this.planets.forEach(planet => planet.update());
         }
 
         // Control spacecraft
         if (this.spacecraft) {
-            // Move spacecraft based on keyboard
-            this.spacecraft.move(this.keys, deltaTime);
-
-            // Rotate spacecraft based on mouse
-            const rotation = {
-                pitch: this.mouse.y,
-                yaw: this.mouse.x,
-                roll: (this.keys.left ? -1 : 0) + (this.keys.right ? 1 : 0)
-            };
-            this.spacecraft.rotate(rotation, deltaTime);
+            // Steer spacecraft with keyboard
+            this.spacecraft.steer(this.keys, deltaTime);
 
             // Update spacecraft animation
             this.spacecraft.update(deltaTime);
 
             // Update camera to follow spacecraft
             this.spacecraft.updateCamera(this.cameraManager.camera);
+
+            // Update HUD
+            this.updateHUD();
         }
 
         // Render the scene
@@ -237,14 +125,12 @@ class App {
     }
 
     updateHUD() {
-        // Update speed
         const speedElement = document.getElementById('hud-speed');
         if (speedElement && this.spacecraft) {
             const speed = this.spacecraft.getSpeed();
             speedElement.textContent = speed.toFixed(1);
         }
 
-        // Update coordinates
         const coordsElement = document.getElementById('hud-coords');
         if (coordsElement && this.spacecraft) {
             const pos = this.spacecraft.getPosition();
@@ -258,10 +144,8 @@ class App {
     }
 
     dispose() {
-        // Cleanup resources
         this.planets?.forEach(planet => planet.dispose());
         this.rendererManager.dispose();
-        this.controls.dispose();
     }
 }
 
