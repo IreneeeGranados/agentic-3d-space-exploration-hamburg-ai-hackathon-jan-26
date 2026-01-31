@@ -20,9 +20,9 @@ export class ExoplanetField {
         this.loaded = false;
         this.renderedPlanets = new Set(); // Track rendered planet IDs
 
-        // Visual settings
-        this.sceneScale = 10; // 1 light year = 10 scene units
-        this.earthRadiusScale = 0.5; // Earth = 0.5 scene units (for visibility)
+        // Visual settings - UNIFIED LINEAR SCALE (1:1 ratio, no boosts)
+        this.sceneScale = 10; // 1 light year = 10 scene units (ALL planets)
+        this.earthRadiusScale = 0.5; // 1 Earth radius = 0.5 scene units (ALL planets, no exceptions)
 
         // For compatibility with old code
         this.mesh = this.meshGroup;
@@ -110,20 +110,21 @@ export class ExoplanetField {
 
                 const coords = planet.characteristics?.coordinates_3d;
                 
-                // Use position field for solar system planets (in AU), coordinates_3d for exoplanets
-                if (isSolarPlanet && planet.position) {
-                    // Solar system planets use position field (in AU, scaled)
-                    // These will be rendered at their actual scaled positions
-                } else if (!coords || coords.x_light_years === null) {
-                    // Exoplanets without valid coordinates_3d - skip
+                // UNIFIED: All planets must have valid coordinates_3d
+                if (!coords || coords.x_light_years === null) {
+                    console.warn(`⚠️ Skipping ${planet.pl_name}: missing coordinates_3d`);
                     continue;
                 }
 
-                const distLY = planet.sy_dist * 3.26156 || (coords ? coords.x_light_years : 0);
+                const distLY = planet.sy_dist * 3.26156 || Math.sqrt(
+                    coords.x_light_years ** 2 + 
+                    coords.y_light_years ** 2 + 
+                    coords.z_light_years ** 2
+                );
                 const radiusInEarthRadii = planet.pl_rade || 1.0;
                 
-                // Solar system planets get larger radii for visibility
-                const radius = isSolarPlanet ? radiusInEarthRadii * 5 : radiusInEarthRadii * this.earthRadiusScale;
+                // TRUE 1:1 SCALE: No boosts, no exceptions
+                const radius = radiusInEarthRadii * this.earthRadiusScale;
 
                 let tier = 3;
                 if (distLY < 25) tier = 1;
@@ -170,22 +171,12 @@ export class ExoplanetField {
 
                 const mesh = new THREE.Mesh(geometry, material);
                 
-                // Position: use position field for solar system, coordinates_3d for exoplanets
-                if (isSolarPlanet && planet.position) {
-                    // Solar system planets use position field (already in AU, scaled)
-                    mesh.position.set(
-                        planet.position.x * 200, // Same scale as before
-                        planet.position.y * 200,
-                        planet.position.z * 200
-                    );
-                } else {
-                    // Exoplanets use coordinates_3d
-                    mesh.position.set(
-                        coords.x_light_years * this.sceneScale,
-                        coords.y_light_years * this.sceneScale,
-                        coords.z_light_years * this.sceneScale
-                    );
-                }
+                // UNIFIED POSITIONING: All planets use coordinates_3d (light-years → scene units)
+                mesh.position.set(
+                    coords.x_light_years * this.sceneScale,
+                    coords.y_light_years * this.sceneScale,
+                    coords.z_light_years * this.sceneScale
+                );
 
                 mesh.userData.planetData = planet;
                 mesh.userData.planet = planet; // Compatibility
