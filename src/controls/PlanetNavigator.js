@@ -132,10 +132,14 @@ export class PlanetNavigator {
         const clusterIndex = await this.dataService.initialize();
         const totalClusters = Object.keys(clusterIndex.clusters).length;
         
+        console.log(`🗺️ Navigator: Waiting for ${totalClusters} clusters to load...`);
+        
         return new Promise((resolve) => {
             const checkInterval = setInterval(() => {
                 const stats = this.dataService.getStats();
                 if (stats.clustersLoaded >= totalClusters) {
+                    console.log(`✅ Navigator: All ${stats.clustersLoaded} clusters loaded!`);
+                    console.log(`📋 Loaded clusters: ${stats.clusterNames.join(', ')}`);
                     clearInterval(checkInterval);
                     resolve();
                 }
@@ -144,6 +148,8 @@ export class PlanetNavigator {
             // Timeout after 60 seconds
             setTimeout(() => {
                 clearInterval(checkInterval);
+                const stats = this.dataService.getStats();
+                console.warn(`⚠️ Navigator: Timeout after 60s (${stats.clustersLoaded}/${totalClusters} clusters loaded)`);
                 resolve();
             }, 60000);
         });
@@ -186,6 +192,17 @@ export class PlanetNavigator {
         const start = this.currentPage * this.planetsPerPage;
         const end = start + this.planetsPerPage;
         const planetsToShow = this.nearbyPlanets.slice(start, end);
+
+        if (this.nearbyPlanets.length === 0) {
+            const stats = this.dataService.getStats();
+            listContainer.innerHTML = `
+                <div class="nav-loading">
+                    <p>⏳ Loading planets...</p>
+                    <p style="font-size: 12px;">${stats.clustersLoaded} clusters loaded</p>
+                </div>
+            `;
+            return;
+        }
 
         if (planetsToShow.length === 0) {
             listContainer.innerHTML = '<div class="nav-no-results">No planets found</div>';
