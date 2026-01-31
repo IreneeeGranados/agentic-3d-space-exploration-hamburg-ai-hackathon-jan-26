@@ -688,7 +688,60 @@
       "y": -0.7240385436650874,
       "z": -0.9596690274767348
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 40.3,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Temperate Zone",
+      "coordinates_3d": {
+        "x_parsecs": 3.5845,
+        "y_parsecs": 11.7423,
+        "z_parsecs": 1.3934,
+        "x_light_years": 11.691,
+        "y_light_years": 38.2981,
+        "z_light_years": 4.5448,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 73.0245495,
+          "hours_format": "04h52m05.89s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 6.4752347,
+          "dms_format": "+06d28m30.84s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 12.356,
+          "light_years": 40.2998,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 80.9036,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 153.425,
+          "dec": -306.106,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.1099,
@@ -1379,7 +1432,60 @@
       "y": -0.042156826444037905,
       "z": 0.28453067612239896
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Gas (H/He/CH4)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 15.25,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": 4.3404,
+        "y_parsecs": -1.3002,
+        "z_parsecs": -1.1521,
+        "x_light_years": 14.1566,
+        "y_light_years": -4.2407,
+        "z_light_years": -3.7577,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 343.3239737,
+          "hours_format": "22h53m17.75s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -14.2665958,
+          "dms_format": "-14d15m59.74s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 4.6752,
+          "light_years": 15.2483,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 213.867,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 957.961,
+          "dec": -673.638,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.19223,
@@ -2070,7 +2176,60 @@
       "y": -4.379994438318101,
       "z": 2.7948862171316518
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 77.4,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Eccentric - Cold Zone",
+      "coordinates_3d": {
+        "x_parsecs": 18.4933,
+        "y_parsecs": 12.1489,
+        "z_parsecs": -8.5808,
+        "x_light_years": 60.3169,
+        "y_light_years": 39.6244,
+        "z_light_years": -27.9867,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 33.3024198,
+          "hours_format": "02h13m12.58s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -21.1962147,
+          "dms_format": "-21d11m46.37s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 23.7324,
+          "light_years": 77.4046,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 42.1075,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 375.476,
+          "dec": 55.8061,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11347,
@@ -2761,7 +2920,60 @@
       "y": -0.5982300475296947,
       "z": 0.7704510640779806
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 89.99,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": -21.7424,
+        "y_parsecs": 15.9647,
+        "z_parsecs": -5.7977,
+        "x_light_years": -70.9142,
+        "y_light_years": 52.07,
+        "z_light_years": -18.9095,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 143.7114034,
+          "hours_format": "09h34m50.74s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -12.1302976,
+          "dms_format": "-12d07m49.07s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 27.5902,
+          "light_years": 89.9871,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 36.2158,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 1.5128,
+          "dec": -174.718,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11573,
@@ -3452,7 +3664,60 @@
       "y": -0.020067442737319557,
       "z": -0.00011358500107613636
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Unknown",
+      "atmosphere_type": "Unknown",
+      "principal_material": "Unknown",
+      "toxicity_percent": 50,
+      "habitability_percent": 60,
+      "distance_to_earth_ly": 66.11,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 0.6152,
+        "y_parsecs": 20.1492,
+        "z_parsecs": -2.1175,
+        "x_light_years": 2.0065,
+        "y_light_years": 65.7178,
+        "z_light_years": -6.9062,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 88.2511811,
+          "hours_format": "05h53m00.28s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -5.9963378,
+          "dms_format": "-05d59m46.82s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 20.2695,
+          "light_years": 66.1102,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 49.3062,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -1.0454,
+          "dec": -346.721,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11698,
@@ -4143,7 +4408,60 @@
       "y": -6.925936523432345,
       "z": 0.24287852957831085
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 92.2,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Eccentric - Cold Zone",
+      "coordinates_3d": {
+        "x_parsecs": -1.8914,
+        "y_parsecs": -4.6406,
+        "z_parsecs": 27.822,
+        "x_light_years": -6.1689,
+        "y_light_years": -15.1357,
+        "z_light_years": 90.7431,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 247.8255687,
+          "hours_format": "16h31m18.14s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 79.7894032,
+          "dms_format": "+79d47m21.85s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 28.2697,
+          "light_years": 92.2033,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 35.3446,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 94.884,
+          "dec": -86.9714,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.10974,
@@ -4834,7 +5152,60 @@
       "y": -0.003934263904351058,
       "z": -0.01927193055515365
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 31.81,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": -8.6867,
+        "y_parsecs": 0.676,
+        "z_parsecs": 4.3828,
+        "x_light_years": -28.3323,
+        "y_light_years": 2.2047,
+        "z_light_years": 14.2947,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 175.5505363,
+          "hours_format": "11h42m12.13s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 26.7030669,
+          "dms_format": "+26d42m11.04s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 9.7532,
+          "light_years": 31.8107,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 102.501,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 895.047,
+          "dec": -814.031,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.12529,
@@ -5525,7 +5896,60 @@
       "y": -0.05426007371271942,
       "z": 0.04402351933309708
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 71.69,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": -19.45,
+        "y_parsecs": 9.2169,
+        "z_parsecs": -4.4642,
+        "x_light_years": -63.4373,
+        "y_light_years": 30.0613,
+        "z_light_years": -14.5604,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 154.6449033,
+          "hours_format": "10h18m34.78s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -11.717801,
+          "dms_format": "-11d43m04.08s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 21.9814,
+          "light_years": 71.6937,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 45.4644,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -341.409,
+          "dec": -247.87,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11878,
@@ -6216,7 +6640,60 @@
       "y": -0.0023054598470819963,
       "z": 0.015927530877092564
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Sub-Earth",
+      "atmosphere_type": "Thin N2/CO2",
+      "principal_material": "Rocky (Silicate)",
+      "toxicity_percent": 40,
+      "habitability_percent": 63,
+      "distance_to_earth_ly": 40.54,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 12.046,
+        "y_parsecs": -2.8639,
+        "z_parsecs": -1.0927,
+        "x_light_years": 39.2888,
+        "y_light_years": -9.3408,
+        "z_light_years": -3.564,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 346.6263919,
+          "hours_format": "23h06m30.33s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -5.0434618,
+          "dms_format": "-05d02m36.46s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 12.4299,
+          "light_years": 40.5408,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 80.4512,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 901.0,
+          "dec": -492.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11174,
@@ -6907,7 +7384,60 @@
       "y": -0.45626867958402206,
       "z": 1.458327525711948
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Unknown",
+      "atmosphere_type": "Unknown",
+      "principal_material": "Unknown",
+      "toxicity_percent": 50,
+      "habitability_percent": 60,
+      "distance_to_earth_ly": 87.66,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": 3.8957,
+        "y_parsecs": -9.9986,
+        "z_parsecs": -24.6411,
+        "x_light_years": 12.7062,
+        "y_light_years": -32.6109,
+        "z_light_years": -80.3683,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 291.2873731,
+          "hours_format": "19h25m08.97s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -66.4677838,
+          "dms_format": "-66d28m04.02s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 26.8762,
+          "light_years": 87.6583,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 37.1787,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -230.931,
+          "dec": 235.775,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.12097,
@@ -7598,7 +8128,60 @@
       "y": -0.05107265857097839,
       "z": 0.00021723950423484516
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Unknown",
+      "atmosphere_type": "Unknown",
+      "principal_material": "Unknown",
+      "toxicity_percent": 50,
+      "habitability_percent": 60,
+      "distance_to_earth_ly": 90.62,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 7.413,
+        "y_parsecs": -26.2427,
+        "z_parsecs": -5.3229,
+        "x_light_years": 24.1781,
+        "y_light_years": -85.5922,
+        "z_light_years": -17.3609,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 285.7739138,
+          "hours_format": "19h03m05.74s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -11.044941,
+          "dms_format": "-11d02m41.79s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 27.7843,
+          "light_years": 90.6202,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 35.9627,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -126.942,
+          "dec": -235.907,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.1271,
@@ -8289,7 +8872,60 @@
       "y": -0.003714946608384552,
       "z": 0.12383910526941737
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 90.09,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": -15.461,
+        "y_parsecs": 6.6435,
+        "z_parsecs": -21.9051,
+        "x_light_years": -50.4271,
+        "y_light_years": 21.668,
+        "z_light_years": -71.4449,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 156.74726,
+          "hours_format": "10h26m59.34s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -52.4678724,
+          "dms_format": "-52d28m04.34s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 27.6227,
+          "light_years": 90.0931,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 36.1735,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -89.0458,
+          "dec": 361.603,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.13048,
@@ -8980,7 +9616,60 @@
       "y": -0.006928242861261604,
       "z": 0.021677745456128914
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky (Silicate/Iron)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 22.4,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 4.6173,
+        "y_parsecs": 4.6924,
+        "z_parsecs": -1.9618,
+        "x_light_years": 15.0596,
+        "y_light_years": 15.3047,
+        "z_light_years": -6.3987,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 45.4624781,
+          "hours_format": "03h01m50.99s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -16.5944956,
+          "dms_format": "-16d35m40.18s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 6.8693,
+          "light_years": 22.4046,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 145.547,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -369.196,
+          "dec": -268.51,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.13075,
@@ -9671,7 +10360,60 @@
       "y": -0.015766786491074082,
       "z": -0.01965102459107751
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky (Silicate/Iron)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 51.56,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": -6.5248,
+        "y_parsecs": -11.1113,
+        "z_parsecs": 9.16,
+        "x_light_years": -21.2811,
+        "y_light_years": -36.2403,
+        "z_light_years": 29.8758,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 239.5775678,
+          "hours_format": "15h58m18.62s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 35.4081141,
+          "dms_format": "+35d24m29.21s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 15.8095,
+          "light_years": 51.5636,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 63.224,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -143.277,
+          "dec": 318.219,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.13152,
@@ -10362,7 +11104,60 @@
       "y": -0.0038994636138398172,
       "z": 0.04507137297070721
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky-Ice Mix",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 32.63,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": -1.5401,
+        "y_parsecs": 9.4138,
+        "z_parsecs": 3.0197,
+        "x_light_years": -5.0233,
+        "y_light_years": 30.7036,
+        "z_light_years": 9.8491,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 99.2915429,
+          "hours_format": "06h37m09.97s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 17.5662696,
+          "dms_format": "+17d33m58.57s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 10.0055,
+          "light_years": 32.6335,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 99.9164,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -764.522,
+          "dec": 337.802,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.12491,
@@ -11053,7 +11848,60 @@
       "y": -0.005325083748378816,
       "z": -0.007412517536435933
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky-Ice Mix",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 66.45,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 6.7627,
+        "y_parsecs": -8.9977,
+        "z_parsecs": -16.9814,
+        "x_light_years": 22.057,
+        "y_light_years": -29.3466,
+        "z_light_years": -55.3857,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 306.9286462,
+          "hours_format": "20h27m42.88s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -56.4622865,
+          "dms_format": "-56d27m44.23s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 20.373,
+          "light_years": 66.4478,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 49.0558,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 424.414,
+          "dec": -1230.62,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.18302,
@@ -11744,7 +12592,60 @@
       "y": -0.19483733780948176,
       "z": -0.4879225710891717
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 20.42,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Eccentric - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": 5.8408,
+        "y_parsecs": -0.7203,
+        "z_parsecs": 2.1347,
+        "x_light_years": 19.0501,
+        "y_light_years": -2.3492,
+        "z_light_years": 6.9623,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 352.9700384,
+          "hours_format": "23h31m52.81s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 19.9370011,
+          "dms_format": "+19d56m13.20s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 6.2602,
+          "light_years": 20.4181,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 159.71,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 577.605,
+          "dec": -59.6403,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.14892,
@@ -12435,7 +13336,60 @@
       "y": -0.035156649848325346,
       "z": 0.07087397067229338
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 73.78,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 0.5931,
+        "y_parsecs": -17.551,
+        "z_parsecs": 14.2577,
+        "x_light_years": 1.9345,
+        "y_light_years": -57.2438,
+        "z_light_years": 46.5024,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 271.9355015,
+          "hours_format": "18h07m44.52s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 39.0729269,
+          "dms_format": "+39d04m22.54s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 22.6202,
+          "light_years": 73.7771,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 44.1793,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 54.3709,
+          "dec": -283.05,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.17143,
@@ -13126,7 +14080,60 @@
       "y": -0.042379415373594596,
       "z": 0.009042732080283599
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 97.96,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 0.1352,
+        "y_parsecs": -24.4223,
+        "z_parsecs": 17.4817,
+        "x_light_years": 0.441,
+        "y_light_years": -79.6549,
+        "z_light_years": 57.0175,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 270.3172389,
+          "hours_format": "18h01m16.14s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 35.5948992,
+          "dms_format": "+35d35m41.64s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 30.0346,
+          "light_years": 97.9596,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 33.266,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 29.1092,
+          "dec": -571.47,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.14317,
@@ -13817,7 +14824,60 @@
       "y": -0.06397121785850962,
       "z": 0.04461558130242269
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 80.69,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 22.3804,
+        "y_parsecs": 6.6948,
+        "z_parsecs": 8.1463,
+        "x_light_years": 72.9949,
+        "y_light_years": 21.8355,
+        "z_light_years": 26.5696,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 16.6538724,
+          "hours_format": "01h06m36.93s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 19.2249195,
+          "dms_format": "+19d13m29.71s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 24.7399,
+          "light_years": 80.6907,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 40.3917,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -41.4646,
+          "dec": -222.697,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.12786,
@@ -14508,7 +15568,60 @@
       "y": -0.017245516896339488,
       "z": 0.06672424392244569
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin N2/CO2",
+      "principal_material": "Rocky (Silicate/Iron)",
+      "toxicity_percent": 40,
+      "habitability_percent": 63,
+      "distance_to_earth_ly": 34.64,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": -2.2244,
+        "y_parsecs": 3.2326,
+        "z_parsecs": -9.8678,
+        "x_light_years": -7.2551,
+        "y_light_years": 10.5433,
+        "z_light_years": -32.1845,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 124.5328604,
+          "hours_format": "08h18m07.89s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -68.3144658,
+          "dms_format": "-68d18m52.08s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 10.6194,
+          "light_years": 34.6358,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 94.1385,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 94.7675,
+          "dec": -340.47,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11097,
@@ -15199,7 +16312,60 @@
       "y": -0.008432050202631306,
       "z": -0.026158216247761743
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky (Silicate/Iron)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 47.89,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": -6.2181,
+        "y_parsecs": -7.5271,
+        "z_parsecs": -10.9653,
+        "x_light_years": -20.2807,
+        "y_light_years": -24.5501,
+        "z_light_years": -35.7641,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 230.4401147,
+          "hours_format": "15h21m45.63s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -48.3188174,
+          "dms_format": "-48d19m07.74s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 14.682,
+          "light_years": 47.8862,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 68.0818,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -1624.05,
+          "dec": -276.024,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11758,
@@ -15890,7 +17056,60 @@
       "y": -0.08538872050869782,
       "z": -0.00037148396066110636
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Unknown",
+      "atmosphere_type": "Unknown",
+      "principal_material": "Unknown",
+      "toxicity_percent": 70,
+      "habitability_percent": 14,
+      "distance_to_earth_ly": 55.42,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": 3.6589,
+        "y_parsecs": 1.3677,
+        "z_parsecs": 16.5371,
+        "x_light_years": 11.9336,
+        "y_light_years": 4.4608,
+        "z_light_years": 53.9369,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 20.4956562,
+          "hours_format": "01h21m58.96s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 76.7101475,
+          "dms_format": "+76d42m36.53s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 16.9922,
+          "light_years": 55.4211,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 58.8216,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -34.6432,
+          "dec": -32.6602,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.1111,
@@ -16581,7 +17800,60 @@
       "y": -0.8652795920444378,
       "z": -0.03172117935712881
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 85.4,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": 17.1465,
+        "y_parsecs": 0.4741,
+        "z_parsecs": -19.7849,
+        "x_light_years": 55.9245,
+        "y_light_years": 1.5462,
+        "z_light_years": -64.5296,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 1.5836771,
+          "hours_format": "00h06m20.08s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -49.0753625,
+          "dms_format": "-49d04m31.30s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 26.1853,
+          "light_years": 85.4049,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 38.1605,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 575.03,
+          "dec": -40.6904,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.18371,
@@ -17272,7 +18544,60 @@
       "y": -14.661763380969203,
       "z": -4.084084113023828
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 58.52,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Cold Zone",
+      "coordinates_3d": {
+        "x_parsecs": -3.2533,
+        "y_parsecs": -11.7078,
+        "z_parsecs": 13.1996,
+        "x_light_years": -10.6109,
+        "y_light_years": -38.1856,
+        "z_light_years": 43.0515,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 254.4706516,
+          "hours_format": "16h57m52.96s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 47.3678558,
+          "dms_format": "+47d22m04.28s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 17.9412,
+          "light_years": 58.5163,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 55.7086,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -145.79,
+          "dec": 272.18,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11795,
@@ -17963,7 +19288,60 @@
       "y": -0.0011646017990390527,
       "z": -0.013446600306591162
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky (Silicate/Iron)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 21.3,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 3.4678,
+        "y_parsecs": -0.7158,
+        "z_parsecs": 5.4881,
+        "x_light_years": 11.3106,
+        "y_light_years": -2.3347,
+        "z_light_years": 17.8997,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 348.3372026,
+          "hours_format": "23h13m20.93s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 57.1696255,
+          "dms_format": "+57d10m10.65s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 6.5313,
+          "light_years": 21.3021,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 153.081,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 2074.52,
+          "dec": 294.936,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11395,
@@ -18654,7 +20032,60 @@
       "y": -0.5388062413538491,
       "z": 0.7567805554963795
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 98.06,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Temperate Zone",
+      "coordinates_3d": {
+        "x_parsecs": -13.0147,
+        "y_parsecs": -20.6734,
+        "z_parsecs": 17.5254,
+        "x_light_years": -42.4482,
+        "y_light_years": -67.4274,
+        "z_light_years": 57.1602,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 237.8080012,
+          "hours_format": "15h51m13.92s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 35.6558818,
+          "dms_format": "+35d39m21.17s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 30.0651,
+          "light_years": 98.0591,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 33.2328,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": -8.7916,
+          "dec": -347.766,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.12456,
@@ -19345,7 +20776,60 @@
       "y": -2.906215080137671,
       "z": 23.787864208649186
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 11.87,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Eccentric - Cold Zone",
+      "coordinates_3d": {
+        "x_parsecs": 1.7405,
+        "y_parsecs": -0.9699,
+        "z_parsecs": -3.0445,
+        "x_light_years": 5.6768,
+        "y_light_years": -3.1634,
+        "z_light_years": -9.9299,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 330.8714021,
+          "hours_format": "22h03m29.14s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -56.7969023,
+          "dms_format": "-56d47m48.85s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 3.6386,
+          "light_years": 11.8674,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 274.805,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 3967.04,
+          "dec": -2535.76,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.12511,
@@ -20036,7 +21520,60 @@
       "y": -0.03881545001256268,
       "z": -0.011197609809468493
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Super-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky (Silicate/Iron)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 97.33,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": -0.3231,
+        "y_parsecs": 16.9807,
+        "z_parsecs": -24.5382,
+        "x_light_years": -1.0537,
+        "y_light_years": 55.3834,
+        "z_light_years": -80.0327,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 91.0899861,
+          "hours_format": "06h04m21.60s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -55.3115376,
+          "dms_format": "-55d18m41.54s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 29.8424,
+          "light_years": 97.3328,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 33.4805,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 681.726,
+          "dec": 342.132,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.11059,
@@ -20727,7 +22264,60 @@
       "y": -2.529132231123104,
       "z": 0.5286525289260543
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 94.45,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Temperate Zone",
+      "coordinates_3d": {
+        "x_parsecs": -10.4071,
+        "y_parsecs": -2.2531,
+        "z_parsecs": -26.9282,
+        "x_light_years": -33.9434,
+        "y_light_years": -7.3487,
+        "z_light_years": -87.828,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 192.2159553,
+          "hours_format": "12h48m51.83s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -68.4246679,
+          "dms_format": "-68d25m28.80s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 28.9571,
+          "light_years": 94.4453,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 34.5049,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 27.2875,
+          "dec": 112.419,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.10931,
@@ -21418,7 +23008,60 @@
       "y": -0.47258567897510445,
       "z": 0.0629557399656055
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gaseous (H/He)",
+      "toxicity_percent": 80,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 64.61,
+      "satellites": {
+        "has_satellites": true,
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": -2.9808,
+        "y_parsecs": 18.4627,
+        "z_parsecs": -6.5332,
+        "x_light_years": -9.7221,
+        "y_light_years": 60.2173,
+        "z_light_years": -21.3085,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 99.171276,
+          "hours_format": "06h36m41.11s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -19.2561808,
+          "dms_format": "-19d15m22.25s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 19.8101,
+          "light_years": 64.6118,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 50.4571,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 61.9916,
+          "dec": -72.8065,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.12825,
@@ -22109,7 +23752,60 @@
       "y": -0.0013337185469761616,
       "z": -0.011986051029322221
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Sub-Earth",
+      "atmosphere_type": "Thin/None (Hot)",
+      "principal_material": "Rocky (Silicate)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 64.83,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Circular - Hot Zone",
+      "coordinates_3d": {
+        "x_parsecs": 5.6775,
+        "y_parsecs": 14.1797,
+        "z_parsecs": -12.7218,
+        "x_light_years": 18.5176,
+        "y_light_years": 46.248,
+        "z_light_years": -41.4929,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 68.1789866,
+          "hours_format": "04h32m42.96s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -39.7908744,
+          "dms_format": "-39d47m27.15s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 19.8782,
+          "light_years": 64.8339,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 50.2773,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 239.41,
+          "dec": -967.772,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   },
   {
     "objectid": 3.123,
@@ -22800,6 +24496,59 @@
       "y": -0.20470787303274565,
       "z": 0.08548056179794387
     },
-    "has_orbit": true
+    "has_orbit": true,
+    "characteristics": {
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4)",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 53.23,
+      "satellites": {
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
+      },
+      "orbit_type": "Slightly Eccentric - Habitable Zone",
+      "coordinates_3d": {
+        "x_parsecs": 4.5082,
+        "y_parsecs": 5.7186,
+        "z_parsecs": -14.6053,
+        "x_light_years": 14.7037,
+        "y_light_years": 18.6516,
+        "z_light_years": -47.6362,
+        "system": "Galactic (Earth/Sun centered)",
+        "note": "Coordinates are in a galactic coordinate system with Earth at origin"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 51.7501882,
+          "hours_format": "03h27m00.05s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": -63.500166,
+          "dms_format": "-63d30m00.60s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 16.32,
+          "light_years": 53.2287,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 61.2455,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 355.084,
+          "dec": -247.46,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "ICRS is the current standard celestial coordinate system"
+      }
+    }
   }
 ]

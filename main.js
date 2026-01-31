@@ -14,6 +14,10 @@ import { LoadingManager } from './src/utils/LoadingManager.js';
 import { TeleportManager } from './src/utils/TeleportManager.js';
 import { PlanetSelector } from './src/controls/PlanetSelector.js';
 import { PlanetHoverInfo } from './src/utils/PlanetHoverInfo.js';
+import { PlanetExplorationDialog } from './src/ui/PlanetExplorationDialog.js';
+import OpenAIService from './src/ai/OpenAIService.js';
+import ElevenLabsService from './src/ai/ElevenLabsService.js';
+import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
 import { SpaceDust } from './src/objects/SpaceDust.js';
 
 class App {
@@ -50,6 +54,7 @@ class App {
             await this.createSceneObjects();
             await this.loadExoplanets();
             this.initPlanetSelector();
+            this.initExplorationDialog();
             this.loadingManager.completeStep('Universe');
 
             // Step 4: Start animation and finalize
@@ -89,6 +94,7 @@ class App {
             if (e.code === 'KeyT') this.togglePlanetSelector();
             if (e.code === 'KeyE') this.toggleExoplanets();
             if (e.code === 'KeyH') this.toggleUI();
+            if (e.code === 'KeyI') this.showLastClickedPlanetInfo(); // 'I' for Info
             if (e.code === 'Escape') this.closePlanetSelector();
         });
 
@@ -209,7 +215,19 @@ class App {
                             const planetData = hit.object.userData.planetData;
                             console.log('Exoplanet Selected:', planetData.pl_name);
 
-                            if (this.teleportManager) {
+                            // Store for info dialog
+                            this.lastClickedPlanet = planetData;
+
+                            // Show exploration dialog with planet info
+                            if (this.explorationDialog) {
+                                this.explorationDialog.show(planetData, (planet) => {
+                                    // Teleport callback
+                                    if (this.teleportManager) {
+                                        this.teleportManager.teleportToPlanet(planet);
+                                    }
+                                });
+                            } else if (this.teleportManager) {
+                                // Fallback to direct teleport if dialog not available
                                 this.teleportManager.teleportWithProgress(planetData);
                             }
                         } else {
@@ -399,6 +417,42 @@ class App {
         console.log('✓ Planet selector and teleport initialized');
     }
 
+    initExplorationDialog() {
+        // Initialize AI services if configured
+        let openAIService = null;
+        let elevenLabsService = null;
+
+        if (isAIConfigured()) {
+            try {
+                openAIService = new OpenAIService(CONFIG.openai.apiKey);
+                console.log('✓ OpenAI service initialized');
+            } catch (error) {
+                console.warn('⚠ OpenAI service not initialized:', error.message);
+            }
+        } else {
+            console.log('ℹ OpenAI not configured - AI descriptions disabled');
+        }
+
+        if (isNarrationConfigured()) {
+            try {
+                elevenLabsService = new ElevenLabsService(CONFIG.elevenLabs.apiKey);
+                console.log('✓ Eleven Labs service initialized');
+            } catch (error) {
+                console.warn('⚠ Eleven Labs service not initialized:', error.message);
+            }
+        } else {
+            console.log('ℹ Eleven Labs not configured - Audio narration disabled');
+        }
+
+        // Initialize exploration dialog
+        this.explorationDialog = new PlanetExplorationDialog(openAIService, elevenLabsService);
+
+        // Make it globally accessible for debugging
+        window.planetExplorationDialog = this.explorationDialog;
+
+        console.log('✓ Planet exploration dialog initialized');
+    }
+
     setupUIControls() {
         // Toggle UI button
         const toggleBtn = document.getElementById('toggle-ui-btn');
@@ -446,6 +500,18 @@ class App {
         const toggleBtn = document.getElementById('toggle-ui-btn');
         if (toggleBtn) {
             toggleBtn.style.opacity = this.uiVisible ? '1' : '0.3';
+        }
+    }
+
+    showLastClickedPlanetInfo() {
+        if (this.lastClickedPlanet && this.explorationDialog) {
+            this.explorationDialog.show(this.lastClickedPlanet, (planet) => {
+                if (this.teleportManager) {
+                    this.teleportManager.teleportToPlanet(planet);
+                }
+            });
+        } else {
+            console.log('No planet selected yet. Click on a planet first.');
         }
     }
 

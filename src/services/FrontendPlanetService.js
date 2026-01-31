@@ -261,6 +261,65 @@ Write 2 engaging paragraphs highlighting what makes this planet unique and fasci
     }
 
     /**
+     * Get planet by name with all enriched data
+     */
+    getPlanet(planetName) {
+        return this.planetsData.get(planetName);
+    }
+
+    /**
+     * Get habitability data for a planet
+     */
+    getHabitabilityData(planetName) {
+        const planet = this.planetsData.get(planetName);
+        if (!planet) return null;
+        
+        return {
+            habitability: planet.habitability || 0,
+            toxicity: planet.toxicity || 0,
+            atmosphereType: planet.atmosphereType || 'Unknown',
+            material: planet.material || 'Unknown',
+            orbitType: planet.orbitType || 'Unknown',
+            hasSatellites: planet.hasSatellites || false,
+            satelliteCount: planet.satelliteCount || 0
+        };
+    }
+
+    /**
+     * Filter planets by habitability threshold
+     */
+    getHabitablePlanets(minHabitability = 50) {
+        return Array.from(this.planetsData.values())
+            .filter(p => (p.habitability || 0) >= minHabitability)
+            .sort((a, b) => (b.habitability || 0) - (a.habitability || 0));
+    }
+
+    /**
+     * Filter planets by toxicity (lower is safer)
+     */
+    getSafePlanets(maxToxicity = 50) {
+        return Array.from(this.planetsData.values())
+            .filter(p => (p.toxicity || 100) <= maxToxicity)
+            .sort((a, b) => (a.toxicity || 100) - (b.toxicity || 100));
+    }
+
+    /**
+     * Get planets with breathable atmosphere
+     */
+    getBreathablePlanets() {
+        return Array.from(this.planetsData.values())
+            .filter(p => p.atmosphereType && p.atmosphereType.includes('Breathable'));
+    }
+
+    /**
+     * Get planets in habitable zone
+     */
+    getHabitableZonePlanets() {
+        return Array.from(this.planetsData.values())
+            .filter(p => p.orbitType && p.orbitType.includes('Habitable Zone'));
+    }
+
+    /**
      * Utility: delay
      */
     delay(ms) {
@@ -316,7 +375,7 @@ FrontendPlanetService.prototype.loadNasaData = async function () {
         const nearbyPlanets = await clusterLoader.loadNearby();
         console.log(`🪐 Loaded ${nearbyPlanets.length} nearby NASA planets`);
 
-        // Print sample info (using correct field names from FRONTEND_AGENT_README)
+        // Print sample info with enriched characteristics
         if (nearbyPlanets.length > 0) {
             console.groupCollapsed('🪐 NASA Exoplanet Data Sample (first 5)');
             console.table(nearbyPlanets.slice(0, 5).map(p => ({
@@ -324,22 +383,44 @@ FrontendPlanetService.prototype.loadNasaData = async function () {
                 Host: p.hostname,
                 Distance: (p.characteristics?.distance_to_earth_ly?.toFixed(2) || '?') + ' ly',
                 Type: p.characteristics?.radius_position || 'Unknown',
-                Habitability: (p.characteristics?.habitability_percent || 0) + '%'
+                Habitability: (p.characteristics?.habitability_percent || 0) + '%',
+                Toxicity: (p.characteristics?.toxicity_percent || 0) + '%',
+                Atmosphere: p.characteristics?.atmosphere_type || 'Unknown',
+                Material: p.characteristics?.principal_material || 'Unknown'
             })));
             console.groupEnd();
         }
 
-        // Normalize and store in our service using correct field names
+        // Normalize and store in our service with ALL enriched characteristics
         nearbyPlanets.forEach(p => {
+            const char = p.characteristics || {};
             this.planetsData.set(p.pl_name, {
-                ...p,
+                ...p, // Keep ALL original NASA data
                 name: p.pl_name, // Alias for compatibility
-                description: `Exoplanet ${p.pl_name} in the ${p.hostname} system, ${p.characteristics?.distance_to_earth_ly?.toFixed(2) || 'unknown'} light years from Earth.`,
+                description: `Exoplanet ${p.pl_name} in the ${p.hostname} system, ${char.distance_to_earth_ly?.toFixed(2) || 'unknown'} light years from Earth.`,
+                
+                // Store enriched characteristics in accessible format
+                habitability: char.habitability_percent || 0,
+                toxicity: char.toxicity_percent || 0,
+                planetType: char.radius_position || 'Unknown',
+                atmosphereType: char.atmosphere_type || 'Unknown',
+                material: char.principal_material || 'Unknown',
+                orbitType: char.orbit_type || 'Unknown',
+                hasSatellites: char.satellites?.has_satellites || false,
+                satelliteCount: char.satellites?.count || 0,
+                
+                // AI-compatible data structure
                 aiData: {
-                    composition: p.characteristics?.principal_material || 'Unknown',
-                    atmosphere: p.characteristics?.atmosphere_type || 'Unknown',
-                    surfaceTemp: p.pl_eqt ? `${p.pl_eqt} K` : 'Unknown'
-                }
+                    composition: char.principal_material || 'Unknown',
+                    atmosphere: char.atmosphere_type || 'Unknown',
+                    surfaceTemp: p.pl_eqt ? `${p.pl_eqt} K` : 'Unknown',
+                    habitability: char.habitability_percent || 0,
+                    toxicity: char.toxicity_percent || 0,
+                    orbitZone: char.orbit_type || 'Unknown'
+                },
+                
+                // 3D coordinates for rendering
+                coordinates3D: char.coordinates_3d || null
             });
         });
 

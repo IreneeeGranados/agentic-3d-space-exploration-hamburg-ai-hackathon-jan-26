@@ -155,4 +155,5 @@ Write a vivid, scientifically-inspired description that highlights the unique ch
   }
 }
 
+export { OpenAIService };
 export default OpenAIService;
