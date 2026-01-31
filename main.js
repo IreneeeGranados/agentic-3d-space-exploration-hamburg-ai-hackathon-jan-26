@@ -137,41 +137,145 @@ class App {
     }
 
     async loadNasaContent() {
-        // Dynamic import workaround if main.js is not a module or if path issues, 
-        // but here we are in a module so we should use the service instance we have.
-        // We need to wait a tiny bit for the dynamic import in the service to resolve if it hasn't already,
-        // or just call the method and let it handle the "getter" logic.
+        console.log('🚀 Loading NASA exoplanet data...');
 
-        // Give the service a moment to initialize its dynamic import
-        setTimeout(async () => {
+        try {
             const nasaPlanets = await planetService.loadNasaData();
             if (nasaPlanets && nasaPlanets.length > 0) {
                 this.renderNasaPlanets(nasaPlanets);
+            } else {
+                console.warn('No NASA planets returned');
             }
-        }, 500);
+        } catch (error) {
+            console.error('Failed to load NASA data:', error);
+        }
     }
 
     renderNasaPlanets(planets) {
-        console.log(`Rendering ${planets.length} NASA planets into scene...`);
-        import('three').then(THREE => {
-            const geometry = new THREE.SphereGeometry(0.5, 8, 8); // Simple geometry for performance
-            const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+        // Filter planets with valid 3D coordinates
+        const planetsWithCoords = planets.filter(p =>
+            p.characteristics?.coordinates_3d?.x_light_years != null
+        );
 
-            planets.forEach(p => {
-                if (p.position_3d?.current_position_au) {
-                    const pos = p.position_3d.current_position_au;
+        console.log(`🌍 Rendering ${planetsWithCoords.length} NASA planets with procedural textures...`);
 
-                    // Create mesh (consider instanced mesh for optimization if list is huge)
-                    // For now, simpler implementation
-                    // Scale down distances for visualization if needed, or keeping real scale
-                    const mesh = new THREE.Mesh(geometry, material);
-                    mesh.position.set(pos.x, pos.y, pos.z);
-                    mesh.userData = { isNasaPlanet: true, name: p.name, data: p };
+        // Store NASA planet objects for later reference (search, fly-to, etc.)
+        this.nasaPlanets = [];
+        this.nasaPlanetMeshes = new Map();
 
-                    this.sceneManager.add(mesh);
-                }
+        // Scale factor: Convert light-years to scene units
+        // Original planets orbit at 40-260 units from center
+        // Nearby exoplanets are 0-100 light-years away
+        // Scale: 1 light-year = 3 units (so 100 ly = 300 units, spread nicely)
+        const SCALE_FACTOR = 3;
+
+        planetsWithCoords.forEach((p, index) => {
+            const coords = p.characteristics.coordinates_3d;
+            const chars = p.characteristics;
+
+            // Determine planet type based on radius_position
+            let planetType = 'rocky';
+            let color = 0x888888;
+            let detailColor = 0x666666;
+            let gasColors = null;
+            let radius = 2;
+
+            const radiusPos = chars.radius_position;
+
+            if (radiusPos === 'Jupiter-like') {
+                planetType = 'gasGiant';
+                gasColors = this.getGasGiantColors(chars.habitability_percent);
+                radius = 5 + Math.random() * 2;
+            } else if (radiusPos === 'Neptune-like') {
+                planetType = 'iceGiant';
+                color = this.getIceGiantColor(chars.habitability_percent);
+                radius = 3.5 + Math.random() * 1.5;
+            } else if (radiusPos === 'Super-Earth') {
+                planetType = 'rocky';
+                const colors = this.getRockyColors(chars.habitability_percent, chars.toxicity_percent);
+                color = colors.base;
+                detailColor = colors.detail;
+                radius = 2.5 + Math.random() * 1;
+            } else {
+                // Sub-Earth or Unknown
+                planetType = 'rocky';
+                const colors = this.getRockyColors(chars.habitability_percent, chars.toxicity_percent);
+                color = colors.base;
+                detailColor = colors.detail;
+                radius = 1.5 + Math.random() * 1;
+            }
+
+            // Create planet using Planet class
+            const planet = new Planet({
+                name: p.pl_name,
+                planetType: planetType,
+                radius: radius,
+                color: color,
+                detailColor: detailColor,
+                gasColors: gasColors,
+                position: {
+                    x: coords.x_light_years * SCALE_FACTOR,
+                    y: coords.y_light_years * SCALE_FACTOR,
+                    z: coords.z_light_years * SCALE_FACTOR
+                },
+                orbitRadius: 0, // Static position
+                orbitSpeed: 0,
+                rotationSpeed: 0.002 + Math.random() * 0.008,
+                tilt: Math.random() * 0.5
             });
+
+            // Store reference data
+            planet.mesh.userData = {
+                type: 'nasaPlanet',
+                isNasaPlanet: true,
+                name: p.pl_name,
+                hostname: p.hostname,
+                data: p
+            };
+
+            this.sceneManager.add(planet.group);
+            this.nasaPlanets.push(planet);
+            this.nasaPlanetMeshes.set(p.pl_name, planet.mesh);
         });
+
+        console.log(`✅ Rendered ${this.nasaPlanetMeshes.size} NASA exoplanets with realistic visuals`);
+    }
+
+    // Color helpers for planet generation
+    getRockyColors(habitability, toxicity) {
+        if (habitability > 60) {
+            // Earth-like (blue/green)
+            return { base: 0x4a90e2, detail: 0x2d8a5a };
+        } else if (habitability > 30) {
+            // Mars-like (red/orange)
+            return { base: 0xcd5c5c, detail: 0x8b3a3a };
+        } else if (toxicity > 70) {
+            // Venus-like (yellow/orange)
+            return { base: 0xffc649, detail: 0xe6b85c };
+        } else {
+            // Mercury-like (gray/brown)
+            return { base: 0x8c7853, detail: 0x6b5d4f };
+        }
+    }
+
+    getGasGiantColors(habitability) {
+        if (habitability > 40) {
+            // Saturn-like (golden)
+            return [0xfad5a5, 0xf4c78a, 0xe8b975, 0xd4a05a];
+        } else {
+            // Jupiter-like (orange/brown)
+            return [0xc88b3a, 0xe6a85c, 0xf4d7a8, 0xd4a05a];
+        }
+    }
+
+    getIceGiantColor(habitability) {
+        if (habitability > 30) {
+            // Uranus-like (cyan)
+            return 0x4fd0e7;
+        } else {
+            // Neptune-like (blue)
+            return 0x4169e1;
+        }
     }
 
 
@@ -185,12 +289,14 @@ class App {
             this.universe.update();
         }
 
-        // Update all planets
+        // Update all planets (including NASA planets)
         if (this.planets) {
             this.planets.forEach(planet => planet.update());
         }
+        if (this.nasaPlanets) {
+            this.nasaPlanets.forEach(planet => planet.update());
+        }
 
-        // Control spacecraft
         // Control spacecraft
         if (this.spacecraft) {
             // Steer spacecraft with keyboard and mouse
@@ -232,15 +338,162 @@ class App {
         this.rendererManager.updateSize(this.canvas);
     }
 
+    setupSearch() {
+        const searchInput = document.getElementById('planet-search');
+        const searchResults = document.getElementById('search-results');
+
+        if (!searchInput || !searchResults) return;
+
+        let debounceTimer;
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const query = e.target.value.trim().toLowerCase();
+
+            if (query.length < 2) {
+                searchResults.classList.remove('active');
+                searchResults.innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                this.performSearch(query);
+            }, 200);
+        });
+
+        // Hide results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.remove('active');
+            }
+        });
+
+        // Show results when focusing on input
+        searchInput.addEventListener('focus', () => {
+            if (searchResults.innerHTML) {
+                searchResults.classList.add('active');
+            }
+        });
+    }
+
+    performSearch(query) {
+        const searchResults = document.getElementById('search-results');
+        if (!this.nasaPlanetMeshes || this.nasaPlanetMeshes.size === 0) {
+            searchResults.innerHTML = '<div class="search-result-item">Loading planets...</div>';
+            searchResults.classList.add('active');
+            return;
+        }
+
+        // Search through loaded planets
+        const matches = [];
+        this.nasaPlanetMeshes.forEach((mesh, name) => {
+            if (name.toLowerCase().includes(query) ||
+                mesh.userData.hostname?.toLowerCase().includes(query)) {
+                matches.push({ name, mesh, data: mesh.userData.data });
+            }
+        });
+
+        // Limit results
+        const limited = matches.slice(0, 10);
+
+        if (limited.length === 0) {
+            searchResults.innerHTML = '<div class="search-result-item">No planets found</div>';
+        } else {
+            searchResults.innerHTML = limited.map(m => {
+                const chars = m.data?.characteristics || {};
+                const habitability = chars.habitability_percent || 0;
+                let badgeClass = 'habitability-low';
+                if (habitability > 60) badgeClass = 'habitability-high';
+                else if (habitability > 30) badgeClass = 'habitability-medium';
+
+                return `
+                    <div class="search-result-item" data-planet="${m.name}">
+                        <div class="planet-name">
+                            ${m.name}
+                            <span class="habitability-badge ${badgeClass}">${habitability}%</span>
+                        </div>
+                        <div class="planet-details">
+                            Host: ${m.data?.hostname || 'Unknown'} | 
+                            ${chars.distance_to_earth_ly?.toFixed(1) || '?'} ly | 
+                            ${chars.radius_position || 'Unknown type'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers
+            searchResults.querySelectorAll('.search-result-item[data-planet]').forEach(item => {
+                item.addEventListener('click', () => {
+                    const planetName = item.dataset.planet;
+                    this.flyToPlanet(planetName);
+                    searchResults.classList.remove('active');
+                    document.getElementById('planet-search').value = planetName;
+                });
+            });
+        }
+
+        searchResults.classList.add('active');
+    }
+
+    flyToPlanet(planetName) {
+        const mesh = this.nasaPlanetMeshes?.get(planetName);
+        if (!mesh) {
+            console.warn(`Planet ${planetName} not found`);
+            return;
+        }
+
+        // Get world position of the mesh using THREE.Vector3
+        import('three').then(THREE => {
+            const targetPos = mesh.getWorldPosition(new THREE.Vector3());
+            console.log(`🚀 Flying to ${planetName} at`, targetPos);
+
+            // Move spacecraft to planet location (with offset so we don't land inside it)
+            if (this.spacecraft) {
+                // Offset slightly so we approach from a viewable distance
+                const offset = 20; // 20 units offset
+                this.spacecraft.group.position.set(
+                    targetPos.x + offset,
+                    targetPos.y + offset,
+                    targetPos.z + offset
+                );
+
+                // Make spacecraft face the planet
+                this.spacecraft.group.lookAt(targetPos);
+            }
+
+            // Update planet info panel
+            const infoEl = document.getElementById('planet-info');
+            if (infoEl && mesh.userData.data) {
+                const p = mesh.userData.data;
+                const chars = p.characteristics || {};
+                infoEl.innerHTML = `
+                    <strong>${p.pl_name}</strong><br>
+                    Host Star: ${p.hostname}<br>
+                    Distance: ${chars.distance_to_earth_ly?.toFixed(2) || '?'} light-years<br>
+                    Type: ${chars.radius_position || 'Unknown'}<br>
+                    Habitability: ${chars.habitability_percent || 0}%
+                `;
+            }
+        });
+    }
+
     dispose() {
         this.planets?.forEach(planet => planet.dispose());
+        this.nasaPlanets?.forEach(planet => planet.dispose());
         this.rendererManager.dispose();
     }
 }
 
+// Store app instance globally for debugging
+let appInstance = null;
+
 // Initialize application when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new App());
+    document.addEventListener('DOMContentLoaded', () => {
+        appInstance = new App();
+        appInstance.setupSearch();
+    });
 } else {
-    new App();
+    appInstance = new App();
+    appInstance.setupSearch();
 }
