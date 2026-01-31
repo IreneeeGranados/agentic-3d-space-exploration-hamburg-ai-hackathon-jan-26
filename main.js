@@ -5,7 +5,7 @@ import { RendererManager } from './src/core/Renderer.js';
 import { Planet } from './src/objects/Planet.js';
 import { Star } from './src/objects/Star.js';
 import { StarField } from './src/objects/StarField.js';
-import { PLANETS_DATA } from './src/config/planets.js';
+import { PLANETS_DATA, loadSolarSystemPlanets } from './src/config/planets.js';
 import { Universe } from './src/objects/Universe.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { PlanetDataService } from './src/services/PlanetDataService.js';
@@ -44,9 +44,8 @@ class App {
             this.setupMouse();
             this.loadingManager.completeStep('Controls');
 
-            // Step 3: Create scene objects
             this.loadingManager.updateStatus('Building Universe', 'Creating stars and planets...');
-            this.createSceneObjects();
+            await this.createSceneObjects();
             await this.loadExoplanets();
             this.initPlanetSelector();
             this.loadingManager.completeStep('Universe');
@@ -293,7 +292,7 @@ class App {
         }
     }
 
-    createSceneObjects() {
+    async createSceneObjects() {
         // Create the universe background
         this.universe = new Universe(4000);
         this.sceneManager.add(this.universe.mesh);
@@ -310,14 +309,19 @@ class App {
         });
         this.sceneManager.add(sun.mesh);
 
-        // Create solar system planets (the 8 original planets)
-        this.planets = PLANETS_DATA.map(planetData => {
+        // Load solar system planets from dataset
+        console.log('🌍 Loading solar system planet data from dataset...');
+        const planetsData = await loadSolarSystemPlanets();
+
+        // Create solar system planets with accurate dimensions from dataset
+        this.planets = planetsData.map(planetData => {
+            console.log(`  ✓ ${planetData.name}: radius=${planetData.radius.toFixed(3)} (${planetData.datasetValues?.pl_rade || 'N/A'} Earth radii)`);
             const planet = new Planet(planetData);
             this.sceneManager.add(planet.group);
             return planet;
         });
 
-        console.log(`✓ Created ${this.planets.length} solar system planets`);
+        console.log(`✓ Created ${this.planets.length} solar system planets with dataset dimensions`);
 
         // Create spacecraft
         this.spacecraft = new Spacecraft();
@@ -550,7 +554,9 @@ class App {
 
 // Initialize application when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new App());
+    document.addEventListener('DOMContentLoaded', () => {
+        window.app = new App();
+    });
 } else {
-    new App();
+    window.app = new App();
 }
