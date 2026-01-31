@@ -30,6 +30,10 @@ class App {
         this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
         this.setupControls();
 
+        // Mouse state for steering
+        this.mouse = { x: 0, y: 0 };
+        this.setupMouse();
+
         // Create scene objects
         this.createSceneObjects();
 
@@ -44,8 +48,8 @@ class App {
 
     setupControls() {
         window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.up = true; // Pitch down (dive)
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = true; // Pitch up (climb)
+            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.up = true;
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = true;
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = true;
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
         });
@@ -55,6 +59,46 @@ class App {
             if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = false;
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = false;
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = false;
+        });
+    }
+
+    setupMouse() {
+        // Track mouse position relative to center (for steering)
+        this.canvas.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            // Normalize -1 to 1 based on distance from center
+            // Sensitive zone: full steering at 50% distance to edge
+            this.mouse.x = (e.clientX - rect.left - centerX) / (centerX * 0.8);
+            this.mouse.y = (e.clientY - rect.top - centerY) / (centerY * 0.8);
+
+            // Clamp to -1 to 1
+            this.mouse.x = Math.max(-1, Math.min(1, this.mouse.x));
+            this.mouse.y = Math.max(-1, Math.min(1, this.mouse.y));
+
+            // Update visual cursor
+            const cursor = document.getElementById('flight-cursor');
+            if (cursor) {
+                cursor.style.left = `${e.clientX}px`;
+                cursor.style.top = `${e.clientY}px`;
+
+                // Add active style if steering hard
+                if (Math.abs(this.mouse.x) > 0.3 || Math.abs(this.mouse.y) > 0.3) {
+                    cursor.classList.add('flight-cursor-active');
+                } else {
+                    cursor.classList.remove('flight-cursor-active');
+                }
+            }
+        });
+
+        // Hide default cursor on canvas hover
+        this.canvas.style.cursor = 'none';
+
+        // Handle pointer lock click (optional, but good for immersive flight)
+        this.canvas.addEventListener('click', () => {
+            this.canvas.requestPointerLock();
         });
     }
 
@@ -103,9 +147,10 @@ class App {
         }
 
         // Control spacecraft
+        // Control spacecraft
         if (this.spacecraft) {
-            // Steer spacecraft with keyboard
-            this.spacecraft.steer(this.keys, deltaTime);
+            // Steer spacecraft with keyboard and mouse
+            this.spacecraft.steer(this.keys, deltaTime, this.mouse);
 
             // Update spacecraft animation
             this.spacecraft.update(deltaTime);

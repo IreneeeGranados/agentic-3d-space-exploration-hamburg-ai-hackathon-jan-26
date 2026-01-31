@@ -93,23 +93,35 @@ export class Spacecraft {
     }
 
     /**
-     * Steer spacecraft with arrow keys/WASD
+     * Steer spacecraft with arrow keys/WASD and mouse
      */
-    steer(keys, deltaTime) {
-        // Calculate steering direction
-        const steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);  // Left/Right
-        const steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);      // Up/Down
+    steer(keys, deltaTime, mouseInput = { x: 0, y: 0 }) {
+        // Calculate steering direction from keys
+        let steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+        let steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
+
+        // Add mouse influence (if mouse is active)
+        // Mouse X controls Yaw (turn left/right)
+        // Mouse Y controls Pitch (turn up/down)
+        if (Math.abs(mouseInput.x) > 0.1) steerX -= mouseInput.x * 2; // Mouse moves cursor, ship follows
+        if (Math.abs(mouseInput.y) > 0.1) steerY += mouseInput.y * 2; // Inverted Y for natural flight feel? Or standard?
+        // Let's use: Mouse Up -> Pitch Down (like plane stick push) -> steerY positive?
+        // Wait: keys.up = Pitch Down?
+        // Logic: rotateZ negative rotates "Up" relative to standard?
+        // Let's stick to simple: Mouse moves to point on screen, ship turns towards it.
 
         // Apply steering rotation
         const rotSpeed = 1.2 * deltaTime;
 
-        if (steerY !== 0) {
-            // Pitch (up/down)
-            this.group.rotateZ(-steerY * rotSpeed);
+        // Pitch (up/down)
+        // If steerY is positive (Up key/Mouse Up), we pitch UP
+        if (Math.abs(steerY) > 0.01) {
+            this.group.rotateZ(steerY * rotSpeed);
         }
 
-        if (steerX !== 0) {
-            // Yaw (left/right)
+        // Yaw (left/right)
+        // If steerX is positive (Right key/Mouse Right), we turn RIGHT
+        if (Math.abs(steerX) > 0.01) {
             this.group.rotateY(-steerX * rotSpeed);
         }
 
