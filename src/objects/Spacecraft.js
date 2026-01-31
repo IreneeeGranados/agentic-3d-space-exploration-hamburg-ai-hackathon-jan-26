@@ -4,7 +4,8 @@
  */
 
 import * as THREE from 'three';
-
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 export class Spacecraft {
     constructor() {
@@ -34,6 +35,9 @@ export class Spacecraft {
         // Animation
         this.animationTime = 0;
 
+        // View Mode
+        this.viewMode = 'CHASE'; // 'CHASE' or 'COCKPIT'
+
         this.createSpacecraft();
     }
 
@@ -42,246 +46,96 @@ export class Spacecraft {
         this.mesh = new THREE.Group();
         this.group.add(this.mesh);
 
-        // Generate textures
-        this.panelTexture = this.generatePanelTexture(512, '#cfcfcf');
+        this.loadModel();
 
-        // Create Modules
-        this.createHull();
-        this.createSolarPanels();
+        // Add FX immediately (will be attached to mesh, so they move with it)
         this.createEngines();
-        this.createAntenna();
-        this.createRadiators();
         this.createNavLights();
-
-        // Rotate entire ship to face +X
-        this.mesh.rotation.y = -Math.PI / 2;
     }
 
-    createHull() {
-        // Materials
-        const hullMat = new THREE.MeshStandardMaterial({
-            map: this.panelTexture,
-            roughness: 0.4,
-            metalness: 0.8,
-            bumpMap: this.panelTexture,
-            bumpScale: 0.02
+    loadModel() {
+        const loader = new GLTFLoader();
+
+        // Setup Draco Loader for compressed meshes
+        const dracoLoader = new DRACOLoader();
+        // Use CDN for Draco decoders to avoid needing local files
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+        loader.setDRACOLoader(dracoLoader);
+
+        loader.load('assets/space_shuttle.glb', (gltf) => {
+            console.log('Spacecraft Model Loaded');
+            const model = gltf.scene;
+
+            // Adjust Scale - Shuttles are big, but we need to fit the scene scale
+            model.scale.set(1.5, 1.5, 1.5);
+
+            // Rotate to point forward
+            // The model likely faces +Z. We want it to align with our local +Z (which then gets rotated to +X)
+            // Removing the 180 flip should fix the "flying backwards" issue.
+            model.rotation.y = 0;
+
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    // Ensure materials look good
+                    if (child.material) {
+                        child.material.metalness = 0.6;
+                        child.material.roughness = 0.4;
+                    }
+                }
+            });
+
+            this.mesh.add(model);
+
+            // Adjust orientation of container if needed
+            this.mesh.rotation.y = -Math.PI / 2; // Face +X global
+
+        }, undefined, (error) => {
+            console.error('An error occurred loading the spacecraft:', error);
         });
-
-        const darkMat = new THREE.MeshStandardMaterial({
-            color: 0x333333,
-            roughness: 0.6,
-            metalness: 0.5
-        });
-
-        const windowMat = new THREE.MeshPhysicalMaterial({
-            color: 0x88ccff,
-            metalness: 0.9,
-            roughness: 0.1,
-            transmission: 0.5,
-            thickness: 0.5
-        });
-
-        // 1. Command Module (Front)
-        const cmdGeo = new THREE.ConeGeometry(1.5, 3, 32);
-        const cmdMod = new THREE.Mesh(cmdGeo, hullMat);
-        cmdMod.rotation.x = -Math.PI / 2;
-        cmdMod.position.z = 6; // Front
-        this.mesh.add(cmdMod);
-
-        // Cockpit Windows
-        const winGeo = new THREE.SphereGeometry(0.8, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.3);
-        const window = new THREE.Mesh(winGeo, windowMat);
-        window.rotation.x = -Math.PI / 2;
-        window.position.set(0, 0.8, 6.5);
-        this.mesh.add(window);
-
-        // 2. Service Module (Center)
-        const svcGeo = new THREE.CylinderGeometry(1.8, 1.8, 5, 32);
-        const svcMod = new THREE.Mesh(svcGeo, hullMat);
-        svcMod.rotation.x = -Math.PI / 2;
-        svcMod.position.z = 2;
-        this.mesh.add(svcMod);
-
-        // 3. Propulsion Link (Neck)
-        const neckGeo = new THREE.CylinderGeometry(1.2, 1.2, 2, 16);
-        const neck = new THREE.Mesh(neckGeo, darkMat);
-        neck.rotation.x = -Math.PI / 2;
-        neck.position.z = -1.5;
-        this.mesh.add(neck);
-
-        // 4. Engineering Module (Rear)
-        const engGeo = new THREE.CylinderGeometry(2, 1.5, 4, 32);
-        const engMod = new THREE.Mesh(engGeo, hullMat);
-        engMod.rotation.x = -Math.PI / 2;
-        engMod.position.z = -4.5;
-        this.mesh.add(engMod);
-    }
-
-    createSolarPanels() {
-        const panelMat = new THREE.MeshStandardMaterial({
-            color: 0x112244,
-            roughness: 0.2,
-            metalness: 0.9,
-            emissive: 0x001133,
-            emissiveIntensity: 0.2,
-            side: THREE.DoubleSide
-        });
-
-        const rodMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
-
-        // Array geometry
-        const panelGeo = new THREE.BoxGeometry(12, 0.1, 3);
-
-        // Left Array
-        const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), rodMat);
-        leftArm.position.set(-3.5, 0, 2);
-        leftArm.rotation.z = Math.PI / 2;
-        this.mesh.add(leftArm);
-
-        const leftPanel = new THREE.Mesh(panelGeo, panelMat);
-        leftPanel.position.set(-0, 0, 0); // Relative to pivot
-
-        // Pivot for rotation
-        this.leftPanelPivot = new THREE.Group();
-        this.leftPanelPivot.position.set(-6, 0, 2);
-        this.leftPanelPivot.add(leftPanel);
-        this.mesh.add(this.leftPanelPivot);
-
-        // Right Array
-        const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 4), rodMat);
-        rightArm.position.set(3.5, 0, 2);
-        rightArm.rotation.z = Math.PI / 2;
-        this.mesh.add(rightArm);
-
-        const rightPanel = new THREE.Mesh(panelGeo, panelMat);
-        rightPanel.position.set(0, 0, 0);
-
-        this.rightPanelPivot = new THREE.Group();
-        this.rightPanelPivot.position.set(6, 0, 2);
-        this.rightPanelPivot.add(rightPanel);
-        this.mesh.add(this.rightPanelPivot);
     }
 
     createEngines() {
-        const engineMat = new THREE.MeshStandardMaterial({
-            color: 0x333333,
-            roughness: 0.5,
-            metalness: 0.7
-        });
-
+        // Adjust engine glow positions for the shuttle
         const glowMat = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
             transparent: true,
             opacity: 0.8
         });
 
-        // Main Thruster
-        const mainNozzle = new THREE.Mesh(new THREE.ConeGeometry(1.2, 1.5, 32, 1, true), engineMat);
-        mainNozzle.rotation.x = Math.PI / 2; // Point back
-        mainNozzle.position.z = -7;
-        this.mesh.add(mainNozzle);
+        // Main Engines (3 main engines on shuttle)
+        this.mainGlow = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2, 32), glowMat);
+        this.mainGlow.rotation.x = Math.PI / 2;
+        this.mainGlow.position.set(0, 0, -6.5); // Rear
+        this.mesh.add(this.mainGlow);
 
-        // Glow
-        const mainGlow = new THREE.Mesh(new THREE.ConeGeometry(1.0, 1.4, 32), glowMat);
-        mainGlow.rotation.x = Math.PI / 2;
-        mainGlow.position.z = -7.2;
-        this.mesh.add(mainGlow);
-        this.mainGlow = mainGlow;
-
-        // 4x Secondary Thrusters
         this.secondaryGlows = [];
-        const pos = [
-            { x: 1.2, y: 1.2 }, { x: -1.2, y: 1.2 },
-            { x: 1.2, y: -1.2 }, { x: -1.2, y: -1.2 }
-        ];
+        // Two OMS pods
+        const leftOMS = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1, 16), glowMat);
+        leftOMS.rotation.x = Math.PI / 2;
+        leftOMS.position.set(1.5, 1.5, -6);
+        this.mesh.add(leftOMS);
+        this.secondaryGlows.push(leftOMS);
 
-        pos.forEach(p => {
-            const nozzle = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.8, 16, 1, true), engineMat);
-            nozzle.rotation.x = Math.PI / 2;
-            nozzle.position.set(p.x, p.y, -6.5);
-            this.mesh.add(nozzle);
-
-            const glow = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 16), glowMat);
-            glow.rotation.x = Math.PI / 2;
-            glow.position.set(p.x, p.y, -6.6);
-            this.mesh.add(glow);
-            this.secondaryGlows.push(glow);
-        });
-    }
-
-    createAntenna() {
-        // Dish
-        const dishGeo = new THREE.SphereGeometry(1, 32, 16, 0, Math.PI * 2, 0, 0.6);
-        const dishMat = new THREE.MeshStandardMaterial({
-            color: 0xeeeeee,
-            roughness: 0.5,
-            metalness: 0.2,
-            side: THREE.DoubleSide
-        });
-        const dish = new THREE.Mesh(dishGeo, dishMat);
-        dish.position.set(0, 1.8, 2);
-        dish.rotation.x = -Math.PI / 4;
-        this.mesh.add(dish);
-
-        // Feed
-        const feed = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1), dishMat);
-        feed.rotation.x = Math.PI / 2;
-        feed.position.set(0, 0, 0.5);
-        dish.add(feed);
-    }
-
-    createRadiators() {
-        const radMat = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            roughness: 0.3,
-            metalness: 0.1,
-            emissive: 0xffffff,
-            emissiveIntensity: 0.1
-        });
-
-        // Vertical radiator fins on Engineering module
-        const finGeo = new THREE.BoxGeometry(0.2, 4, 3);
-
-        const topFin = new THREE.Mesh(finGeo, radMat);
-        topFin.position.set(0, 2.5, -4.5);
-        this.mesh.add(topFin);
-
-        const bottomFin = new THREE.Mesh(finGeo, radMat);
-        bottomFin.position.set(0, -2.5, -4.5);
-        this.mesh.add(bottomFin);
+        const rightOMS = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1, 16), glowMat);
+        rightOMS.rotation.x = Math.PI / 2;
+        rightOMS.position.set(-1.5, 1.5, -6);
+        this.mesh.add(rightOMS);
+        this.secondaryGlows.push(rightOMS);
     }
 
     createNavLights() {
-        // Navigation Lights (Red=Port/Left, Green=Starboard/Right)
-        // Since mesh is rotated -90 Y:
-        // Local +Z is Ship Front
-        // Local +Y is Ship Top
-        // Local +X is Ship Right (Starboard)
-        // Local -X is Ship Left (Port)
-
-        // Wait, I rotated mesh -PI/2 Y.
-        // So global X+ is Forward.
-        // Mesh local Z+ was Front. 
-        // Let's stick to module coordinates: 
-        // Command Module is at Z=6 (Front).
-        // Left is X+? No.
-
-        // Let's visualize: 
-        // Mesh Z axis: Eng(-4.5) -> Cmd(6)
-        // Mesh Y axis: Up
-        // Mesh X axis: Side
-
-        // Port (Left) -> Red. If looking forward (Z+), Left is X+.
+        // Port (Red) - Left Wingtip
         const portLight = new THREE.PointLight(0xff0000, 1, 5);
-        portLight.position.set(2, 0, 3); // Left side
+        portLight.position.set(4, -0.5, 2);
         this.mesh.add(portLight);
 
-        // Starboard (Right) -> Green.
+        // Starboard (Green) - Right Wingtip
         const starboardLight = new THREE.PointLight(0x00ff00, 1, 5);
-        starboardLight.position.set(-2, 0, 3); // Right side
+        starboardLight.position.set(-4, -0.5, 2);
         this.mesh.add(starboardLight);
 
-        // Blinking mesh for visibility
         const bulbGeo = new THREE.SphereGeometry(0.1);
         const redMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         const greenMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -308,6 +162,16 @@ export class Spacecraft {
             this.autopilot.enabled = false;
             this.autopilot.target = null;
             this.forwardSpeed = this.defaultSpeed;
+        }
+    }
+
+    toggleView() {
+        if (this.viewMode === 'CHASE') {
+            this.viewMode = 'COCKPIT';
+            console.log('Switched to Cockpit View');
+        } else {
+            this.viewMode = 'CHASE';
+            console.log('Switched to Chase View');
         }
     }
 
@@ -375,10 +239,9 @@ export class Spacecraft {
         let steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
         let steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
 
-        // Add mouse influence (FIXED DIRECTION)
-        // Increased deadzone to prevent accidental drift
-        if (Math.abs(mouseInput.x) > 0.15) steerX += mouseInput.x * 2;
-        if (Math.abs(mouseInput.y) > 0.15) steerY -= mouseInput.y * 2;
+        // Mouse Influence removed per user request.
+        // Navigation is now Keyboard-only (WASD/Arrows).
+        // if (this.viewMode !== 'COCKPIT') { ... }
 
         // Apply steering rotation
         // Reduced rotation speed for smoother handling at low speeds
@@ -393,22 +256,42 @@ export class Spacecraft {
         if (Math.abs(steerX) > 0.01) {
             this.group.rotateY(-steerX * rotSpeed);
         }
+
+        // Visual Banking (Roll)
+        // Bank the mesh into the turn. Steer Right (+steerX) -> Bank Right (Rotate -X local to mesh?).
+        // Mesh X axis is perpendicular to Forward (+X global).
+        // Let's rotate the mesh around its local X axis to bank.
+        const targetBank = -steerX * 0.5; // Max 0.5 rad bank
+        this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, targetBank, deltaTime * 2);
     }
 
     /**
      * Update camera to follow spacecraft (behind view)
      */
     updateCamera(camera) {
-        // Camera position: behind and slightly above
-        const offset = new THREE.Vector3(-25, 8, 0);
+        let offset;
+        let lookAhead;
+
+        if (this.viewMode === 'COCKPIT') {
+            // First Person: Position slightly in front of the nose
+            offset = new THREE.Vector3(15, 3, 0);
+            lookAhead = new THREE.Vector3(60, 0, 0); // Look far ahead
+        } else {
+            // Chase View (Far away)
+            // User requested "far away", placing camera significantly behind
+            offset = new THREE.Vector3(-120, 35, 0);
+            lookAhead = new THREE.Vector3(20, 0, 0);
+        }
+
         offset.applyQuaternion(this.group.quaternion);
         offset.add(this.group.position);
 
         // Smooth camera movement
-        camera.position.lerp(offset, 0.1);
+        // Increase lerp speed for cockpit for snappier feel? Or keep smooth.
+        const lerpFactor = this.viewMode === 'COCKPIT' ? 0.5 : 0.1;
+        camera.position.lerp(offset, lerpFactor);
 
-        // Look slightly ahead of spacecraft
-        const lookAhead = new THREE.Vector3(10, 0, 0);
+        // Look target
         lookAhead.applyQuaternion(this.group.quaternion);
         lookAhead.add(this.group.position);
 
@@ -430,10 +313,6 @@ export class Spacecraft {
                 glow.material.opacity = flicker * 0.8 * thrustScale;
             });
         }
-
-        // Rotate solar panels slowly
-        if (this.leftPanelPivot) this.leftPanelPivot.rotation.x = Math.sin(this.animationTime * 0.2) * 0.2;
-        if (this.rightPanelPivot) this.rightPanelPivot.rotation.x = -Math.sin(this.animationTime * 0.2) * 0.2;
 
         // Blink Nav Lights
         if (this.portBulb && this.starboardBulb) {
@@ -462,45 +341,5 @@ export class Spacecraft {
                 }
             }
         });
-    }
-
-    generatePanelTexture(size = 512, color = '#cccccc') {
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-
-        // Fill background
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, size, size);
-
-        // Draw panels
-        ctx.strokeStyle = '#aaaaaa';
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = 0.5;
-
-        const gridSize = 64;
-        for (let y = 0; y < size; y += gridSize) {
-            for (let x = 0; x < size; x += gridSize) {
-                // Random fluctuations to make it look less perfect
-                if (Math.random() > 0.2) {
-                    ctx.strokeRect(x, y, gridSize, gridSize);
-
-                    // Add little details inside
-                    if (Math.random() > 0.5) {
-                        ctx.fillStyle = '#999999';
-                        const detSize = gridSize / 4;
-                        ctx.fillRect(x + detSize, y + detSize, detSize, detSize);
-                        ctx.fillStyle = color; // Reset
-                    }
-                }
-            }
-        }
-
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-
-        return texture;
     }
 }

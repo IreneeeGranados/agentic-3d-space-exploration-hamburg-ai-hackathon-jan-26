@@ -208,11 +208,35 @@ strong {
 /* Custom Flight Cursor (Arrow) */
 .hud-controls {
     display: flex;
-    /* Kept for the text wrapper */
+    flex-direction: column;
+    gap: 5px;
     margin-top: 5px;
 }
 
-/* Removed .hud-btn styles as buttons are removed */
+.hud-btn {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    color: #00d4ff;
+    padding: 5px 10px;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 5px;
+    pointer-events: auto;
+    /* Ensure clickable */
+}
+
+.hud-btn:hover {
+    background: rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+.hud-btn:active {
+    transform: translateY(1px);
+}
 
 .flight-cursor {
     position: absolute;
@@ -259,4 +283,89 @@ strong {
 /* Hide default cursor on canvas */
 #canvas {
     cursor: none;
+}
+
+/* Cockpit Overlay */
+.cockpit-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* Let clicks pass through */
+    z-index: 50;
+    display: none;
+    /* Hidden by default */
+    background: radial-gradient(circle, transparent 60%, rgba(0, 20, 40, 0.8) 100%);
+    box-shadow: inset 0 0 100px rgba(0, 212, 255, 0.1);
+}
+
+.cockpit-overlay.visible {
+    display: block;
+}
+
+/* Window Frame */
+.cockpit-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 2px solid rgba(0, 212, 255, 0.3);
+    border-radius: 20px;
+    box-sizing: border-box;
+    /* Corner Accents */
+    clip-path: polygon(0 10%, 10% 0, 90% 0, 100% 10%,
+            100% 90%, 90% 100%, 10% 100%, 0 90%);
+}
+
+.cockpit-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(0, 255, 0, 0.5);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.cockpit-crosshair::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: rgba(0, 255, 0, 0.8);
+    transform: translate(-50%, -50%);
+}
+
+.cockpit-data-left,
+.cockpit-data-right {
+    position: absolute;
+    bottom: 20%;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12px;
+    color: rgba(0, 212, 255, 0.8);
+    text-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+}
+
+.cockpit-data-left {
+    left: 10%;
+    text-align: left;
+    border-left: 2px solid rgba(0, 212, 255, 0.5);
+    padding-left: 10px;
+}
+
+.cockpit-data-right {
+    right: 10%;
+    text-align: right;
+    border-right: 2px solid rgba(0, 212, 255, 0.5);
+    padding-right: 10px;
+}
+
+.data-line {
+    margin-bottom: 5px;
 }

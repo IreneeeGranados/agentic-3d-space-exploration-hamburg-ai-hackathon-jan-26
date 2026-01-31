@@ -140,15 +140,20 @@ class App {
             this.mouse.y = Math.max(-1, Math.min(1, this.mouse.y));
 
             // Update visual cursor position
-            cursor.style.left = `${e.clientX}px`;
-            cursor.style.top = `${e.clientY}px`;
+            if (cursor) {
+                cursor.style.left = `${e.clientX}px`;
+                cursor.style.top = `${e.clientY}px`;
 
-            // Add active style (glow red when steering hard)
-            // Tweak to match actual deadzone of 0.15
-            if (Math.abs(this.mouse.x) > 0.15 || Math.abs(this.mouse.y) > 0.15) {
-                cursor.style.borderBottomColor = '#ff0055';
-                cursor.style.filter = 'drop-shadow(0 0 15px #ff0055)';
-            } else {
+                // --- DYNAMIC CURSOR LOGIC ---
+                // In Cockpit: Cursor must be INVISIBLE (Aim with Crosshair)
+                if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
+                    cursor.style.display = 'none';
+                } else {
+                    // In Chase Mode: Always show
+                    cursor.style.display = 'block';
+                }
+
+                // Cursor Styling (Standard Blue)
                 cursor.style.borderBottomColor = '#00d4ff';
                 cursor.style.filter = 'drop-shadow(0 0 10px #00d4ff)';
             }
@@ -239,7 +244,43 @@ class App {
                 this.spacecraft.forwardSpeed = this.spacecraft.defaultSpeed;
                 console.log('Speed decreased to:', this.spacecraft.defaultSpeed);
             }
+
+            // View Toggle (V)
+            if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') {
+                console.log('V Key Pressed');
+                this.spacecraft.toggleView();
+                this.updateViewUI();
+            }
         });
+
+        // Setup UI Buttons
+        const viewBtn = document.getElementById('btn-toggle-view');
+        if (viewBtn) {
+            viewBtn.addEventListener('click', (e) => {
+                console.log('View Button Clicked');
+                // Prevent focus from sticking to button (which steals keyboard input)
+                viewBtn.blur();
+                if (this.spacecraft) {
+                    this.spacecraft.toggleView();
+                    this.updateViewUI();
+                }
+            });
+        }
+    }
+
+    updateViewUI() {
+        const overlay = document.getElementById('cockpit-overlay');
+        const cursor = document.getElementById('flight-cursor');
+
+        if (this.spacecraft.viewMode === 'COCKPIT') {
+            if (overlay) overlay.classList.add('visible');
+            // Hide standard flight cursor initially in cockpit
+            if (cursor) cursor.style.display = 'none';
+        } else {
+            if (overlay) overlay.classList.remove('visible');
+            // Show standard flight cursor in chase
+            if (cursor) cursor.style.display = 'block';
+        }
     }
 
     createSceneObjects() {
