@@ -372,16 +372,14 @@ class App {
     }
 
     togglePlanetSelector() {
-        const selector = document.getElementById('planet-selector');
-        if (selector) {
-            selector.classList.toggle('hidden');
+        if (this.planetSelector) {
+            this.planetSelector.toggle();
         }
     }
 
     closePlanetSelector() {
-        const selector = document.getElementById('planet-selector');
-        if (selector) {
-            selector.classList.add('hidden');
+        if (this.planetSelector) {
+            this.planetSelector.hide();
         }
     }
 

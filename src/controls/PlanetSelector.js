@@ -63,6 +63,11 @@ export class PlanetSelector {
 
     async loadPlanets() {
         try {
+            // Show loading message
+            if (this.planetList) {
+                this.planetList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Loading planets...</div>';
+            }
+            
             // Ensure clusters are loaded
             if (!this.dataService.clusterIndex) {
                 console.log('Initializing planet data service...');
@@ -81,15 +86,20 @@ export class PlanetSelector {
                 // Load all clusters in background
                 this.dataService.loadAllClusters().then(() => {
                     this.filteredPlanets = this.dataService.getAllPlanets();
-                    console.log(`Updated planet selector with ${this.filteredPlanets.length} total planets`);
-                    this.renderPlanetList();
+                    console.log(`✓ Updated planet selector with ${this.filteredPlanets.length} total planets`);
+                    if (this.isVisible) {
+                        this.renderPlanetList();
+                    }
                 });
             }
             
-            console.log(`Planet selector loaded ${this.filteredPlanets.length} planets`);
+            console.log(`✓ Planet selector has ${this.filteredPlanets.length} planets available`);
             this.renderPlanetList();
         } catch (error) {
-            console.error('Error loading planets:', error);
+            console.error('❌ Error loading planets:', error);
+            if (this.planetList) {
+                this.planetList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--accent-danger);">Error loading planets</div>';
+            }
         }
     }
 
@@ -132,7 +142,12 @@ export class PlanetSelector {
     }
 
     renderPlanetList() {
-        if (!this.planetList) return;
+        if (!this.planetList) {
+            console.error('❌ Planet list container not found');
+            return;
+        }
+        
+        console.log(`Rendering ${this.filteredPlanets.length} planets in list`);
         
         if (this.filteredPlanets.length === 0) {
             this.planetList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-dim);">No planets found</div>';
@@ -141,6 +156,7 @@ export class PlanetSelector {
         
         // Show first 50 planets for performance
         const planetsToShow = this.filteredPlanets.slice(0, 50);
+        console.log(`Showing first ${planetsToShow.length} planets`);
         
         this.planetList.innerHTML = planetsToShow.map(planet => {
             const chars = planet.characteristics || {};
@@ -180,6 +196,8 @@ export class PlanetSelector {
                 </div>
             `;
         }
+        
+        console.log('✓ Planet list rendered successfully');
     }
 
     selectPlanet(planet) {
@@ -304,10 +322,11 @@ export class PlanetSelector {
             this.isVisible = true;
             this.container.classList.remove('hidden');
             
-            // Reload planets if needed
-            if (this.filteredPlanets.length === 0) {
-                this.loadPlanets();
-            }
+            console.log('Opening planet selector...');
+            console.log(`Currently have ${this.filteredPlanets.length} planets loaded`);
+            
+            // Always try to load/refresh planets when showing
+            this.loadPlanets();
         }
     }
 
