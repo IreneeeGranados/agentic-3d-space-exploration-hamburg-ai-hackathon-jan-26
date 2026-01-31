@@ -35,6 +35,9 @@ export class Spacecraft {
         // Animation
         this.animationTime = 0;
 
+        // View Mode
+        this.viewMode = 'CHASE'; // 'CHASE' or 'COCKPIT'
+
         this.createSpacecraft();
     }
 
@@ -64,7 +67,7 @@ export class Spacecraft {
             const model = gltf.scene;
 
             // Adjust Scale - Shuttles are big, but we need to fit the scene scale
-            model.scale.set(0.5, 0.5, 0.5);
+            model.scale.set(1.5, 1.5, 1.5);
 
             // Rotate to point forward
             // The model likely faces +Z. We want it to align with our local +Z (which then gets rotated to +X)
@@ -159,6 +162,16 @@ export class Spacecraft {
             this.autopilot.enabled = false;
             this.autopilot.target = null;
             this.forwardSpeed = this.defaultSpeed;
+        }
+    }
+
+    toggleView() {
+        if (this.viewMode === 'CHASE') {
+            this.viewMode = 'COCKPIT';
+            console.log('Switched to Cockpit View');
+        } else {
+            this.viewMode = 'CHASE';
+            console.log('Switched to Chase View');
         }
     }
 
@@ -260,17 +273,29 @@ export class Spacecraft {
      * Update camera to follow spacecraft (behind view)
      */
     updateCamera(camera) {
-        // Camera position: behind and slightly above
-        // Moved farther back (-40) and higher (12) for better view of smaller ship
-        const offset = new THREE.Vector3(-40, 12, 0);
+        let offset;
+        let lookAhead;
+
+        if (this.viewMode === 'COCKPIT') {
+            // First Person: Position slightly in front of the nose
+            offset = new THREE.Vector3(15, 3, 0);
+            lookAhead = new THREE.Vector3(60, 0, 0); // Look far ahead
+        } else {
+            // Chase View (Far away)
+            // User requested "far away", placing camera significantly behind
+            offset = new THREE.Vector3(-120, 35, 0);
+            lookAhead = new THREE.Vector3(20, 0, 0);
+        }
+
         offset.applyQuaternion(this.group.quaternion);
         offset.add(this.group.position);
 
         // Smooth camera movement
-        camera.position.lerp(offset, 0.1);
+        // Increase lerp speed for cockpit for snappier feel? Or keep smooth.
+        const lerpFactor = this.viewMode === 'COCKPIT' ? 0.5 : 0.1;
+        camera.position.lerp(offset, lerpFactor);
 
-        // Look slightly ahead of spacecraft
-        const lookAhead = new THREE.Vector3(10, 0, 0);
+        // Look target
         lookAhead.applyQuaternion(this.group.quaternion);
         lookAhead.add(this.group.position);
 
