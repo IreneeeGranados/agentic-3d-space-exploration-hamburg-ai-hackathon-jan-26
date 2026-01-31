@@ -16,29 +16,48 @@ export class TeleportManager {
     teleportToPlanet(planetData) {
         if (!planetData) return false;
 
+        console.log('🌍 TeleportManager.teleportToPlanet called with:', planetData);
+
         let targetPosition;
         let planetName = planetData.pl_name || planetData.name || 'Unknown Planet';
+        
+        // Check if this is a solar system planet
+        const isSolarPlanet = planetData.hostname === 'Sun';
 
-        // Case 1: Exoplanet with coordinates_3d
-        if (planetData.characteristics?.coordinates_3d) {
+        // Case 1: Solar system planet with position field (in AU)
+        if (isSolarPlanet && planetData.position) {
+            console.log('📍 Solar system planet - using position field:', planetData.position);
+            // Solar system planets use position field scaled by 200 (same as ExoplanetField)
+            targetPosition = new THREE.Vector3(
+                planetData.position.x * 200,
+                planetData.position.y * 200,
+                planetData.position.z * 200
+            );
+            console.log('✓ Calculated solar system target position:', targetPosition);
+        }
+        // Case 2: Exoplanet with coordinates_3d
+        else if (planetData.characteristics?.coordinates_3d) {
             const coords = planetData.characteristics.coordinates_3d;
+            console.log('📍 Exoplanet - found coordinates_3d:', coords);
             if (coords.x_light_years !== null && coords.x_light_years !== undefined) {
-                const sceneScale = 10;
+                const sceneScale = 10; // MUST match ExoplanetField.sceneScale
                 targetPosition = new THREE.Vector3(
                     coords.x_light_years * sceneScale,
                     coords.y_light_years * sceneScale,
                     coords.z_light_years * sceneScale
                 );
+                console.log('✓ Calculated exoplanet target position:', targetPosition);
             }
         }
-
-        // Case 2: Generic object/Solar system planet (already has position)
-        if (!targetPosition && planetData.position) {
+        // Case 3: Generic position field (fallback)
+        else if (planetData.position) {
+            console.log('📍 Generic position field:', planetData.position);
             targetPosition = planetData.position.clone ? planetData.position.clone() : new THREE.Vector3(planetData.position.x, planetData.position.y, planetData.position.z);
+            console.log('✓ Using position as-is:', targetPosition);
         }
 
         if (!targetPosition) {
-            console.error('Invalid planet data for teleportation:', planetData);
+            console.error('❌ Invalid planet data for teleportation:', planetData);
             alert(`Cannot teleport to ${planetName}: No coordinates available`);
             return false;
         }

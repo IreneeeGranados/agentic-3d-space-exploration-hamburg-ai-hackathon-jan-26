@@ -129,7 +129,9 @@ export class PlanetHoverInfo {
         const content = this.infoPanel.querySelector('.hover-content');
 
         const chars = planetData.characteristics || {};
-        const distance = planetData.sy_dist ? (planetData.sy_dist * 3.262).toFixed(1) : 'Unknown';
+        const distance = planetData.sy_dist !== undefined && planetData.sy_dist !== null 
+            ? `${(planetData.sy_dist * 3.262).toFixed(4)} ly`
+            : 'Unknown';
 
         header.textContent = planetData.pl_name || 'Unknown';
 

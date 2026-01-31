@@ -245,7 +245,9 @@ export class PlanetSelector {
 
         const chars = planet.characteristics || {};
         const coords = chars.coordinates_3d || {};
-        const distance = planet.sy_dist ? (planet.sy_dist * 3.262).toFixed(2) : 'Unknown';
+        const distance = planet.sy_dist !== undefined && planet.sy_dist !== null 
+            ? `${(planet.sy_dist * 3.262).toFixed(4)} ly`
+            : 'Unknown';
 
         // Update modal header
         if (modalName) modalName.textContent = planet.pl_name || 'Unknown';

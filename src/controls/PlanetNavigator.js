@@ -3,12 +3,13 @@
  * Always visible, easy to use interface
  */
 export class PlanetNavigator {
-    constructor(planetDataService, teleportManager) {
+    constructor(planetDataService, onPlanetSelect) {
         this.dataService = planetDataService;
-        this.teleportManager = teleportManager;
+        this.onPlanetSelect = onPlanetSelect; // Callback when user clicks GO
         this.nearbyPlanets = [];
+        this.filteredPlanets = [];
         this.currentPage = 0;
-        this.planetsPerPage = 10;
+        this.planetsPerPage = 5;
         
         this.createUI();
         this.attachEventListeners();
@@ -22,8 +23,10 @@ export class PlanetNavigator {
         
         this.container.innerHTML = `
             <div class="nav-header">
-                <h2>🌍 PLANET NAVIGATOR</h2>
-                <p class="nav-subtitle">Click any planet to travel instantly</p>
+                <div>
+                    <h2>🌍 PLANET NAVIGATOR</h2>
+                    <p class="nav-subtitle">Click any planet to travel instantly</p>
+                </div>
             </div>
             
             <div class="nav-search">
@@ -80,6 +83,15 @@ export class PlanetNavigator {
 
         // Toggle minimize
         document.getElementById('nav-toggle').addEventListener('click', () => this.toggle());
+        
+        // Click container when minimized to expand
+        this.container.addEventListener('click', (e) => {
+            // Only expand if minimized and not clicking the toggle button
+            if (this.container.classList.contains('minimized') && 
+                !e.target.closest('#nav-toggle')) {
+                this.show();
+            }
+        });
     }
 
     async loadPlanets() {
@@ -88,6 +100,7 @@ export class PlanetNavigator {
             
             // Get initial count
             this.nearbyPlanets = this.dataService.getAllPlanets();
+            this.filteredPlanets = this.nearbyPlanets;
             this.renderPlanetList();
             
             // Update display every 2 seconds as more planets load
@@ -95,6 +108,7 @@ export class PlanetNavigator {
                 const currentCount = this.dataService.getAllPlanets().length;
                 if (currentCount > this.nearbyPlanets.length) {
                     this.nearbyPlanets = this.dataService.getAllPlanets();
+                    this.filteredPlanets = this.nearbyPlanets;
                     this.renderPlanetList();
                     console.log(`🗺️ Navigator updated: ${this.nearbyPlanets.length} planets`);
                 }
@@ -110,6 +124,7 @@ export class PlanetNavigator {
             
             // Final update
             this.nearbyPlanets = this.dataService.getAllPlanets();
+            this.filteredPlanets = this.nearbyPlanets;
             const stats = this.dataService.getStats();
             console.log(`✓ Navigator complete: ${this.nearbyPlanets.length} planets from ${stats.clustersLoaded} clusters`);
             this.renderPlanetList();
@@ -161,6 +176,7 @@ export class PlanetNavigator {
         } else {
             this.nearbyPlanets = this.dataService.searchByName(query);
         }
+        this.filteredPlanets = this.nearbyPlanets;
         this.currentPage = 0;
         this.renderPlanetList();
     }
@@ -183,19 +199,17 @@ export class PlanetNavigator {
                 this.nearbyPlanets = allPlanets;
         }
         
+        this.filteredPlanets = this.nearbyPlanets;
         this.currentPage = 0;
         this.renderPlanetList();
     }
 
     renderPlanetList() {
-        const listContainer = document.getElementById('nav-planet-list');
-        const start = this.currentPage * this.planetsPerPage;
-        const end = start + this.planetsPerPage;
-        const planetsToShow = this.nearbyPlanets.slice(start, end);
-
-        if (this.nearbyPlanets.length === 0) {
+        const list = document.getElementById('nav-planet-list');
+        
+        if (!this.filteredPlanets || this.filteredPlanets.length === 0) {
             const stats = this.dataService.getStats();
-            listContainer.innerHTML = `
+            list.innerHTML = `
                 <div class="nav-loading">
                     <p>⏳ Loading planets...</p>
                     <p style="font-size: 12px;">${stats.clustersLoaded} clusters loaded</p>
@@ -203,65 +217,97 @@ export class PlanetNavigator {
             `;
             return;
         }
+        
+        const startIdx = this.currentPage * this.planetsPerPage;
+        const endIdx = startIdx + this.planetsPerPage;
+        const planetsToShow = this.filteredPlanets.slice(startIdx, endIdx);
 
         if (planetsToShow.length === 0) {
-            listContainer.innerHTML = '<div class="nav-no-results">No planets found</div>';
+            list.innerHTML = '<div class="nav-no-results">No planets found</div>';
             return;
         }
 
-        listContainer.innerHTML = planetsToShow.map(planet => {
-            const chars = planet.characteristics || {};
-            const habitability = chars.habitability_percent || 0;
-            const distance = planet.sy_dist ? (planet.sy_dist * 3.262).toFixed(1) : '?';
-            const planetType = chars.radius_position || 'Unknown';
+        list.innerHTML = planetsToShow.map(planet => {
+            const name = planet.pl_name || 'Unknown Planet';
+            const distance = planet.sy_dist !== undefined && planet.sy_dist !== null 
+                ? `${planet.sy_dist.toFixed(6)} pc`
+                : 'Unknown';
+            const habitability = planet.characteristics?.habitability_percent || 0;
+            const toxicity = planet.characteristics?.toxicity_percent || 0;
+            const type = planet.characteristics?.radius_position || 'Unknown';
+            const atmosphere = planet.characteristics?.atmosphere_type || 'Unknown';
+            const material = planet.characteristics?.principal_material || 'Unknown';
+            const radius = planet.pl_rade ? `${planet.pl_rade.toFixed(2)}` : 'N/A';
+            const mass = planet.pl_bmasse ? `${planet.pl_bmasse.toFixed(2)}` : 'N/A';
             
-            const habitClass = habitability > 70 ? 'high' : habitability > 40 ? 'medium' : 'low';
-            
+            let habClass = 'low';
+            if (habitability >= 70) habClass = 'high';
+            else if (habitability >= 40) habClass = 'medium';
+
             return `
-                <div class="nav-planet-item" data-planet-name="${planet.pl_name}">
-                    <div class="nav-planet-info">
-                        <div class="nav-planet-name">${planet.pl_name}</div>
-                        <div class="nav-planet-meta">
-                            <span class="nav-distance">${distance} ly</span>
-                            <span class="nav-type">${planetType}</span>
+                <div class="nav-planet-item" data-planet="${name}">
+                    <div class="nav-planet-header">
+                        <div class="nav-planet-name">${name}</div>
+                        <button class="nav-go-btn" data-planet-name="${name}">GO →</button>
+                    </div>
+                    
+                    <div class="nav-planet-details">
+                        <div class="nav-detail-row">
+                            <span class="nav-label">📍 Distance:</span>
+                            <span class="nav-value">${distance}</span>
+                        </div>
+                        <div class="nav-detail-row">
+                            <span class="nav-label">🌍 Type:</span>
+                            <span class="nav-value">${type}</span>
+                        </div>
+                        <div class="nav-detail-row">
+                            <span class="nav-label">📏 Radius:</span>
+                            <span class="nav-value">${radius}</span>
+                        </div>
+                        <div class="nav-detail-row">
+                            <span class="nav-label">⚖️ Mass:</span>
+                            <span class="nav-value">${mass}</span>
+                        </div>
+                        <div class="nav-detail-row">
+                            <span class="nav-label">🌫️ Atmosphere:</span>
+                            <span class="nav-value nav-value-small">${atmosphere}</span>
+                        </div>
+                        <div class="nav-detail-row">
+                            <span class="nav-label">🪨 Material:</span>
+                            <span class="nav-value nav-value-small">${material}</span>
+                        </div>
+                        
+                        <div class="nav-metrics">
+                            <div class="nav-metric">
+                                <span class="nav-metric-label">Habitability</span>
+                                <div class="nav-metric-bar ${habClass}">
+                                    <div class="nav-metric-fill" style="width: ${habitability}%"></div>
+                                </div>
+                                <span class="nav-metric-value ${habClass}">${habitability}%</span>
+                            </div>
+                            <div class="nav-metric">
+                                <span class="nav-metric-label">Toxicity</span>
+                                <div class="nav-metric-bar toxicity">
+                                    <div class="nav-metric-fill" style="width: ${toxicity}%"></div>
+                                </div>
+                                <span class="nav-metric-value toxicity">${toxicity}%</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="nav-planet-hab ${habitClass}">
-                        <div class="nav-hab-bar">
-                            <div class="nav-hab-fill" style="width: ${habitability}%"></div>
-                        </div>
-                        <span class="nav-hab-text">${habitability}%</span>
-                    </div>
-                    <button class="nav-go-btn" data-planet-name="${planet.pl_name}">
-                        GO →
-                    </button>
                 </div>
             `;
         }).join('');
 
-        // Add click handlers to GO buttons
-        listContainer.querySelectorAll('.nav-go-btn').forEach(btn => {
+        // Attach GO button handlers
+        list.querySelectorAll('.nav-go-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const planetName = btn.dataset.planetName;
                 const planet = this.dataService.getPlanetByName(planetName);
-                if (planet) this.goToPlanet(planet);
+                if (planet && this.onPlanetSelect) {
+                    this.onPlanetSelect(planet);
+                }
             });
-        });
-
-        // Add click handlers to planet items (click anywhere to teleport)
-        listContainer.querySelectorAll('.nav-planet-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                // Don't trigger if clicking the GO button (it has its own handler)
-                if (e.target.classList.contains('nav-go-btn')) return;
-                
-                const planetName = item.dataset.planetName;
-                const planet = this.dataService.getPlanetByName(planetName);
-                if (planet) this.goToPlanet(planet);
-            });
-            
-            // Add hover effect
-            item.style.cursor = 'pointer';
         });
 
         // Update pagination
@@ -269,12 +315,15 @@ export class PlanetNavigator {
     }
 
     updatePagination() {
-        const totalPages = Math.ceil(this.nearbyPlanets.length / this.planetsPerPage);
+        const totalPages = Math.ceil(this.filteredPlanets.length / this.planetsPerPage);
         const pageInfo = document.getElementById('nav-page-info');
         const prevBtn = document.getElementById('nav-prev');
         const nextBtn = document.getElementById('nav-next');
 
-        pageInfo.textContent = `Page ${this.currentPage + 1} of ${totalPages} (${this.nearbyPlanets.length} planets)`;
+        const startIdx = this.currentPage * this.planetsPerPage + 1;
+        const endIdx = Math.min((this.currentPage + 1) * this.planetsPerPage, this.filteredPlanets.length);
+        
+        pageInfo.textContent = `${startIdx}-${endIdx} of ${this.filteredPlanets.length} planets`;
         prevBtn.disabled = this.currentPage === 0;
         nextBtn.disabled = this.currentPage >= totalPages - 1;
     }
@@ -287,40 +336,10 @@ export class PlanetNavigator {
     }
 
     nextPage() {
-        const totalPages = Math.ceil(this.nearbyPlanets.length / this.planetsPerPage);
+        const totalPages = Math.ceil(this.filteredPlanets.length / this.planetsPerPage);
         if (this.currentPage < totalPages - 1) {
             this.currentPage++;
             this.renderPlanetList();
-        }
-    }
-
-    goToPlanet(planet) {
-        console.log(`Navigating to ${planet.pl_name}`);
-        
-        // Validate coordinates
-        if (!planet.characteristics?.coordinates_3d?.x_light_years) {
-            alert(`Cannot navigate to ${planet.pl_name}: No coordinates available`);
-            return;
-        }
-
-        // Teleport with effect
-        this.teleportManager.teleportWithEffect(planet, () => {
-            // Update HUD
-            const hudStatus = document.getElementById('hud-status');
-            if (hudStatus) {
-                hudStatus.textContent = `Traveling to: ${planet.pl_name}`;
-            }
-        });
-
-        // Visual feedback
-        const btn = document.querySelector(`[data-planet-name="${planet.pl_name}"].nav-go-btn`);
-        if (btn) {
-            btn.textContent = '✓ GOING!';
-            btn.style.background = '#39ff14';
-            setTimeout(() => {
-                btn.textContent = 'GO →';
-                btn.style.background = '';
-            }, 2000);
         }
     }
 

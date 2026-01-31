@@ -397,7 +397,9 @@ FrontendPlanetService.prototype.loadNasaData = async function () {
             this.planetsData.set(p.pl_name, {
                 ...p, // Keep ALL original NASA data
                 name: p.pl_name, // Alias for compatibility
-                description: `Exoplanet ${p.pl_name} in the ${p.hostname} system, ${char.distance_to_earth_ly?.toFixed(2) || 'unknown'} light years from Earth.`,
+                description: p.sy_dist < 0.0001 
+                    ? `${p.pl_name} in our Solar System, ${char.distance_to_earth_ly?.toFixed(6) || 'unknown'} light years from Earth`
+                    : `Exoplanet ${p.pl_name} in the ${p.hostname} system, ${char.distance_to_earth_ly?.toFixed(2) || 'unknown'} light years from Earth.`,
                 
                 // Store enriched characteristics in accessible format
                 habitability: char.habitability_percent || 0,
