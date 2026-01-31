@@ -35,8 +35,19 @@ export async function loadSolarSystemPlanets() {
             },
             atmosphere: {
                 enabled: p.characteristics?.atmosphere_type !== 'None',
-                color: p.pl_name === 'Earth' ? 0x4a90e2 : 0xaa4422,
-                density: 0.1
+                color: p.pl_name === 'Earth' ? 0x4a90e2 : (p.pl_name === 'Mars' ? 0xaa4422 : 0xaaaaaa),
+                density: 0.1,
+                hasClouds: ['Earth', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Venus'].includes(p.pl_name)
+            },
+            rings: {
+                enabled: p.pl_name === 'Saturn',
+                innerRadius: 1.4,
+                outerRadius: 2.4,
+                color1: 0x8c7853,
+                color2: 0x4a4a4a
+            },
+            aiData: {
+                habitability: p.pl_name === 'Earth' ? 100 : 0
             },
             isSolar: true,
             pl_name: p.pl_name,
