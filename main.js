@@ -218,6 +218,7 @@ class App {
             if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') {
                 console.log('V Key Pressed');
                 this.spacecraft.toggleView();
+                this.updateViewUI();
             }
         });
 
@@ -228,8 +229,26 @@ class App {
                 console.log('View Button Clicked');
                 // Prevent focus from sticking to button (which steals keyboard input)
                 viewBtn.blur();
-                if (this.spacecraft) this.spacecraft.toggleView();
+                if (this.spacecraft) {
+                    this.spacecraft.toggleView();
+                    this.updateViewUI();
+                }
             });
+        }
+    }
+
+    updateViewUI() {
+        const overlay = document.getElementById('cockpit-overlay');
+        const cursor = document.getElementById('flight-cursor');
+
+        if (this.spacecraft.viewMode === 'COCKPIT') {
+            if (overlay) overlay.classList.add('visible');
+            // Hide standard flight cursor in cockpit (replaced by crosshair)
+            if (cursor) cursor.style.display = 'none';
+        } else {
+            if (overlay) overlay.classList.remove('visible');
+            // Show standard flight cursor in chase
+            if (cursor) cursor.style.display = 'block';
         }
     }
 
