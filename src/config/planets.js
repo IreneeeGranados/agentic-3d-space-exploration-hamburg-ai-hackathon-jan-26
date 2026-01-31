@@ -16,11 +16,22 @@ export async function loadSolarSystemPlanets() {
         const data = await response.json();
 
         // Map the dataset format to the internal Planet class format
-        return data.map(p => ({
+        // UNIFIED SCALE: Use same algorithm as ExoplanetField.js (1 Earth radius = 0.5 scene units)
+        const earthRadiusScale = 0.5;
+        const sceneScale = 10; // 1 light-year = 10 scene units
+        
+        return data
+            .filter(p => {
+                // Skip planets without valid position data
+                const hasCoords = p.characteristics?.coordinates_3d?.x_light_years != null;
+                const hasPosition = p.position?.x != null;
+                return hasCoords || hasPosition;
+            })
+            .map(p => ({
             name: p.pl_name,
             planetType: p.characteristics?.principal_material?.toLowerCase().includes('gas') ? 'gasGiant' :
                 p.characteristics?.principal_material?.toLowerCase().includes('ice') ? 'iceGiant' : 'rocky',
-            radius: p.pl_rade * 5, // Scale for visibility
+            radius: p.pl_rade * earthRadiusScale, // UNIFIED: Same scale as exoplanets
             color: p.pl_name === 'Mars' ? 0xff4400 :
                 p.pl_name === 'Jupiter' ? 0xccaa88 :
                     p.pl_name === 'Saturn' ? 0xeedd88 :
@@ -29,9 +40,10 @@ export async function loadSolarSystemPlanets() {
                                 p.pl_name === 'Venus' ? 0xffcc88 :
                                     p.pl_name === 'Mercury' ? 0xaaaaaa : 0x0088ff,
             position: {
-                x: p.position.x * 200, // Scale orbit distance
-                y: p.position.y * 200,
-                z: p.position.z * 200
+                // UNIFIED: Use coordinates_3d if available, otherwise fallback to position
+                x: p.characteristics?.coordinates_3d?.x_light_years ? p.characteristics.coordinates_3d.x_light_years * sceneScale : p.position.x * 200,
+                y: p.characteristics?.coordinates_3d?.y_light_years ? p.characteristics.coordinates_3d.y_light_years * sceneScale : p.position.y * 200,
+                z: p.characteristics?.coordinates_3d?.z_light_years ? p.characteristics.coordinates_3d.z_light_years * sceneScale : p.position.z * 200
             },
             atmosphere: {
                 enabled: p.characteristics?.atmosphere_type !== 'None',
