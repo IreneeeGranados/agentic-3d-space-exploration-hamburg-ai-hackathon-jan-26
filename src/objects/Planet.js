@@ -6,6 +6,8 @@
 import * as THREE from 'three';
 import {
     generateIceGiantTexture,
+    generateGasGiantTexture,
+    generateRockyTexture,
     generateNormalMap,
     generateCloudTexture,
     generateRingTexture,
