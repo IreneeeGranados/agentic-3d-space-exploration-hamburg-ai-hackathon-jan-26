@@ -239,13 +239,9 @@ export class Spacecraft {
         let steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
         let steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
 
-        // Add mouse influence (FIXED DIRECTION)
-        // Increased deadzone to prevent accidental drift
-        // User Request: "Same direction as cursor"
-        // Mouse Right (+) -> Steer Right (Need +SteerX -> -RotY) -> steerX += ...
-        // Mouse Up (-) -> Steer Up (Need +SteerY -> +RotZ) -> steerY -= ...
-        if (Math.abs(mouseInput.x) > 0.15) steerX += mouseInput.x * 2;
-        if (Math.abs(mouseInput.y) > 0.15) steerY -= mouseInput.y * 2;
+        // Mouse Influence removed per user request.
+        // Navigation is now Keyboard-only (WASD/Arrows).
+        // if (this.viewMode !== 'COCKPIT') { ... }
 
         // Apply steering rotation
         // Reduced rotation speed for smoother handling at low speeds

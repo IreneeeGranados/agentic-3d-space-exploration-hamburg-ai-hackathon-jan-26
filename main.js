@@ -104,15 +104,20 @@ class App {
             this.mouse.y = Math.max(-1, Math.min(1, this.mouse.y));
 
             // Update visual cursor position
-            cursor.style.left = `${e.clientX}px`;
-            cursor.style.top = `${e.clientY}px`;
+            if (cursor) {
+                cursor.style.left = `${e.clientX}px`;
+                cursor.style.top = `${e.clientY}px`;
 
-            // Add active style (glow red when steering hard)
-            // Tweak to match actual deadzone of 0.15
-            if (Math.abs(this.mouse.x) > 0.15 || Math.abs(this.mouse.y) > 0.15) {
-                cursor.style.borderBottomColor = '#ff0055';
-                cursor.style.filter = 'drop-shadow(0 0 15px #ff0055)';
-            } else {
+                // --- DYNAMIC CURSOR LOGIC ---
+                // In Cockpit: Cursor must be INVISIBLE (Aim with Crosshair)
+                if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
+                    cursor.style.display = 'none';
+                } else {
+                    // In Chase Mode: Always show
+                    cursor.style.display = 'block';
+                }
+
+                // Cursor Styling (Standard Blue)
                 cursor.style.borderBottomColor = '#00d4ff';
                 cursor.style.filter = 'drop-shadow(0 0 10px #00d4ff)';
             }
@@ -131,8 +136,16 @@ class App {
 
             // Calculate mouse position in normalized device coordinates (-1 to +1) for raycasting
             // Use window dimensions since we want full screen raycasting potentially
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
+                // Cockpit Mode: Raycast from center (Crosshair)
+                mouse.x = 0;
+                mouse.y = 0;
+            } else {
+                // Chase Mode: Raycast from cursor
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
 
             if (this.cameraManager && this.cameraManager.camera) {
                 raycaster.setFromCamera(mouse, this.cameraManager.camera);
@@ -243,7 +256,7 @@ class App {
 
         if (this.spacecraft.viewMode === 'COCKPIT') {
             if (overlay) overlay.classList.add('visible');
-            // Hide standard flight cursor in cockpit (replaced by crosshair)
+            // Hide standard flight cursor initially in cockpit
             if (cursor) cursor.style.display = 'none';
         } else {
             if (overlay) overlay.classList.remove('visible');
