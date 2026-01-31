@@ -15,11 +15,15 @@ export class SceneManager {
         // Set background to dark space
         this.scene.background = new THREE.Color(0x000000);
 
-        // Add ambient light for subtle illumination
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+        // Add ambient light for general visibility (Base Illumination)
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Increased from 0.3
         this.scene.add(ambientLight);
 
-        // Add directional light (simulating sunlight) with shadows
+        // Add Hemisphere light for better 3D depth (simulates galactic glow)
+        const hemiLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.4);
+        this.scene.add(hemiLight);
+
+        // Add directional light (simulating local star/sun)
         const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
         directionalLight.position.set(50, 50, 50);
         directionalLight.castShadow = true;

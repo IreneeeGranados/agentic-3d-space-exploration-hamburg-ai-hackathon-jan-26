@@ -17,7 +17,9 @@ export class FlightControls {
             yawLeft: false,      // Q
             yawRight: false,     // E
             boost: false,        // Space
-            slowMode: false      // Shift
+            slowMode: false,     // Shift
+            speedUp: false,      // + or =
+            speedDown: false     // - or _
         };
 
         // Mouse control
@@ -108,6 +110,14 @@ export class FlightControls {
             case 'ShiftRight':
                 this.keys.slowMode = true;
                 break;
+            case 'Equal': // +
+            case 'NumpadAdd':
+                this.keys.speedUp = true;
+                break;
+            case 'Minus': // -
+            case 'NumpadSubtract':
+                this.keys.speedDown = true;
+                break;
         }
     }
 
@@ -141,9 +151,15 @@ export class FlightControls {
             case 'Space':
                 this.keys.boost = false;
                 break;
-            case 'ShiftLeft':
-            case 'ShiftRight':
                 this.keys.slowMode = false;
+                break;
+            case 'Equal':
+            case 'NumpadAdd':
+                this.keys.speedUp = false;
+                break;
+            case 'Minus':
+            case 'NumpadSubtract':
+                this.keys.speedDown = false;
                 break;
         }
     }
@@ -242,7 +258,10 @@ export class FlightControls {
             yaw,
             roll,
             boost,
-            slowMode
+            boost,
+            slowMode,
+            speedUp: this.keys.speedUp,
+            speedDown: this.keys.speedDown
         };
     }
 
