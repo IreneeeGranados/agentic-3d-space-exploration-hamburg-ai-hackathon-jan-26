@@ -1,0 +1,418 @@
+[
+  {
+    "pl_name": "Mercury",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 87.969,
+    "pl_orbsmax": 0.387,
+    "pl_orbeccen": 0.2056,
+    "pl_orbincl": 7.005,
+    "pl_rade": 0.3829,
+    "pl_masse": 0.0553,
+    "pl_eqt": 440,
+    "discoverymethod": "Known",
+    "disc_year": 0,
+    "position": {
+      "x": 0.387,
+      "y": 0.0,
+      "z": 0.047
+    },
+    "distance_from_earth": {
+      "astronomical_units": 0.387,
+      "light_years": 6.133e-06,
+      "parsecs": 1.88e-06
+    },
+    "characteristics": {
+      "habitability_percent": 0,
+      "toxicity_percent": 100,
+      "radius_position": "Sub-Earth",
+      "atmosphere_type": "None (Exosphere)",
+      "principal_material": "Rocky (Iron/Silicates)",
+      "orbit_type": "Circular - Hot Zone",
+      "satellites": {
+        "has_satellites": false,
+        "count": 0
+      },
+      "coordinates_3d": {
+        "x_light_years": 6.133e-06,
+        "y_light_years": 0.0,
+        "z_light_years": 7.47e-07,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Venus",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 224.701,
+    "pl_orbsmax": 0.723,
+    "pl_orbeccen": 0.0068,
+    "pl_orbincl": 3.395,
+    "pl_rade": 0.9499,
+    "pl_masse": 0.815,
+    "pl_eqt": 737,
+    "discoverymethod": "Known",
+    "disc_year": 0,
+    "position": {
+      "x": 0.723,
+      "y": 0.0,
+      "z": 0.043
+    },
+    "distance_from_earth": {
+      "astronomical_units": 0.723,
+      "light_years": 1.1468e-05,
+      "parsecs": 3.516e-06
+    },
+    "characteristics": {
+      "habitability_percent": 0,
+      "toxicity_percent": 100,
+      "radius_position": "Earth-like",
+      "atmosphere_type": "CO2-N2 (Dense)",
+      "principal_material": "Rocky (Silicates)",
+      "orbit_type": "Circular - Hot Zone",
+      "satellites": {
+        "has_satellites": false,
+        "count": 0
+      },
+      "coordinates_3d": {
+        "x_light_years": 1.1468e-05,
+        "y_light_years": 0.0,
+        "z_light_years": 6.82e-07,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Earth",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 365.256,
+    "pl_orbsmax": 1.0,
+    "pl_orbeccen": 0.0167,
+    "pl_orbincl": 0.0,
+    "pl_rade": 1.0,
+    "pl_masse": 1.0,
+    "pl_eqt": 288,
+    "discoverymethod": "Known",
+    "disc_year": 0,
+    "position": {
+      "x": 1.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "distance_from_earth": {
+      "astronomical_units": 0.0,
+      "light_years": 0.0,
+      "parsecs": 0.0
+    },
+    "characteristics": {
+      "habitability_percent": 100,
+      "toxicity_percent": 0,
+      "radius_position": "Earth-like",
+      "atmosphere_type": "N2-O2 (Breathable)",
+      "principal_material": "Rocky (Silicates/Iron)",
+      "orbit_type": "Circular - Habitable Zone",
+      "satellites": {
+        "has_satellites": true,
+        "count": 1,
+        "names": [
+          "Moon"
+        ]
+      },
+      "coordinates_3d": {
+        "x_light_years": 0.0,
+        "y_light_years": 0.0,
+        "z_light_years": 0.0,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Mars",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 686.98,
+    "pl_orbsmax": 1.524,
+    "pl_orbeccen": 0.0934,
+    "pl_orbincl": 1.85,
+    "pl_rade": 0.532,
+    "pl_masse": 0.107,
+    "pl_eqt": 210,
+    "discoverymethod": "Known",
+    "disc_year": 0,
+    "position": {
+      "x": 1.524,
+      "y": 0.0,
+      "z": 0.049
+    },
+    "distance_from_earth": {
+      "astronomical_units": 1.524,
+      "light_years": 2.4181e-05,
+      "parsecs": 7.414e-06
+    },
+    "characteristics": {
+      "habitability_percent": 30,
+      "toxicity_percent": 60,
+      "radius_position": "Sub-Earth",
+      "atmosphere_type": "CO2 (Thin)",
+      "principal_material": "Rocky (Iron Oxides/Silicates)",
+      "orbit_type": "Elliptical - Cold Zone",
+      "satellites": {
+        "has_satellites": true,
+        "count": 2,
+        "names": [
+          "Phobos",
+          "Deimos"
+        ]
+      },
+      "coordinates_3d": {
+        "x_light_years": 2.4181e-05,
+        "y_light_years": 0.0,
+        "z_light_years": 7.78e-07,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Jupiter",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 4332.589,
+    "pl_orbsmax": 5.203,
+    "pl_orbeccen": 0.0484,
+    "pl_orbincl": 1.303,
+    "pl_rade": 10.973,
+    "pl_masse": 317.8,
+    "pl_eqt": 165,
+    "discoverymethod": "Known",
+    "disc_year": 0,
+    "position": {
+      "x": 5.203,
+      "y": 0.0,
+      "z": 0.118
+    },
+    "distance_from_earth": {
+      "astronomical_units": 5.203,
+      "light_years": 8.2526e-05,
+      "parsecs": 2.5302e-05
+    },
+    "characteristics": {
+      "habitability_percent": 0,
+      "toxicity_percent": 100,
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gas (H/He)",
+      "orbit_type": "Circular - Cold Zone",
+      "satellites": {
+        "has_satellites": true,
+        "count": 95,
+        "names": [
+          "Io",
+          "Europa",
+          "Ganymede",
+          "Callisto"
+        ]
+      },
+      "coordinates_3d": {
+        "x_light_years": 8.2526e-05,
+        "y_light_years": 0.0,
+        "z_light_years": 1.873e-06,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Saturn",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 10759.22,
+    "pl_orbsmax": 9.537,
+    "pl_orbeccen": 0.0542,
+    "pl_orbincl": 2.485,
+    "pl_rade": 9.14,
+    "pl_masse": 95.2,
+    "pl_eqt": 134,
+    "discoverymethod": "Known",
+    "disc_year": 0,
+    "position": {
+      "x": 9.537,
+      "y": 0.0,
+      "z": 0.413
+    },
+    "distance_from_earth": {
+      "astronomical_units": 9.537,
+      "light_years": 0.000151287,
+      "parsecs": 4.6385e-05
+    },
+    "characteristics": {
+      "habitability_percent": 0,
+      "toxicity_percent": 100,
+      "radius_position": "Jupiter-like",
+      "atmosphere_type": "Hydrogen-Helium",
+      "principal_material": "Gas (H/He)",
+      "orbit_type": "Circular - Cold Zone",
+      "satellites": {
+        "has_satellites": true,
+        "count": 146,
+        "names": [
+          "Titan",
+          "Enceladus",
+          "Mimas",
+          "Rhea"
+        ]
+      },
+      "coordinates_3d": {
+        "x_light_years": 0.000151287,
+        "y_light_years": 0.0,
+        "z_light_years": 6.55e-06,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Uranus",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 30688.5,
+    "pl_orbsmax": 19.191,
+    "pl_orbeccen": 0.0472,
+    "pl_orbincl": 0.773,
+    "pl_rade": 3.981,
+    "pl_masse": 14.5,
+    "pl_eqt": 76,
+    "discoverymethod": "Known",
+    "disc_year": 1781,
+    "position": {
+      "x": 19.191,
+      "y": 0.0,
+      "z": 0.259
+    },
+    "distance_from_earth": {
+      "astronomical_units": 19.191,
+      "light_years": 0.000304407,
+      "parsecs": 9.3331e-05
+    },
+    "characteristics": {
+      "habitability_percent": 0,
+      "toxicity_percent": 100,
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4/NH3)",
+      "orbit_type": "Circular - Frozen Zone",
+      "satellites": {
+        "has_satellites": true,
+        "count": 28,
+        "names": [
+          "Titania",
+          "Oberon",
+          "Umbriel",
+          "Ariel",
+          "Miranda"
+        ]
+      },
+      "coordinates_3d": {
+        "x_light_years": 0.000304407,
+        "y_light_years": 0.0,
+        "z_light_years": 4.11e-06,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Neptune",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 60182,
+    "pl_orbsmax": 30.069,
+    "pl_orbeccen": 0.0086,
+    "pl_orbincl": 1.77,
+    "pl_rade": 3.865,
+    "pl_masse": 17.1,
+    "pl_eqt": 72,
+    "discoverymethod": "Known",
+    "disc_year": 1846,
+    "position": {
+      "x": 30.069,
+      "y": 0.0,
+      "z": 0.928
+    },
+    "distance_from_earth": {
+      "astronomical_units": 30.069,
+      "light_years": 0.000476921,
+      "parsecs": 0.000146213
+    },
+    "characteristics": {
+      "habitability_percent": 0,
+      "toxicity_percent": 100,
+      "radius_position": "Neptune-like",
+      "atmosphere_type": "Hydrogen-Helium-Methane",
+      "principal_material": "Ice Giant (H2O/CH4/NH3)",
+      "orbit_type": "Circular - Frozen Zone",
+      "satellites": {
+        "has_satellites": true,
+        "count": 16,
+        "names": [
+          "Triton",
+          "Proteus",
+          "Nereid"
+        ]
+      },
+      "coordinates_3d": {
+        "x_light_years": 0.000476921,
+        "y_light_years": 0.0,
+        "z_light_years": 1.4723e-05,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  },
+  {
+    "pl_name": "Pluto",
+    "hostname": "Sun",
+    "sy_dist": 4.848e-06,
+    "pl_orbper": 90560,
+    "pl_orbsmax": 39.482,
+    "pl_orbeccen": 0.2488,
+    "pl_orbincl": 17.16,
+    "pl_rade": 0.186,
+    "pl_masse": 0.0022,
+    "pl_eqt": 44,
+    "discoverymethod": "Known",
+    "disc_year": 1930,
+    "position": {
+      "x": 39.482,
+      "y": 0.0,
+      "z": 11.858
+    },
+    "distance_from_earth": {
+      "astronomical_units": 39.482,
+      "light_years": 0.000626404,
+      "parsecs": 0.000192039
+    },
+    "characteristics": {
+      "habitability_percent": 0,
+      "toxicity_percent": 100,
+      "radius_position": "Sub-Earth",
+      "atmosphere_type": "N2-CH4 (Thin)",
+      "principal_material": "Ice/Rock (H2O/N2)",
+      "orbit_type": "Highly Elliptical - Frozen Zone",
+      "satellites": {
+        "has_satellites": true,
+        "count": 5,
+        "names": [
+          "Charon",
+          "Styx",
+          "Nix",
+          "Kerberos",
+          "Hydra"
+        ]
+      },
+      "coordinates_3d": {
+        "x_light_years": 0.000626404,
+        "y_light_years": 0.0,
+        "z_light_years": 0.000188097,
+        "system": "Heliocentric (Sun centered)"
+      }
+    }
+  }
+]
