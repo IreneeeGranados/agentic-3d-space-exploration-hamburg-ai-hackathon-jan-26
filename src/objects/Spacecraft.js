@@ -1,6 +1,6 @@
 /**
  * Spacecraft Class
- * Simple player-controlled spacecraft
+ * Auto-pilot forward with steering controls
  */
 
 import * as THREE from 'three';
@@ -12,12 +12,12 @@ export class Spacecraft {
         // Start in space
         this.group.position.set(0, 0, 150);
 
-        // Simple physics
+        // Constant forward speed
+        this.forwardSpeed = 80; // Faster movement to see motion
+
+        // Steering
+        this.steeringForce = 8;
         this.velocity = new THREE.Vector3(0, 0, 0);
-        this.speed = 0;
-        this.maxSpeed = 30;
-        this.acceleration = 15;
-        this.friction = 0.95;
 
         // Animation
         this.animationTime = 0;
@@ -76,7 +76,7 @@ export class Spacecraft {
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
             transparent: true,
-            opacity: 0.8
+            opacity: 0.9
         });
 
         const leftGlow = new THREE.Mesh(glowGeometry, glowMaterial);
@@ -93,74 +93,55 @@ export class Spacecraft {
     }
 
     /**
-     * Move spacecraft based on keyboard input
+     * Steer spacecraft with arrow keys/WASD
      */
-    move(keys, deltaTime) {
-        // Forward/backward
-        if (keys.forward) {
-            this.speed = Math.min(this.speed + this.acceleration * deltaTime, this.maxSpeed);
-        } else if (keys.backward) {
-            this.speed = Math.max(this.speed - this.acceleration * deltaTime, -this.maxSpeed * 0.5);
-        } else {
-            // Apply friction when no input
-            this.speed *= this.friction;
-            if (Math.abs(this.speed) < 0.1) this.speed = 0;
+    steer(keys, deltaTime) {
+        // Calculate steering direction
+        const steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);  // Left/Right
+        const steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);      // Up/Down
+
+        // Apply steering rotation
+        const rotSpeed = 1.2 * deltaTime;
+
+        if (steerY !== 0) {
+            // Pitch (up/down)
+            this.group.rotateZ(-steerY * rotSpeed);
         }
 
-        // Get forward direction
-        const forward = new THREE.Vector3(1, 0, 0);
+        if (steerX !== 0) {
+            // Yaw (left/right)
+            this.group.rotateY(-steerX * rotSpeed);
+        }
+
+        // Always move forward in the direction we're facing
+        const forward = new THREE.Vector3(1, 0, 0); // X-axis is forward
         forward.applyQuaternion(this.group.quaternion);
 
-        // Update velocity
-        this.velocity.copy(forward).multiplyScalar(this.speed);
+        // Set velocity to forward direction
+        this.velocity.copy(forward).multiplyScalar(this.forwardSpeed);
 
         // Update position
         this.group.position.add(this.velocity.clone().multiplyScalar(deltaTime));
-
-        // Update engine glow based on speed
-        if (this.leftGlow && this.rightGlow) {
-            const intensity = 0.5 + (Math.abs(this.speed) / this.maxSpeed) * 0.5;
-            this.leftGlow.material.opacity = intensity;
-            this.rightGlow.material.opacity = intensity;
-        }
     }
 
     /**
-     * Rotate spacecraft based on mouse/keys
-     */
-    rotate(rotation, deltaTime) {
-        const rotSpeed = 1.5 * deltaTime;
-
-        // Pitch (up/down)
-        if (rotation.pitch !== 0) {
-            this.group.rotateZ(-rotation.pitch * rotSpeed);
-        }
-
-        // Yaw (left/right)
-        if (rotation.yaw !== 0) {
-            this.group.rotateY(-rotation.yaw * rotSpeed);
-        }
-
-        // Roll
-        if (rotation.roll !== 0) {
-            this.group.rotateX(rotation.roll * rotSpeed);
-        }
-    }
-
-    /**
-     * Update camera to follow spacecraft (third-person view)
+     * Update camera to follow spacecraft (behind view)
      */
     updateCamera(camera) {
-        // Camera position behind and above spacecraft
-        const offset = new THREE.Vector3(-20, 5, 0);
+        // Camera position: behind and slightly above
+        const offset = new THREE.Vector3(-25, 8, 0);
         offset.applyQuaternion(this.group.quaternion);
         offset.add(this.group.position);
 
         // Smooth camera movement
         camera.position.lerp(offset, 0.1);
 
-        // Look at spacecraft
-        camera.lookAt(this.group.position);
+        // Look slightly ahead of spacecraft
+        const lookAhead = new THREE.Vector3(10, 0, 0);
+        lookAhead.applyQuaternion(this.group.quaternion);
+        lookAhead.add(this.group.position);
+
+        camera.lookAt(lookAhead);
     }
 
     update(deltaTime) {
@@ -168,9 +149,9 @@ export class Spacecraft {
 
         // Pulse engine glow
         if (this.leftGlow && this.rightGlow) {
-            const pulse = Math.sin(this.animationTime * 5) * 0.1;
-            this.leftGlow.material.opacity = Math.min(this.leftGlow.material.opacity + pulse * deltaTime, 1.0);
-            this.rightGlow.material.opacity = Math.min(this.rightGlow.material.opacity + pulse * deltaTime, 1.0);
+            const pulse = 0.8 + Math.sin(this.animationTime * 8) * 0.2;
+            this.leftGlow.material.opacity = pulse;
+            this.rightGlow.material.opacity = pulse;
         }
     }
 
@@ -179,7 +160,7 @@ export class Spacecraft {
     }
 
     getSpeed() {
-        return Math.abs(this.speed);
+        return this.forwardSpeed;
     }
 
     dispose() {
