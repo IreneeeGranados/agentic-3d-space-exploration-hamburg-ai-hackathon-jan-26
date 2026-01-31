@@ -263,7 +263,7 @@ strong {
     /* Super high Z-index */
     transition: transform 0.1s ease;
     filter: drop-shadow(0 0 10px #00d4ff);
-    display: block;
+    display: none;
     /* Ensure visibility */
 }
 
