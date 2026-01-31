@@ -1,34 +1,155 @@
-# AIService - OpenAI Integration
+# AI Services - OpenAI & ElevenLabs Integration
 
 ## Overview
-The AIService module provides AI-powered planet description generation using OpenAI's GPT models.
+The AI Services module provides two main capabilities:
+1. **OpenAI Integration** - Generate descriptive text about planets using GPT models
+2. **ElevenLabs Integration** - Convert text descriptions into natural-sounding voice
 
-## Location
-`src/ai/AIService.js`
+## Architecture
 
-## Features
-- ✅ Generate descriptive text from planet JSON data
-- ✅ Customizable AI parameters (model, temperature, max tokens)
+### Files Structure
+```
+src/ai/
+├── AIService.js              # Unified interface (combines both services)
+├── OpenAIService.js          # OpenAI text generation
+├── ElevenLabsService.js      # ElevenLabs text-to-speech
+├── testAIService.js          # OpenAI tests
+├── testElevenLabsService.js  # ElevenLabs tests
+├── example-combined-usage.js # Combined usage examples
+├── example-browser-usage.js  # Browser integration example
+└── samplePlanetData.js       # Sample planet data
+```
+
+## Services
+
+### 1. AIService (Unified Interface)
+Main service that combines OpenAI and ElevenLabs functionality.
+
+```javascript
+import AIService from './src/ai/AIService.js';
+
+// Initialize with both services
+const aiService = new AIService(
+  openAIKey,      // Required
+  elevenLabsKey   // Optional
+);
+
+// Generate text description
+const description = await aiService.generatePlanetDescription(planetData);
+
+// Convert text to speech
+const audioData = await aiService.textToSpeech(description);
+
+// Generate description AND speech in one call
+const result = await aiService.generatePlanetDescriptionWithSpeech(
+  planetData,
+  true  // Play immediately
+);
+```
+
+### 2. OpenAIService
+Generates descriptive text from planet JSON data.
+
+**Features:**
+- ✅ Generate descriptions from planet data
+- ✅ Customizable AI parameters (model, temperature, tokens)
 - ✅ Built-in caching to reduce API calls
 - ✅ Error handling with fallback descriptions
-- ✅ Support for custom prompts
+
+```javascript
+import OpenAIService from './src/ai/OpenAIService.js';
+
+const openAI = new OpenAIService(apiKey);
+
+// Configure
+openAI.configure({
+  model: 'gpt-4',
+  temperature: 0.8,
+  max_tokens: 400
+});
+
+// Generate description
+const description = await openAI.generatePlanetDescription(planetData);
+```
+
+### 3. ElevenLabsService
+Converts text into natural-sounding speech.
+
+**Features:**
+- ✅ Text-to-speech conversion
+- ✅ Multiple voice options
+- ✅ Configurable voice settings (stability, similarity)
+- ✅ Audio caching
+- ✅ Streaming support for long texts
+- ✅ Play audio immediately or get audio data
+
+```javascript
+import ElevenLabsService from './src/ai/ElevenLabsService.js';
+
+const elevenLabs = new ElevenLabsService(apiKey);
+
+// Configure voice
+elevenLabs.configure({
+  voiceId: '21m00Tcm4TlvDq8ikWAM', // Rachel voice
+  stability: 0.5,
+  similarityBoost: 0.75
+});
+
+// Convert and play
+const audio = await elevenLabs.textToSpeechAndPlay(text);
+
+// Just get audio data
+const audioData = await elevenLabs.textToSpeech(text);
+
+// Get available voices
+const voices = await elevenLabs.getVoices();
+```
 
 ## Installation
 
-Dependencies are already installed:
+Dependencies are already in package.json:
 ```bash
 npm install openai
 ```
 
-## Usage
+No additional package needed for ElevenLabs (uses native Fetch API).
 
-### Basic Example
+## API Key Setup
+
+Add both keys to `.env` file:
+```env
+# OpenAI
+OPENAI_API_KEY=sk-proj-...
+VITE_OPENAI_API_KEY=sk-proj-...
+
+# ElevenLabs
+ELEVENLABS_API_KEY=sk_...
+VITE_ELEVENLABS_API_KEY=sk_...
+```
+
+### For Node.js Testing
 ```javascript
-import AIService from './src/ai/AIService.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const apiKey = 'your-openai-api-key';
-const aiService = new AIService(apiKey);
+const aiService = new AIService(
+  process.env.OPENAI_API_KEY,
+  process.env.ELEVENLABS_API_KEY
+);
+```
 
+### For Vite/Browser
+```javascript
+const aiService = new AIService(
+  import.meta.env.VITE_OPENAI_API_KEY,
+  import.meta.env.VITE_ELEVENLABS_API_KEY
+);
+```
+
+## Usage Examples
+
+### Example 1: Generate Planet Description
+```javascript
 const planetData = {
   name: "Mars",
   type: "Terrestrial",
@@ -41,144 +162,164 @@ const description = await aiService.generatePlanetDescription(planetData);
 console.log(description);
 ```
 
-### Configuration
+### Example 2: Convert Text to Speech
 ```javascript
-// Customize AI behavior
-aiService.configure({
-  model: 'gpt-4',           // Use GPT-4 for better quality
-  temperature: 0.8,          // More creative (0.0 - 1.0)
-  max_tokens: 400            // Longer descriptions
-});
+const text = "Mars is the fourth planet from the Sun...";
+const audio = await aiService.textToSpeechAndPlay(text);
+// Audio plays automatically
 ```
 
-### Cache Management
+### Example 3: Combined (Description + Speech)
 ```javascript
-// Get cache statistics
-const stats = aiService.getCacheStats();
-console.log(`Cached planets: ${stats.size}`);
+// Generate description and play as speech
+const result = await aiService.generatePlanetDescriptionWithSpeech(
+  planetData,
+  true  // Play immediately
+);
 
-// Clear cache
-aiService.clearCache();
+console.log(result.description);
+// result.audio is the HTMLAudioElement playing
+```
+
+### Example 4: Browser Integration
+```javascript
+// When user clicks on a planet
+async function onPlanetClick(planetData) {
+  try {
+    // Show loading state
+    showLoading();
+    
+    // Generate and play description
+    const { description, audio } = await aiService.generatePlanetDescriptionWithSpeech(
+      planetData,
+      true  // Play speech immediately
+    );
+    
+    // Display text
+    document.getElementById('description').textContent = description;
+    
+    // Audio is already playing
+    audio.addEventListener('ended', () => {
+      console.log('Finished speaking');
+    });
+    
+  } catch (error) {
+    console.error('Error:', error);
+    showError(error.message);
+  }
+}
 ```
 
 ## Testing
 
-Run the test script:
-```bash
-npm run test-ai
-```
-
-Or directly:
+### Test OpenAI Service
 ```bash
 node src/ai/testAIService.js
 ```
 
-## API Key Setup
-
-### For Node.js Testing (Current Setup)
-
-1. API key is stored in `.env` file:
-```env
-OPENAI_API_KEY=your-api-key-here
+### Test ElevenLabs Service
+```bash
+node src/ai/testElevenLabsService.js
 ```
 
-2. Load in your code:
+### Combined Test
+See `src/ai/example-combined-usage.js` for complete examples.
+
+## ElevenLabs Voice Options
+
+Common voice IDs:
+- `21m00Tcm4TlvDq8ikWAM` - Rachel (female, clear)
+- `AZnzlk1XvdvUeBnXmlld` - Domi (female, warm)
+- `EXAVITQu4vr4xnSDxMaL` - Bella (female, soft)
+- `ErXwobaYiN019PkySvjV` - Antoni (male, clear)
+- `VR6AewLTigWG4xSOukaG` - Arnold (male, crisp)
+
+Get all available voices:
 ```javascript
-import dotenv from 'dotenv';
-dotenv.config();
-
-const apiKey = process.env.OPENAI_API_KEY;
-const aiService = new AIService(apiKey);
+const voices = await aiService.getVoices();
+voices.forEach(v => console.log(`${v.name}: ${v.voice_id}`));
 ```
 
-### For Vite/Browser (Three.js Frontend)
+## Cache Management
 
-1. Add to `.env` file with `VITE_` prefix:
-```env
-VITE_OPENAI_API_KEY=your-api-key-here
-```
-
-2. Use in your code:
 ```javascript
-const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-const aiService = new AIService(apiKey);
+// Get statistics
+const stats = aiService.getCacheStats();
+console.log('OpenAI cache:', stats.openAI);
+console.log('ElevenLabs cache:', stats.elevenLabs);
+
+// Clear all caches
+aiService.clearCache();
 ```
 
-See `example-browser-usage.js` for a complete example.
+## Error Handling
 
-**⚠️ Security Warning**: Environment variables in Vite are exposed to the browser. For production, use a backend proxy to keep your API key secure.
+Both services handle common errors:
+- **401 Unauthorized**: Invalid API key
+- **429 Rate Limit**: Too many requests
+- **Quota Exceeded**: ElevenLabs character limit reached
+- **Network errors**: Connection issues
+
+```javascript
+try {
+  const result = await aiService.generatePlanetDescriptionWithSpeech(planetData);
+} catch (error) {
+  if (error.message.includes('API key')) {
+    // Handle authentication error
+  } else if (error.message.includes('quota')) {
+    // Handle quota exceeded
+  }
+}
+```
 
 ## Planet Data Format
 
-Expected JSON structure:
+Expected JSON structure (all fields optional):
 ```json
 {
   "name": "Planet Name",
-  "type": "Planet Type (e.g., Terrestrial, Gas Giant)",
+  "type": "Planet Type",
   "size": 1.0,
   "color": "#RRGGBB",
   "atmosphere": "Atmospheric composition",
   "temperature": -50,
   "moons": 2,
   "distanceFromSun": 1.5,
-  "characteristics": ["Feature 1", "Feature 2"],
-  "discovered": 2020,
-  "constellation": "Constellation Name"
+  "characteristics": ["Feature 1", "Feature 2"]
 }
 ```
-
-All fields are optional. The service will work with any subset of these fields.
-
-## Error Handling
-
-The service handles various error scenarios:
-- **401 Unauthorized**: Invalid API key
-- **429 Rate Limit**: Too many requests
-- **Network errors**: Connection issues
-- **Fallback**: If API fails, returns basic description from planet data
-
-## Methods
-
-### `constructor(apiKey)`
-Initialize the service with your OpenAI API key.
-
-### `configure(options)`
-Update AI configuration (model, temperature, max_tokens).
-
-### `async generatePlanetDescription(planetData, useCache = true)`
-Generate a description for the given planet data.
-- Returns: `Promise<string>`
-- Uses cache by default
-
-### `buildPrompt(planetData)`
-Build a custom prompt from planet data (useful for customization).
-
-### `getFallbackDescription(planetData)`
-Generate a basic description without AI (used as fallback).
-
-### `clearCache()`
-Clear all cached descriptions.
-
-### `getCacheStats()`
-Get information about cached entries.
-
-## Sample Data
-
-Two sample planets are provided in `src/ai/samplePlanetData.js`:
-- `sampleMarsData` - Our solar system's Mars
-- `samplePlanetData` - Kepler-442b exoplanet
 
 ## Security Notes
 
 ⚠️ **Important**: 
 - Never commit API keys to version control
-- `.env` is already in `.gitignore`
-- For production apps, use a backend proxy to keep keys secure
-- `dangerouslyAllowBrowser: true` is set for development only
+- `.env` is in `.gitignore`
+- For production, use a backend proxy
+- `dangerouslyAllowBrowser: true` is for development only
+- ElevenLabs has character quotas - monitor usage
+
+## API Methods
+
+### AIService
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `generatePlanetDescription(data, cache)` | Generate text description | `Promise<string>` |
+| `textToSpeech(text, cache)` | Convert text to audio | `Promise<ArrayBuffer>` |
+| `textToSpeechAndPlay(text, cache)` | Convert and play audio | `Promise<HTMLAudioElement>` |
+| `generatePlanetDescriptionWithSpeech(data, play, cache)` | Generate text + audio | `Promise<{description, audio}>` |
+| `getVoices()` | Get available voices | `Promise<Array>` |
+| `getSubscriptionInfo()` | Get ElevenLabs quota info | `Promise<Object>` |
+| `configureOpenAI(options)` | Configure OpenAI | `void` |
+| `configureElevenLabs(options)` | Configure ElevenLabs | `void` |
+| `clearCache()` | Clear all caches | `void` |
+| `getCacheStats()` | Get cache statistics | `Object` |
 
 ## Next Steps
 
-1. Test with your own planet JSON data
-2. Integrate with Three.js planet objects
-3. Display descriptions in UI when planets are clicked
-4. Consider implementing a backend proxy for production
+1. ✅ Test both services with your API keys
+2. ✅ Integrate with Three.js planet click events
+3. ✅ Display descriptions and play audio in UI
+4. ✅ Configure voice settings for best experience
+5. ✅ Monitor API usage and quotas
+6. ✅ Consider backend proxy for production
