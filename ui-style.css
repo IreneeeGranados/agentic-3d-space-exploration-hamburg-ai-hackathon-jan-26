@@ -130,66 +130,10 @@
 }
 
 /* ========================================
-   TOP RIGHT - MISSION STATUS
+   TOP RIGHT - MISSION STATUS (REMOVED)
    ======================================== */
 
-#mission-status {
-    top: var(--spacing-lg);
-    right: var(--spacing-lg);
-    min-width: 320px;
-}
-
-.status-indicator {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent-success);
-    animation: pulse 2s infinite;
-}
-
-.status-dot.inactive {
-    background: var(--text-dim);
-    animation: none;
-}
-
-.status-dot.warning {
-    background: var(--accent-warning);
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
-
-.destination-card {
-    background: var(--secondary-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: var(--spacing-md);
-    margin-top: var(--spacing-md);
-}
-
-.destination-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--accent-blue);
-    margin-bottom: var(--spacing-sm);
-}
-
-.destination-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: var(--spacing-xs);
-}
+/* Mission status UI has been removed from index.html */
 
 /* ========================================
    BOTTOM LEFT - CONTROLS REFERENCE

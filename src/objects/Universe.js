@@ -8,7 +8,7 @@ import * as THREE from 'three';
 export class Universe {
     constructor(radius = 5000) {
         this.radius = radius;
-        this.createUniverse();
+        thiscreateUniverse();
     }
 
     createUniverse() {

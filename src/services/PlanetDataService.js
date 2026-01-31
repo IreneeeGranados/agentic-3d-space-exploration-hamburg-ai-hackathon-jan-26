@@ -143,11 +143,28 @@ export class PlanetDataService {
     }
 
     /**
+     * Load solar system planets from cluster
+     */
+    async loadSolarSystem() {
+        console.log('  🌍 Loading solar system from PlanetDataService...');
+        const solarPlanets = await this.loadCluster('solar_system');
+        
+        if (solarPlanets && solarPlanets.length > 0) {
+            console.log(`  ✓ Loaded ${solarPlanets.length} solar system planets`);
+        } else {
+            console.warn('  ⚠️ No solar system planets loaded');
+        }
+        
+        return solarPlanets;
+    }
+
+    /**
      * Load a specific cluster JSON file
      */
     async loadCluster(clusterName) {
+        // Check if already loaded - return cached data WITHOUT adding to allPlanets again
         if (this.loadedClusters.has(clusterName)) {
-            console.log(`  ↪ Cluster ${clusterName} already loaded`);
+            console.log(`  ↪ Cluster ${clusterName} already loaded (cached)`);
             return this.clusters.get(clusterName);
         }
 
@@ -159,6 +176,7 @@ export class PlanetDataService {
             if (!response.ok) {
                 if (response.status === 404) {
                     console.warn(`  ⚠️ Cluster ${clusterName} not found (404) - skipping`);
+                    this.loadedClusters.add(clusterName); // Mark as attempted to avoid retries
                     return [];
                 }
                 throw new Error(`Failed to load cluster: ${clusterName} (${response.status})`);
@@ -171,14 +189,18 @@ export class PlanetDataService {
                 // Enrich planets with computed 3D coordinates if missing
                 const enrichedData = data.map(planet => this.enrichPlanetData(planet));
 
+                // IMPORTANT: Mark as loaded BEFORE adding to allPlanets to prevent race conditions
                 this.clusters.set(clusterName, enrichedData);
                 this.loadedClusters.add(clusterName);
+                
+                // Only add to allPlanets if not already added
                 this.allPlanets.push(...enrichedData);
 
-                console.log(`  ✓ Loaded ${clusterName}: ${enrichedData.length} planets`);
+                console.log(`  ✓ Loaded ${clusterName}: ${enrichedData.length} planets (total: ${this.allPlanets.length})`);
                 return enrichedData;
             } else {
                 console.error(`  ❌ Invalid cluster format for ${clusterName}`);
+                this.loadedClusters.add(clusterName); // Mark as attempted
                 return [];
             }
         } catch (error) {
@@ -276,16 +298,16 @@ export class PlanetDataService {
     }
 
     /**
-     * Load all available clusters
+     * Load all available clusters (including all planets with and without positions)
      */
     async loadAllClusters() {
         if (!this.clusterIndex) {
             await this.initialize();
         }
 
-        // Get cluster names from index, excluding 'no_position' cluster
-        const allClusterNames = Object.keys(this.clusterIndex.clusters)
-            .filter(name => name !== 'no_position'); // Skip planets without coordinates
+        // Get ALL cluster names from index (including no_position for completeness)
+        // Even though no_position planets can't be visualized, they can be searched/filtered
+        const allClusterNames = Object.keys(this.clusterIndex.clusters);
 
         console.log(`📦 Loading all ${allClusterNames.length} clusters...`);
 
@@ -297,12 +319,31 @@ export class PlanetDataService {
 
     /**
      * Get all loaded planets (only those with valid coordinates)
+     * Deduplicates by planet name to prevent any duplicate entries
      */
     getAllPlanets() {
-        return this.allPlanets.filter(p => {
+        // Filter for valid coordinates
+        const validPlanets = this.allPlanets.filter(p => {
             const coords = p.characteristics?.coordinates_3d;
             return coords && coords.x_light_years !== null && coords.x_light_years !== undefined;
         });
+        
+        // Deduplicate by planet name (in case of any race conditions)
+        const uniquePlanets = new Map();
+        for (const planet of validPlanets) {
+            if (!uniquePlanets.has(planet.pl_name)) {
+                uniquePlanets.set(planet.pl_name, planet);
+            }
+        }
+        
+        const result = Array.from(uniquePlanets.values());
+        
+        // Log warning if deduplication removed planets
+        if (result.length < validPlanets.length) {
+            console.warn(`⚠️ Deduplicated planets: ${validPlanets.length} → ${result.length} (removed ${validPlanets.length - result.length} duplicates)`);
+        }
+        
+        return result;
     }
 
     /**
@@ -394,8 +435,22 @@ export class PlanetDataService {
      * Get random planet
      */
     getRandomPlanet() {
-        if (this.allPlanets.length === 0) return null;
-        const index = Math.floor(Math.random() * this.allPlanets.length);
-        return this.allPlanets[index];
+        const validPlanets = this.getAllPlanets();
+        if (validPlanets.length === 0) return null;
+        const index = Math.floor(Math.random() * validPlanets.length);
+        return validPlanets[index];
+    }
+    
+    /**
+     * Get statistics about loaded data
+     */
+    getStats() {
+        const allPlanets = this.getAllPlanets();
+        return {
+            totalPlanets: allPlanets.length,
+            totalRawEntries: this.allPlanets.length,
+            clustersLoaded: this.loadedClusters.size,
+            clusterNames: Array.from(this.loadedClusters)
+        };
     }
 }

@@ -84,25 +84,37 @@ export class PlanetNavigator {
 
     async loadPlanets() {
         try {
-            // Initialize cluster index first
-            await this.dataService.initialize();
+            console.log('🗺️ Navigator: Waiting for all planet data...');
             
-            // Load nearby planets first
-            await this.dataService.loadNearbyFirst();
+            // Get initial count
             this.nearbyPlanets = this.dataService.getAllPlanets();
-            
-            console.log(`✓ Navigator loaded ${this.nearbyPlanets.length} planets`);
             this.renderPlanetList();
             
-            // Load more in background
-            this.dataService.loadAllClusters().then(() => {
-                this.nearbyPlanets = this.dataService.getAllPlanets();
-                console.log(`✓ Navigator now has ${this.nearbyPlanets.length} total planets`);
-                this.renderPlanetList();
-            });
+            // Update display every 2 seconds as more planets load
+            const updateInterval = setInterval(() => {
+                const currentCount = this.dataService.getAllPlanets().length;
+                if (currentCount > this.nearbyPlanets.length) {
+                    this.nearbyPlanets = this.dataService.getAllPlanets();
+                    this.renderPlanetList();
+                    console.log(`🗺️ Navigator updated: ${this.nearbyPlanets.length} planets`);
+                }
+            }, 2000);
+            
+            // Wait for all clusters to be loaded by the main system
+            // The ExoplanetField is loading clusters progressively
+            // We just need to wait until it's done
+            await this.waitForAllClusters();
+            
+            // Stop the update interval
+            clearInterval(updateInterval);
+            
+            // Final update
+            this.nearbyPlanets = this.dataService.getAllPlanets();
+            const stats = this.dataService.getStats();
+            console.log(`✓ Navigator complete: ${this.nearbyPlanets.length} planets from ${stats.clustersLoaded} clusters`);
+            this.renderPlanetList();
         } catch (error) {
             console.error('❌ Navigator: Error loading planets:', error);
-            // Show error in UI
             const listElement = document.getElementById('nav-planet-list');
             if (listElement) {
                 listElement.innerHTML = `
@@ -113,6 +125,28 @@ export class PlanetNavigator {
                 `;
             }
         }
+    }
+    
+    async waitForAllClusters() {
+        // Wait until the cluster index says all clusters are loaded
+        const clusterIndex = await this.dataService.initialize();
+        const totalClusters = Object.keys(clusterIndex.clusters).length;
+        
+        return new Promise((resolve) => {
+            const checkInterval = setInterval(() => {
+                const stats = this.dataService.getStats();
+                if (stats.clustersLoaded >= totalClusters) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 1000);
+            
+            // Timeout after 60 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve();
+            }, 60000);
+        });
     }
 
     handleSearch(query) {
@@ -188,7 +222,7 @@ export class PlanetNavigator {
             `;
         }).join('');
 
-        // Add click handlers
+        // Add click handlers to GO buttons
         listContainer.querySelectorAll('.nav-go-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -196,6 +230,21 @@ export class PlanetNavigator {
                 const planet = this.dataService.getPlanetByName(planetName);
                 if (planet) this.goToPlanet(planet);
             });
+        });
+
+        // Add click handlers to planet items (click anywhere to teleport)
+        listContainer.querySelectorAll('.nav-planet-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                // Don't trigger if clicking the GO button (it has its own handler)
+                if (e.target.classList.contains('nav-go-btn')) return;
+                
+                const planetName = item.dataset.planetName;
+                const planet = this.dataService.getPlanetByName(planetName);
+                if (planet) this.goToPlanet(planet);
+            });
+            
+            // Add hover effect
+            item.style.cursor = 'pointer';
         });
 
         // Update pagination
@@ -208,7 +257,7 @@ export class PlanetNavigator {
         const prevBtn = document.getElementById('nav-prev');
         const nextBtn = document.getElementById('nav-next');
 
-        pageInfo.textContent = `Page ${this.currentPage + 1} of ${totalPages}`;
+        pageInfo.textContent = `Page ${this.currentPage + 1} of ${totalPages} (${this.nearbyPlanets.length} planets)`;
         prevBtn.disabled = this.currentPage === 0;
         nextBtn.disabled = this.currentPage >= totalPages - 1;
     }

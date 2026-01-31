@@ -51,7 +51,16 @@ export async function loadSolarSystemPlanets() {
             },
             isSolar: true,
             pl_name: p.pl_name,
-            characteristics: p.characteristics
+            characteristics: p.characteristics,
+            // Pass through all original NASA data
+            pl_rade: p.pl_rade,
+            pl_masse: p.pl_masse,
+            pl_orbper: p.pl_orbper,
+            pl_eqt: p.pl_eqt,
+            hostname: p.hostname,
+            sy_dist: p.sy_dist,
+            discoverymethod: p.discoverymethod,
+            disc_year: p.disc_year
         }));
     } catch (error) {
         console.error('Error loading solar system planets:', error);
