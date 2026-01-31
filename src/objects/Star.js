@@ -26,7 +26,7 @@ export class Star {
         );
 
         // Create emissive material (self-illuminated)
-        const material = new THREE.MeshBasicMaterial({
+        const material = new THREE.MeshStandardMaterial({
             color: this.config.color,
             emissive: this.config.color,
             emissiveIntensity: this.config.emissiveIntensity
