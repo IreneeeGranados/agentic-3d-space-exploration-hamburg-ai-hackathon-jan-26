@@ -9,7 +9,7 @@ class FrontendPlanetService {
         this.planetsData = new Map();
         this.descriptionCache = new Map();
         this.isInitialized = false;
-        
+
         // Configuration
         this.config = {
             apiKey: null,
@@ -27,14 +27,14 @@ class FrontendPlanetService {
      */
     init(apiKey) {
         this.config.apiKey = apiKey || import.meta.env.VITE_OPENAI_API_KEY;
-        
+
         if (!this.config.apiKey) {
             console.warn('⚠️  OpenAI API key not configured. AI descriptions will be disabled.');
             console.warn('   Add VITE_OPENAI_API_KEY to your .env file');
         } else {
             console.log('✅ FrontendPlanetService initialized with API key');
         }
-        
+
         this.isInitialized = true;
         return this;
     }
@@ -45,11 +45,11 @@ class FrontendPlanetService {
      */
     loadPlanets(planetsArray) {
         console.log(`📦 Loading ${planetsArray.length} planets...`);
-        
+
         planetsArray.forEach(planet => {
             this.planetsData.set(planet.name, planet);
         });
-        
+
         console.log(`✅ Loaded ${this.planetsData.size} planets`);
         return this;
     }
@@ -84,9 +84,9 @@ class FrontendPlanetService {
             const batch = planets.slice(i, i + this.config.batchSize);
             const batchNum = Math.floor(i / this.config.batchSize) + 1;
             const totalBatches = Math.ceil(planets.length / this.config.batchSize);
-            
+
             console.log(`   Processing batch ${batchNum}/${totalBatches}...`);
-            
+
             const batchPromises = batch.map(async (planet) => {
                 try {
                     if (this.descriptionCache.has(planet.name)) {
@@ -114,7 +114,7 @@ class FrontendPlanetService {
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         console.log(`✅ Preload complete in ${duration}s:`, results);
-        
+
         return results;
     }
 
@@ -271,3 +271,73 @@ Write 2 engaging paragraphs highlighting what makes this planet unique and fasci
 // Export singleton instance
 export const planetService = new FrontendPlanetService();
 export default FrontendPlanetService;
+
+// Import ClusterLoader (dynamic import to avoid issues if file doesn't exist yet in some envs)
+let clusterLoader = null;
+import('/nasa_data/cluster-loader.js').then(module => {
+    const { ClusterLoader } = module;
+    clusterLoader = new ClusterLoader('/nasa_data/clusters');
+}).catch(err => {
+    console.warn('Could not load ClusterLoader:', err);
+});
+
+// Extend FrontendPlanetService to handle NASA data
+FrontendPlanetService.prototype.loadNasaData = async function () {
+    if (!clusterLoader) {
+        console.error('ClusterLoader not initialized');
+        return [];
+    }
+
+    try {
+        await clusterLoader.init();
+        console.log('NASA Cluster Loader initialized');
+
+        // Load nearby planets first (high priority)
+        const nearbyPlanets = await clusterLoader.loadNearby();
+        console.log(`Loaded ${nearbyPlanets.length} nearby NASA planets`);
+
+        // Print info as requested
+        console.groupCollapsed('🪐 NASA Exoplanet Data (Nearby)');
+        console.table(nearbyPlanets.map(p => ({
+            Name: p.name,
+            Distance: p.distance_light_years + ' ly',
+            Radius: p.radius?.earth_radii + ' Earths',
+            Temp: p.stellar_data?.temperature_k + ' K'
+        })));
+        console.groupEnd();
+
+        // Normalize and store in our service
+        nearbyPlanets.forEach(p => {
+            // Adapt NASA data format to our app's expected format if needed
+            // For now, we store the raw object but ensuring name is key
+            this.planetsData.set(p.name, {
+                ...p,
+                // Add mapping for standard properties if they differ significantly
+                description: `Exoplanet ${p.name} located ${p.distance_light_years} light years from Earth.`,
+                aiData: {
+                    composition: p.composition?.primary || 'Unknown',
+                    atmosphere: 'Unknown', // NASA data might not have this detailed
+                    surfaceTemp: p.stellar_data?.temperature_k ? `${p.stellar_data.temperature_k} K` : 'Unknown'
+                }
+            });
+        });
+
+        // Trigger background loading of other clusters
+        this.loadBackgroundClusters();
+
+        return nearbyPlanets;
+    } catch (error) {
+        console.error('Error loading NASA data:', error);
+        return [];
+    }
+};
+
+FrontendPlanetService.prototype.loadBackgroundClusters = function () {
+    if (!clusterLoader) return;
+
+    // Example: Preload medium distance clusters
+    const mediumClusters = ['medium_quad1', 'medium_quad2', 'medium_quad3', 'medium_quad4'];
+    console.log('Initiating background load of medium distance clusters...');
+    clusterLoader.preloadClusters(mediumClusters);
+};
+

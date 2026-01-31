@@ -13,6 +13,8 @@ import { PLANETS_DATA } from './src/config/planets.js';
 import { Universe } from './src/objects/Universe.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { aiService } from './src/services/AIService.js';
+import { planetService } from './src/services/FrontendPlanetService.js';
+
 
 class App {
     constructor() {
@@ -129,7 +131,49 @@ class App {
         // Create spacecraft
         this.spacecraft = new Spacecraft();
         this.sceneManager.add(this.spacecraft.group);
+
+        // Load NASA Data
+        this.loadNasaContent();
     }
+
+    async loadNasaContent() {
+        // Dynamic import workaround if main.js is not a module or if path issues, 
+        // but here we are in a module so we should use the service instance we have.
+        // We need to wait a tiny bit for the dynamic import in the service to resolve if it hasn't already,
+        // or just call the method and let it handle the "getter" logic.
+
+        // Give the service a moment to initialize its dynamic import
+        setTimeout(async () => {
+            const nasaPlanets = await planetService.loadNasaData();
+            if (nasaPlanets && nasaPlanets.length > 0) {
+                this.renderNasaPlanets(nasaPlanets);
+            }
+        }, 500);
+    }
+
+    renderNasaPlanets(planets) {
+        console.log(`Rendering ${planets.length} NASA planets into scene...`);
+        import('three').then(THREE => {
+            const geometry = new THREE.SphereGeometry(0.5, 8, 8); // Simple geometry for performance
+            const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+
+            planets.forEach(p => {
+                if (p.position_3d?.current_position_au) {
+                    const pos = p.position_3d.current_position_au;
+
+                    // Create mesh (consider instanced mesh for optimization if list is huge)
+                    // For now, simpler implementation
+                    // Scale down distances for visualization if needed, or keeping real scale
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.set(pos.x, pos.y, pos.z);
+                    mesh.userData = { isNasaPlanet: true, name: p.name, data: p };
+
+                    this.sceneManager.add(mesh);
+                }
+            });
+        });
+    }
+
 
     animate() {
         requestAnimationFrame(() => this.animate());
