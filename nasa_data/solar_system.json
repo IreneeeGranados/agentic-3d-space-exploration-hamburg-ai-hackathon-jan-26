@@ -101,28 +101,58 @@
       "y": 0.0,
       "z": 0.0
     },
-    "distance_from_earth": {
-      "astronomical_units": 0.0,
-      "light_years": 0.0,
-      "parsecs": 0.0
-    },
     "characteristics": {
-      "habitability_percent": 100,
-      "toxicity_percent": 0,
       "radius_position": "Earth-like",
       "atmosphere_type": "N2-O2 (Breathable)",
       "principal_material": "Rocky (Silicates/Iron)",
-      "orbit_type": "Circular - Habitable Zone",
+      "toxicity_percent": 0,
+      "habitability_percent": 100,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": true,
         "count": 1,
+        "type": "Known",
         "names": ["Moon"]
       },
+      "orbit_type": "Circular - Habitable Zone",
       "coordinates_3d": {
+        "x_parsecs": 0.0,
+        "y_parsecs": 0.0,
+        "z_parsecs": 0.0,
         "x_light_years": 0.0,
         "y_light_years": 0.0,
         "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)"
+        "system": "Heliocentric (Sun centered)",
+        "note": "Solar System coordinates relative to the Sun"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 0.0,
+          "hours_format": "00h00m00.00s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 0.0,
+          "dms_format": "+00d00m00.00s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 0.000004848,
+          "light_years": 0.000015813,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 206264806.247,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 0.0,
+          "dec": 0.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "Solar System bodies have geocentric/heliocentric coordinates"
       }
     }
   },
@@ -144,28 +174,58 @@
       "y": 0.0,
       "z": 0.049
     },
-    "distance_from_earth": {
-      "astronomical_units": 1.524,
-      "light_years": 0.000024181,
-      "parsecs": 0.000007414
-    },
     "characteristics": {
-      "habitability_percent": 30,
-      "toxicity_percent": 60,
       "radius_position": "Sub-Earth",
       "atmosphere_type": "CO2 (Thin)",
       "principal_material": "Rocky (Iron Oxides/Silicates)",
-      "orbit_type": "Elliptical - Cold Zone",
+      "toxicity_percent": 60,
+      "habitability_percent": 30,
+      "distance_to_earth_ly": 0.000024181,
       "satellites": {
         "has_satellites": true,
         "count": 2,
+        "type": "Known",
         "names": ["Phobos", "Deimos"]
       },
+      "orbit_type": "Elliptical - Cold Zone",
       "coordinates_3d": {
+        "x_parsecs": 0.000007414,
+        "y_parsecs": 0.0,
+        "z_parsecs": 0.000000238,
         "x_light_years": 0.000024181,
         "y_light_years": 0.0,
         "z_light_years": 0.000000778,
-        "system": "Heliocentric (Sun centered)"
+        "system": "Heliocentric (Sun centered)",
+        "note": "Solar System coordinates relative to the Sun"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 0.0,
+          "hours_format": "00h00m00.00s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 0.0,
+          "dms_format": "+00d00m00.00s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 0.000004848,
+          "light_years": 0.000015813,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 206264806.247,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 0.0,
+          "dec": 0.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "Solar System bodies have geocentric/heliocentric coordinates"
       }
     }
   },
@@ -187,28 +247,58 @@
       "y": 0.0,
       "z": 0.118
     },
-    "distance_from_earth": {
-      "astronomical_units": 5.203,
-      "light_years": 0.000082526,
-      "parsecs": 0.000025302
-    },
     "characteristics": {
-      "habitability_percent": 0,
-      "toxicity_percent": 100,
       "radius_position": "Jupiter-like",
       "atmosphere_type": "Hydrogen-Helium",
       "principal_material": "Gas (H/He)",
-      "orbit_type": "Circular - Cold Zone",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 0.000082526,
       "satellites": {
         "has_satellites": true,
         "count": 95,
+        "type": "Known",
         "names": ["Io", "Europa", "Ganymede", "Callisto"]
       },
+      "orbit_type": "Circular - Cold Zone",
       "coordinates_3d": {
+        "x_parsecs": 0.000025302,
+        "y_parsecs": 0.0,
+        "z_parsecs": 0.000000574,
         "x_light_years": 0.000082526,
         "y_light_years": 0.0,
         "z_light_years": 0.000001873,
-        "system": "Heliocentric (Sun centered)"
+        "system": "Heliocentric (Sun centered)",
+        "note": "Solar System coordinates relative to the Sun"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 0.0,
+          "hours_format": "00h00m00.00s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 0.0,
+          "dms_format": "+00d00m00.00s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 0.000004848,
+          "light_years": 0.000015813,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 206264806.247,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 0.0,
+          "dec": 0.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "Solar System bodies have geocentric/heliocentric coordinates"
       }
     }
   },
@@ -230,28 +320,58 @@
       "y": 0.0,
       "z": 0.413
     },
-    "distance_from_earth": {
-      "astronomical_units": 9.537,
-      "light_years": 0.000151287,
-      "parsecs": 0.000046385
-    },
     "characteristics": {
-      "habitability_percent": 0,
-      "toxicity_percent": 100,
       "radius_position": "Jupiter-like",
       "atmosphere_type": "Hydrogen-Helium",
       "principal_material": "Gas (H/He)",
-      "orbit_type": "Circular - Cold Zone",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 0.000151287,
       "satellites": {
         "has_satellites": true,
         "count": 146,
+        "type": "Known",
         "names": ["Titan", "Enceladus", "Mimas", "Rhea"]
       },
+      "orbit_type": "Circular - Cold Zone",
       "coordinates_3d": {
+        "x_parsecs": 0.000046385,
+        "y_parsecs": 0.0,
+        "z_parsecs": 0.000002008,
         "x_light_years": 0.000151287,
         "y_light_years": 0.0,
         "z_light_years": 0.000006550,
-        "system": "Heliocentric (Sun centered)"
+        "system": "Heliocentric (Sun centered)",
+        "note": "Solar System coordinates relative to the Sun"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 0.0,
+          "hours_format": "00h00m00.00s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 0.0,
+          "dms_format": "+00d00m00.00s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 0.000004848,
+          "light_years": 0.000015813,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 206264806.247,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 0.0,
+          "dec": 0.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "Solar System bodies have geocentric/heliocentric coordinates"
       }
     }
   },
@@ -273,28 +393,58 @@
       "y": 0.0,
       "z": 0.259
     },
-    "distance_from_earth": {
-      "astronomical_units": 19.191,
-      "light_years": 0.000304407,
-      "parsecs": 0.000093331
-    },
     "characteristics": {
-      "habitability_percent": 0,
-      "toxicity_percent": 100,
       "radius_position": "Neptune-like",
       "atmosphere_type": "Hydrogen-Helium-Methane",
       "principal_material": "Ice Giant (H2O/CH4/NH3)",
-      "orbit_type": "Circular - Frozen Zone",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 0.000304407,
       "satellites": {
         "has_satellites": true,
         "count": 28,
+        "type": "Known",
         "names": ["Titania", "Oberon", "Umbriel", "Ariel", "Miranda"]
       },
+      "orbit_type": "Circular - Frozen Zone",
       "coordinates_3d": {
+        "x_parsecs": 0.000093331,
+        "y_parsecs": 0.0,
+        "z_parsecs": 0.000001260,
         "x_light_years": 0.000304407,
         "y_light_years": 0.0,
         "z_light_years": 0.000004110,
-        "system": "Heliocentric (Sun centered)"
+        "system": "Heliocentric (Sun centered)",
+        "note": "Solar System coordinates relative to the Sun"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 0.0,
+          "hours_format": "00h00m00.00s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 0.0,
+          "dms_format": "+00d00m00.00s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 0.000004848,
+          "light_years": 0.000015813,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 206264806.247,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 0.0,
+          "dec": 0.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "Solar System bodies have geocentric/heliocentric coordinates"
       }
     }
   },
@@ -316,28 +466,58 @@
       "y": 0.0,
       "z": 0.928
     },
-    "distance_from_earth": {
-      "astronomical_units": 30.069,
-      "light_years": 0.000476921,
-      "parsecs": 0.000146213
-    },
     "characteristics": {
-      "habitability_percent": 0,
-      "toxicity_percent": 100,
       "radius_position": "Neptune-like",
       "atmosphere_type": "Hydrogen-Helium-Methane",
       "principal_material": "Ice Giant (H2O/CH4/NH3)",
-      "orbit_type": "Circular - Frozen Zone",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 0.000476921,
       "satellites": {
         "has_satellites": true,
         "count": 16,
+        "type": "Known",
         "names": ["Triton", "Proteus", "Nereid"]
       },
+      "orbit_type": "Circular - Frozen Zone",
       "coordinates_3d": {
+        "x_parsecs": 0.000146213,
+        "y_parsecs": 0.0,
+        "z_parsecs": 0.000004514,
         "x_light_years": 0.000476921,
         "y_light_years": 0.0,
         "z_light_years": 0.000014723,
-        "system": "Heliocentric (Sun centered)"
+        "system": "Heliocentric (Sun centered)",
+        "note": "Solar System coordinates relative to the Sun"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 0.0,
+          "hours_format": "00h00m00.00s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 0.0,
+          "dms_format": "+00d00m00.00s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 0.000004848,
+          "light_years": 0.000015813,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 206264806.247,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 0.0,
+          "dec": 0.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "Solar System bodies have geocentric/heliocentric coordinates"
       }
     }
   },
@@ -359,28 +539,58 @@
       "y": 0.0,
       "z": 11.858
     },
-    "distance_from_earth": {
-      "astronomical_units": 39.482,
-      "light_years": 0.000626404,
-      "parsecs": 0.000192039
-    },
     "characteristics": {
-      "habitability_percent": 0,
-      "toxicity_percent": 100,
       "radius_position": "Sub-Earth",
       "atmosphere_type": "N2-CH4 (Thin)",
       "principal_material": "Ice/Rock (H2O/N2)",
-      "orbit_type": "Highly Elliptical - Frozen Zone",
+      "toxicity_percent": 100,
+      "habitability_percent": 0,
+      "distance_to_earth_ly": 0.000626404,
       "satellites": {
         "has_satellites": true,
         "count": 5,
+        "type": "Known",
         "names": ["Charon", "Styx", "Nix", "Kerberos", "Hydra"]
       },
+      "orbit_type": "Highly Elliptical - Frozen Zone",
       "coordinates_3d": {
+        "x_parsecs": 0.000192039,
+        "y_parsecs": 0.0,
+        "z_parsecs": 0.000057655,
         "x_light_years": 0.000626404,
         "y_light_years": 0.0,
         "z_light_years": 0.000188097,
-        "system": "Heliocentric (Sun centered)"
+        "system": "Heliocentric (Sun centered)",
+        "note": "Solar System coordinates relative to the Sun"
+      },
+      "icrs_coordinates": {
+        "right_ascension": {
+          "degrees": 0.0,
+          "hours_format": "00h00m00.00s",
+          "unit": "degrees"
+        },
+        "declination": {
+          "degrees": 0.0,
+          "dms_format": "+00d00m00.00s",
+          "unit": "degrees"
+        },
+        "distance": {
+          "parsecs": 0.000004848,
+          "light_years": 0.000015813,
+          "unit": "parsecs/light-years"
+        },
+        "parallax": {
+          "value": 206264806.247,
+          "unit": "milliarcseconds (mas)"
+        },
+        "proper_motion": {
+          "ra": 0.0,
+          "dec": 0.0,
+          "unit": "milliarcseconds/year (mas/yr)"
+        },
+        "epoch": "J2000.0",
+        "reference_frame": "ICRS (International Celestial Reference System)",
+        "note": "Solar System bodies have geocentric/heliocentric coordinates"
       }
     }
   }

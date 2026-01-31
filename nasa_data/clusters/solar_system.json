@@ -24,23 +24,26 @@
     },
     "characteristics": {
       "radius_position": "Sub-Earth",
-      "atmosphere_type": "None (Exosphere)",
-      "principal_material": "Rocky (Iron/Silicates)",
-      "toxicity_percent": 100,
+      "atmosphere_type": "Thin CO2 or None",
+      "principal_material": "Rocky (estimated)",
+      "toxicity_percent": 60,
       "habitability_percent": 0,
-      "distance_to_earth_ly": 9.69e-06,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": false,
         "count": 0,
-        "type": "Known"
+        "type": "Estimated"
       },
-      "orbit_type": "Circular - Hot Zone",
+      "orbit_type": "Slightly Eccentric - Habitable Zone",
       "coordinates_3d": {
-        "x_light_years": -1.48e-06,
-        "y_light_years": 5.94e-06,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 0.387 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -99,23 +102,26 @@
     },
     "characteristics": {
       "radius_position": "Earth-like",
-      "atmosphere_type": "CO2-N2 (Dense)",
-      "principal_material": "Rocky (Silicates)",
+      "atmosphere_type": "Thin/None (Too Hot)",
+      "principal_material": "Rocky (estimated)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
-      "distance_to_earth_ly": 4.38e-06,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": false,
         "count": 0,
-        "type": "Known"
+        "type": "Estimated"
       },
-      "orbit_type": "Circular - Hot Zone",
+      "orbit_type": "Circular - Habitable Zone",
       "coordinates_3d": {
-        "x_light_years": -1.093e-05,
-        "y_light_years": 3.34e-06,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 0.723 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -174,23 +180,26 @@
     },
     "characteristics": {
       "radius_position": "Earth-like",
-      "atmosphere_type": "N2-O2 (Breathable)",
-      "principal_material": "Rocky (Silicates/Iron)",
-      "toxicity_percent": 0,
-      "habitability_percent": 100,
-      "distance_to_earth_ly": 0.0,
+      "atmosphere_type": "N2-O2 or CO2-N2",
+      "principal_material": "Rocky (estimated)",
+      "toxicity_percent": 40,
+      "habitability_percent": 83,
+      "distance_to_earth_ly": null,
       "satellites": {
-        "has_satellites": true,
-        "count": 1,
-        "type": "Known"
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
       },
       "orbit_type": "Circular - Habitable Zone",
       "coordinates_3d": {
-        "x_light_years": -1.369e-05,
-        "y_light_years": 7.91e-06,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 1.0 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -204,8 +213,8 @@
           "unit": "degrees"
         },
         "distance": {
-          "parsecs": 0.0,
-          "light_years": 0.0,
+          "parsecs": null,
+          "light_years": null,
           "unit": "parsecs/light-years"
         },
         "parallax": {
@@ -249,23 +258,26 @@
     },
     "characteristics": {
       "radius_position": "Sub-Earth",
-      "atmosphere_type": "CO2 (Thin)",
-      "principal_material": "Rocky (Iron Oxides/Silicates)",
-      "toxicity_percent": 60,
-      "habitability_percent": 30,
-      "distance_to_earth_ly": 8.29e-06,
+      "atmosphere_type": "Thin CO2 or None",
+      "principal_material": "Rocky (estimated)",
+      "toxicity_percent": 40,
+      "habitability_percent": 43,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
-        "has_satellites": true,
-        "count": 2,
-        "type": "Known"
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
       },
-      "orbit_type": "Elliptical - Cold Zone",
+      "orbit_type": "Circular - Habitable Zone",
       "coordinates_3d": {
-        "x_light_years": -1.168e-05,
-        "y_light_years": 2.108e-05,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 1.524 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -328,19 +340,22 @@
       "principal_material": "Gaseous (H/He)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
-      "distance_to_earth_ly": 6.646e-05,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": true,
-        "count": 95,
-        "type": "Known"
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
       },
       "orbit_type": "Circular - Cold Zone",
       "coordinates_3d": {
-        "x_light_years": 8.207e-05,
-        "y_light_years": -5.74e-06,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 5.203 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -355,7 +370,7 @@
         },
         "distance": {
           "parsecs": 0.0,
-          "light_years": 0.0,
+          "light_years": 0.0001,
           "unit": "parsecs/light-years"
         },
         "parallax": {
@@ -399,23 +414,26 @@
     },
     "characteristics": {
       "radius_position": "Neptune-like",
-      "atmosphere_type": "Hydrogen-Helium (Gas Giant)",
-      "principal_material": "Gaseous (H/He)",
+      "atmosphere_type": "Hydrogen-Helium-Methane (Ice Giant)",
+      "principal_material": "Gas/Ice (H/He/CH4)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
-      "distance_to_earth_ly": 0.000135,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
         "has_satellites": true,
-        "count": 146,
-        "type": "Known"
+        "count": "Unknown (likely multiple)",
+        "type": "Estimated"
       },
       "orbit_type": "Circular - Cold Zone",
       "coordinates_3d": {
-        "x_light_years": -6.373e-05,
-        "y_light_years": 0.00013668,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 9.537 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -430,7 +448,7 @@
         },
         "distance": {
           "parsecs": 0.0,
-          "light_years": 0.0,
+          "light_years": 0.0001,
           "unit": "parsecs/light-years"
         },
         "parallax": {
@@ -474,23 +492,26 @@
     },
     "characteristics": {
       "radius_position": "Mini-Neptune",
-      "atmosphere_type": "Hydrogen-Helium-Methane (Ice Giant)",
-      "principal_material": "Ice Giant (H2O/CH4/NH3)",
+      "atmosphere_type": "Hydrogen-Helium-Methane (Mini)",
+      "principal_material": "Gas/Ice (H/He/CH4)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
-      "distance_to_earth_ly": 0.00028765,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
-        "has_satellites": true,
-        "count": 28,
-        "type": "Known"
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
       },
-      "orbit_type": "Circular - Frozen Zone",
+      "orbit_type": "Circular - Cold Zone",
       "coordinates_3d": {
-        "x_light_years": -0.00017837,
-        "y_light_years": -0.00024551,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 19.191 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -504,8 +525,8 @@
           "unit": "degrees"
         },
         "distance": {
-          "parsecs": 0.0,
-          "light_years": 0.0,
+          "parsecs": 0.0001,
+          "light_years": 0.0003,
           "unit": "parsecs/light-years"
         },
         "parallax": {
@@ -549,23 +570,26 @@
     },
     "characteristics": {
       "radius_position": "Mini-Neptune",
-      "atmosphere_type": "Hydrogen-Helium-Methane (Ice Giant)",
-      "principal_material": "Ice Giant (H2O/CH4/NH3)",
+      "atmosphere_type": "Hydrogen-Helium-Methane (Mini)",
+      "principal_material": "Gas/Ice (H/He/CH4)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
-      "distance_to_earth_ly": 0.00045967,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
-        "has_satellites": true,
-        "count": 16,
-        "type": "Known"
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
       },
-      "orbit_type": "Circular - Frozen Zone",
+      "orbit_type": "Circular - Cold Zone",
       "coordinates_3d": {
-        "x_light_years": 0.00022322,
-        "y_light_years": -0.00041982,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 30.069 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -579,8 +603,8 @@
           "unit": "degrees"
         },
         "distance": {
-          "parsecs": 0.0,
-          "light_years": 0.0,
+          "parsecs": 0.0001,
+          "light_years": 0.0005,
           "unit": "parsecs/light-years"
         },
         "parallax": {
@@ -624,23 +648,26 @@
     },
     "characteristics": {
       "radius_position": "Sub-Earth",
-      "atmosphere_type": "N2-CH4 (Thin)",
-      "principal_material": "Ice/Rock (H2O/N2)",
+      "atmosphere_type": "Thin/None (Frozen)",
+      "principal_material": "Rocky (estimated)",
       "toxicity_percent": 100,
       "habitability_percent": 0,
-      "distance_to_earth_ly": 0.00060852,
+      "distance_to_earth_ly": 0.0,
       "satellites": {
-        "has_satellites": true,
-        "count": 5,
-        "type": "Known"
+        "has_satellites": false,
+        "count": 0,
+        "type": "Estimated"
       },
-      "orbit_type": "Highly Elliptical - Frozen Zone",
+      "orbit_type": "Slightly Eccentric - Cold Zone",
       "coordinates_3d": {
-        "x_light_years": -0.00048519,
-        "y_light_years": 0.0003929,
-        "z_light_years": 0.0,
-        "system": "Heliocentric (Sun centered)",
-        "note": "Orbital distance: 39.482 AU from Sun"
+        "x_parsecs": null,
+        "y_parsecs": null,
+        "z_parsecs": null,
+        "x_light_years": null,
+        "y_light_years": null,
+        "z_light_years": null,
+        "system": "Unknown",
+        "note": "Coordinates unavailable"
       },
       "icrs_coordinates": {
         "right_ascension": {
@@ -654,8 +681,8 @@
           "unit": "degrees"
         },
         "distance": {
-          "parsecs": 0.0,
-          "light_years": 0.0,
+          "parsecs": 0.0002,
+          "light_years": 0.0006,
           "unit": "parsecs/light-years"
         },
         "parallax": {

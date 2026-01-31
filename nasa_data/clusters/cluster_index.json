@@ -1,6 +1,6 @@
 {
-  "total_planets": 6096,
-  "total_clusters": 18,
+  "total_planets": 6087,
+  "total_clusters": 17,
   "clusters": {
     "far_quad1": {
       "filename": "far_quad1.json",
@@ -3031,7 +3031,7 @@
     "nearby_quad1": {
       "filename": "nearby_quad1.json",
       "planet_count": 296,
-      "size_mb": 7.6,
+      "size_mb": 7.59,
       "planet_names": [
         "HD 16417 b",
         "HD 19994 b",
@@ -6206,25 +6206,6 @@
         "CoRoT-30 b",
         "Kepler-117 c",
         "Kepler-82 c"
-      ]
-    },
-    "solar_system": {
-      "filename": "solar_system.json",
-      "planet_count": 9,
-      "size_mb": 0.01,
-      "description": "Our Solar System - Home reference point",
-      "distance_range": "0 - 0.001 light years",
-      "quadrant": "local",
-      "planet_names": [
-        "Mercury",
-        "Venus",
-        "Earth",
-        "Mars",
-        "Jupiter",
-        "Saturn",
-        "Uranus",
-        "Neptune",
-        "Pluto"
       ]
     }
   },
