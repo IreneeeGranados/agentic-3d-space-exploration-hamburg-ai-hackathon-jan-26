@@ -7,9 +7,10 @@ import * as THREE from 'three';
 import { gsap } from 'https://cdn.skypack.dev/gsap@3.12.2';
 
 export class CameraController {
-    constructor(camera, controls) {
+    constructor(camera, controls, spacecraft = null) {
         this.camera = camera;
         this.controls = controls;
+        this.spacecraft = spacecraft;
         this.isAnimating = false;
     }
 
@@ -39,6 +40,11 @@ export class CameraController {
 
         const targetCameraPosition = planetPosition.clone().add(cameraOffset);
 
+        // Notify spacecraft of navigation target
+        if (this.spacecraft) {
+            this.spacecraft.setNavigationTarget(planetPosition, duration);
+        }
+
         // Animate camera position
         gsap.to(this.camera.position, {
             x: targetCameraPosition.x,
@@ -47,6 +53,10 @@ export class CameraController {
             duration: duration,
             ease: 'power2.inOut',
             onComplete: () => {
+                // Notify spacecraft of arrival
+                if (this.spacecraft) {
+                    this.spacecraft.clearNavigationTarget();
+                }
                 this.isAnimating = false;
             }
         });
@@ -72,6 +82,11 @@ export class CameraController {
         // Default overview position
         const overviewPosition = { x: 0, y: 50, z: 150 };
         const overviewTarget = { x: 0, y: 0, z: 0 };
+
+        // Notify spacecraft
+        if (this.spacecraft) {
+            this.spacecraft.clearNavigationTarget();
+        }
 
         gsap.to(this.camera.position, {
             x: overviewPosition.x,

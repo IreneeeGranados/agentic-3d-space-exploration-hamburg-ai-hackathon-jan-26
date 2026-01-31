@@ -36,10 +36,11 @@ class App {
             this.rendererManager.renderer.domElement
         );
 
-        // Setup camera controller for travel mode
+        // Setup camera controller for travel mode (spacecraft will be linked later)
         this.cameraController = new CameraController(
             this.cameraManager.camera,
-            this.controls
+            this.controls,
+            null  // Spacecraft not created yet
         );
 
         // Create scene objects
@@ -81,7 +82,11 @@ class App {
 
         // Create spacecraft in foreground
         this.spacecraft = new Spacecraft();
+        this.spacecraft.attachToCamera(this.cameraManager.camera);
         this.sceneManager.add(this.spacecraft.group);
+
+        // Update camera controller with spacecraft reference
+        this.cameraController.spacecraft = this.spacecraft;
     }
 
     setupInteractions() {
@@ -187,9 +192,9 @@ class App {
             this.planets.forEach(planet => planet.update());
         }
 
-        // Update spacecraft animation
+        // Update spacecraft animation (pass camera reference)
         if (this.spacecraft) {
-            this.spacecraft.update(0.016);
+            this.spacecraft.update(0.016, this.cameraManager.camera);
         }
 
         // Render the scene
