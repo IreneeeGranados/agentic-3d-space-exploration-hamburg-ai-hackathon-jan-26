@@ -1,16 +1,33 @@
 /**
  * Spacecraft Class
- * Creates a procedural spacecraft model for foreground display
+ * Camera-relative spacecraft with navigation capabilities
  */
 
 import * as THREE from 'three';
 
 export class Spacecraft {
-    constructor(position = { x: -30, y: -15, z: 80 }) {
-        this.position = position;
+    constructor() {
         this.group = new THREE.Group();
+
+        // Set initial position (will be overridden when camera attached)
+        this.group.position.set(-30, -15, 80);
+
+        // Camera-relative positioning
+        this.camera = null;
+        this.cameraOffset = new THREE.Vector3(-15, -5, -40); // left, down, in front
+
+        // Navigation state
+        this.navigationState = 'idle'; // 'idle', 'traveling', 'arriving'
+        this.targetPosition = null;
+        this.travelDuration = 0;
+        this.travelElapsed = 0;
+
+        // Animation
+        this.animationTime = 0;
+        this.baseRotation = { x: 0, y: 0, z: 0 };
+        this.currentBankAngle = 0;
+
         this.createSpacecraft();
-        this.setupAnimation();
     }
 
     createSpacecraft() {
@@ -99,37 +116,146 @@ export class Spacecraft {
         this.group.add(rightGlow);
         this.rightGlow = rightGlow;
 
-        // Position the spacecraft
-        this.group.position.set(this.position.x, this.position.y, this.position.z);
-
-        // Rotate to face forward
-        this.group.rotation.y = Math.PI / 6;
-
         // Store metadata
         this.group.userData = { type: 'spacecraft' };
     }
 
-    setupAnimation() {
-        this.animationTime = 0;
-        this.basePosition = { ...this.position };
+    /**
+     * Attach spacecraft to camera
+     */
+    attachToCamera(camera) {
+        this.camera = camera;
     }
 
-    update(deltaTime = 0.016) {
+    /**
+     * Set navigation target (planet position)
+     */
+    setNavigationTarget(targetPosition, duration = 2.5) {
+        this.targetPosition = targetPosition.clone();
+        this.navigationState = 'traveling';
+        this.travelDuration = duration;
+        this.travelElapsed = 0;
+        console.log('Spacecraft navigating to:', targetPosition);
+    }
+
+    /**
+     * Clear navigation target
+     */
+    clearNavigationTarget() {
+        this.navigationState = 'arriving';
+        this.targetPosition = null;
+        console.log('Spacecraft arrived at destination');
+    }
+
+    /**
+     * Update camera-relative position
+     */
+    updateCameraRelativePosition(deltaTime) {
+        if (!this.camera) return;
+
+        // Get camera's direction vectors
+        const forward = new THREE.Vector3(0, 0, -1);
+        const right = new THREE.Vector3(1, 0, 0);
+        const up = new THREE.Vector3(0, 1, 0);
+
+        forward.applyQuaternion(this.camera.quaternion);
+        right.applyQuaternion(this.camera.quaternion);
+        up.applyQuaternion(this.camera.quaternion);
+
+        // Calculate target position in camera space
+        const targetPosition = this.camera.position.clone();
+        targetPosition.add(forward.multiplyScalar(this.cameraOffset.z));
+        targetPosition.add(right.multiplyScalar(this.cameraOffset.x));
+        targetPosition.add(up.multiplyScalar(this.cameraOffset.y));
+
+        // Smooth interpolation to avoid jitter
+        this.group.position.lerp(targetPosition, 0.1);
+    }
+
+    /**
+     * Update spacecraft rotation to bank toward target
+     */
+    updateNavigationRotation(deltaTime) {
+        if (this.navigationState === 'traveling' && this.targetPosition) {
+            // Calculate direction to target
+            const direction = new THREE.Vector3()
+                .subVectors(this.targetPosition, this.group.position)
+                .normalize();
+
+            // Create target look-at quaternion
+            const targetQuaternion = new THREE.Quaternion();
+            const lookAtMatrix = new THREE.Matrix4();
+            lookAtMatrix.lookAt(this.group.position, this.targetPosition, new THREE.Vector3(0, 1, 0));
+            targetQuaternion.setFromRotationMatrix(lookAtMatrix);
+
+            // Apply banking based on navigation
+            const bankAngle = 0.2; // Max bank angle in radians
+            this.currentBankAngle = THREE.MathUtils.lerp(this.currentBankAngle, bankAngle, deltaTime * 2);
+
+            // Smoothly rotate toward target
+            this.group.quaternion.slerp(targetQuaternion, deltaTime * 1.5);
+
+            // Add roll/bank
+            this.group.rotation.z += this.currentBankAngle * Math.sin(this.animationTime * 2);
+
+            // Track travel progress
+            this.travelElapsed += deltaTime;
+
+        } else if (this.navigationState === 'arriving' || this.navigationState === 'idle') {
+            // Level out
+            this.currentBankAngle = THREE.MathUtils.lerp(this.currentBankAngle, 0, deltaTime * 3);
+
+            // Return to idle rotation
+            const idleQuaternion = new THREE.Quaternion();
+            this.group.quaternion.slerp(idleQuaternion, deltaTime * 2);
+
+            if (this.navigationState === 'arriving' && this.currentBankAngle < 0.01) {
+                this.navigationState = 'idle';
+            }
+        }
+    }
+
+    /**
+     * Update idle animations
+     */
+    updateIdleAnimation(deltaTime) {
         this.animationTime += deltaTime;
 
-        // Gentle bobbing motion
-        const bobAmount = 0.3;
-        this.group.position.y = this.basePosition.y + Math.sin(this.animationTime * 2) * bobAmount;
+        // Gentle bobbing (only in idle state)
+        if (this.navigationState === 'idle') {
+            const bobAmount = 0.2;
+            const bobOffset = Math.sin(this.animationTime * 2) * bobAmount;
+            // Apply bob as local offset
+            this.group.position.y += bobOffset * deltaTime;
+        }
 
-        // Slight rocking rotation
-        this.group.rotation.z = Math.sin(this.animationTime * 1.5) * 0.02;
+        // Pulse engine glow (always active, more intense during travel)
+        const baseIntensity = this.navigationState === 'traveling' ? 0.9 : 0.6;
+        const pulseRange = this.navigationState === 'traveling' ? 0.1 : 0.2;
+        const glowIntensity = baseIntensity + Math.sin(this.animationTime * 5) * pulseRange;
 
-        // Pulse engine glow
-        const glowIntensity = 0.6 + Math.sin(this.animationTime * 5) * 0.2;
         if (this.leftGlow && this.rightGlow) {
             this.leftGlow.material.opacity = glowIntensity;
             this.rightGlow.material.opacity = glowIntensity;
         }
+    }
+
+    /**
+     * Main update method
+     */
+    update(deltaTime = 0.016, camera = null) {
+        if (camera) {
+            this.camera = camera;
+        }
+
+        // Update position relative to camera
+        this.updateCameraRelativePosition(deltaTime);
+
+        // Update rotation based on navigation state
+        this.updateNavigationRotation(deltaTime);
+
+        // Update idle animations
+        this.updateIdleAnimation(deltaTime);
     }
 
     dispose() {
