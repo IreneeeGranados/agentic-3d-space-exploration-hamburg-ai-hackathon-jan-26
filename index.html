@@ -17,16 +17,16 @@
         <div class="loading-content">
             <h1 class="loading-title">SPACE ODYSSEY</h1>
             <p class="loading-subtitle">Preparing your cosmic journey...</p>
-            
+
             <div class="loading-rocket-container">
                 <div class="loading-rocket">🚀</div>
                 <div class="loading-trail"></div>
             </div>
-            
+
             <div class="loading-progress">
                 <div class="loading-progress-bar"></div>
             </div>
-            
+
             <p class="loading-status" id="loading-status">Initializing...</p>
             <p class="loading-detail" id="loading-detail">Loading cluster index...</p>
         </div>
@@ -34,13 +34,13 @@
 
     <div id="app">
         <canvas id="canvas"></canvas>
-        
+
         <!-- TOP LEFT: Flight HUD -->
         <div id="flight-hud" class="ui-panel">
             <div class="panel-header">
                 <h2 class="panel-title">Flight Systems</h2>
             </div>
-            
+
             <div class="hud-section">
                 <div class="hud-label">Velocity</div>
                 <div class="hud-value large accent" id="hud-velocity">0.00 u/s</div>
@@ -107,11 +107,11 @@
                 </div>
                 <div class="control-item">
                     <span class="control-key">A/D</span>
-                    <span class="control-description">Roll</span>
+                    <span class="control-description">Turn</span>
                 </div>
                 <div class="control-item">
-                    <span class="control-key">MOUSE</span>
-                    <span class="control-description">Steer</span>
+                    <span class="control-key">KEYS</span>
+                    <span class="control-description">Steer (WASD)</span>
                 </div>
                 <div class="control-item">
                     <span class="control-key">SHIFT</span>
@@ -149,6 +149,26 @@
                     <span class="control-key">H</span>
                     <span class="control-description">Toggle UI</span>
                 </div>
+                <div class="control-item">
+                    <button id="btn-toggle-view" class="modal-btn"
+                        style="width: 100%; margin-top: 10px; font-size: 11px; padding: 5px;">[ V ] Switch View</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cockpit Overlay -->
+        <div id="cockpit-overlay" class="cockpit-overlay">
+            <div class="cockpit-frame"></div>
+            <div class="cockpit-crosshair"></div>
+            <div class="cockpit-data-left">
+                <div class="data-line">SYS: ONLINE</div>
+                <div class="data-line">ENG: 100%</div>
+                <div class="data-line">VIEW: FIRST PERSON</div>
+            </div>
+            <div class="cockpit-data-right">
+                <div class="data-line">TARGET: NONE</div>
+                <div class="data-line">RADAR: ACTIVE</div>
+                <div class="data-line" id="cockpit-speed">SPD: 0.00</div>
             </div>
         </div>
 
@@ -182,7 +202,7 @@
                 <h2 class="modal-title" id="modal-planet-name">Planet Name</h2>
                 <p class="modal-subtitle" id="modal-planet-type">Planet Type</p>
             </div>
-            
+
             <div class="modal-body" id="modal-body">
                 <!-- Populated by JavaScript -->
             </div>

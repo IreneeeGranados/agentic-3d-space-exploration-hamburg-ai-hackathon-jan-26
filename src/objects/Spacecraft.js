@@ -180,7 +180,13 @@ export class Spacecraft {
      */
     steer(keys, deltaTime, mouseInput = { x: 0, y: 0 }) {
         // Check for manual override
-        if (keys.left || keys.right || keys.up || keys.down || Math.abs(mouseInput.x) > 0.1 || Math.abs(mouseInput.y) > 0.1 || keys.boost || keys.brake) {
+        const isMouseMoving = Math.abs(mouseInput.x) > 0.1 || Math.abs(mouseInput.y) > 0.1;
+        const isSteering = keys.left || keys.right || keys.up || keys.down || keys.boost || keys.brake;
+
+        // Only disengage on mouse move if in Chase mode. In Cockpit, mouse is for selection only.
+        const shouldDisengage = isSteering || (this.viewMode === 'CHASE' && isMouseMoving);
+
+        if (shouldDisengage) {
             this.disengageAutopilot();
         }
 
@@ -239,9 +245,13 @@ export class Spacecraft {
         let steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
         let steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
 
-        // Mouse Influence removed per user request.
-        // Navigation is now Keyboard-only (WASD/Arrows).
-        // if (this.viewMode !== 'COCKPIT') { ... }
+        // Mouse Influence (DISABLED per user request for keyboard-only navigation)
+        /*
+        if (this.viewMode === 'CHASE') {
+            if (Math.abs(mouseInput.x) > 0.15) steerX += mouseInput.x * 2;
+            if (Math.abs(mouseInput.y) > 0.15) steerY -= mouseInput.y * 2;
+        }
+        */
 
         // Apply steering rotation
         // Reduced rotation speed for smoother handling at low speeds
