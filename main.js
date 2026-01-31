@@ -5,7 +5,7 @@ import { RendererManager } from './src/core/Renderer.js';
 import { Planet } from './src/objects/Planet.js';
 import { Star } from './src/objects/Star.js';
 import { StarField } from './src/objects/StarField.js';
-import { PLANETS_DATA } from './src/config/planets.js';
+import { PLANETS_DATA, loadSolarSystemPlanets } from './src/config/planets.js';
 import { Universe } from './src/objects/Universe.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { PlanetDataService } from './src/services/PlanetDataService.js';
@@ -27,7 +27,7 @@ class App {
     async init() {
         // Start loading sequence
         this.loadingManager.start(4); // 4 main steps
-        
+
         try {
             // Step 1: Initialize core components
             this.loadingManager.updateStatus('Initializing Engine', 'Setting up 3D renderer...');
@@ -44,28 +44,27 @@ class App {
             this.setupMouse();
             this.loadingManager.completeStep('Controls');
 
-            // Step 3: Create scene objects
             this.loadingManager.updateStatus('Building Universe', 'Creating stars and planets...');
-            this.createSceneObjects();
+            await this.createSceneObjects();
             await this.loadExoplanets();
             this.initPlanetSelector();
             this.loadingManager.completeStep('Universe');
 
             // Step 4: Start animation and finalize
             this.loadingManager.updateStatus('Starting Mission', 'Engaging warp drive...');
-            
+
             // Setup UI controls
             this.setupUIControls();
-            
+
             // Handle window resize
             window.addEventListener('resize', () => this.onWindowResize());
-            
+
             this.animate();
             this.loadingManager.completeStep('Animation');
 
             // Finish loading
             this.loadingManager.finish();
-            
+
         } catch (error) {
             console.error('Initialization error:', error);
             this.loadingManager.error(error.message);
@@ -80,7 +79,7 @@ class App {
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = true;
             if (e.code === 'Space') this.keys.brake = true;
-            
+
             // Navigation shortcuts
             if (e.code === 'KeyT') this.togglePlanetSelector();
             if (e.code === 'KeyE') this.toggleExoplanets();
@@ -197,7 +196,7 @@ class App {
                         if (hit.object.userData && hit.object.userData.planetData) {
                             const planetData = hit.object.userData.planetData;
                             console.log('Exoplanet Selected:', planetData.pl_name);
-                            
+
                             if (this.teleportManager) {
                                 this.teleportManager.teleportToPlanet(planetData);
                             }
@@ -283,7 +282,7 @@ class App {
         }
     }
 
-    createSceneObjects() {
+    async createSceneObjects() {
         // Create the universe background
         this.universe = new Universe(4000);
         this.sceneManager.add(this.universe.mesh);
@@ -300,14 +299,19 @@ class App {
         });
         this.sceneManager.add(sun.mesh);
 
-        // Create solar system planets (the 8 original planets)
-        this.planets = PLANETS_DATA.map(planetData => {
+        // Load solar system planets from dataset
+        console.log('🌍 Loading solar system planet data from dataset...');
+        const planetsData = await loadSolarSystemPlanets();
+
+        // Create solar system planets with accurate dimensions from dataset
+        this.planets = planetsData.map(planetData => {
+            console.log(`  ✓ ${planetData.name}: radius=${planetData.radius.toFixed(3)} (${planetData.datasetValues?.pl_rade || 'N/A'} Earth radii)`);
             const planet = new Planet(planetData);
             this.sceneManager.add(planet.group);
             return planet;
         });
 
-        console.log(`✓ Created ${this.planets.length} solar system planets`);
+        console.log(`✓ Created ${this.planets.length} solar system planets with dataset dimensions`);
 
         // Create spacecraft
         this.spacecraft = new Spacecraft();
@@ -317,19 +321,19 @@ class App {
     async loadExoplanets() {
         // Initialize data service
         this.planetDataService = new PlanetDataService();
-        
+
         // Initialize cluster index first
         await this.planetDataService.initialize();
-        
+
         // Create and load NASA exoplanet visualization
         this.exoplanetField = new ExoplanetField(this.planetDataService);
         await this.exoplanetField.load();
-        
+
         if (this.exoplanetField.mesh) {
             this.sceneManager.add(this.exoplanetField.mesh);
             console.log('✓ NASA exoplanets added to scene');
         }
-        
+
         console.log(`✓ Total visualization: ${this.planets.length} solar system + ${this.planetDataService.getAllPlanets().length} exoplanets`);
     }
 
@@ -445,7 +449,7 @@ class App {
             const statusDot = document.getElementById('autopilot-status');
             const statusText = document.getElementById('autopilot-text');
             const destCard = document.getElementById('destination-card');
-            
+
             if (statusDot) statusDot.className = 'status-dot';
             if (statusText) statusText.textContent = 'Autopilot Active';
             if (destCard) destCard.style.display = 'block';
@@ -456,7 +460,7 @@ class App {
                 const destName = document.getElementById('destination-name');
                 const destDistance = document.getElementById('destination-distance');
                 const destHab = document.getElementById('destination-habitability');
-                
+
                 if (destName) destName.textContent = data.name || data.pl_name;
                 if (destDistance) {
                     const dist = this.spacecraft.mesh.position.distanceTo(target.position);
@@ -470,7 +474,7 @@ class App {
             const statusDot = document.getElementById('autopilot-status');
             const statusText = document.getElementById('autopilot-text');
             const destCard = document.getElementById('destination-card');
-            
+
             if (statusDot) statusDot.className = 'status-dot inactive';
             if (statusText) statusText.textContent = 'Manual Flight';
             if (destCard) destCard.style.display = 'none';
@@ -507,11 +511,11 @@ class App {
 
             // Update camera to follow spacecraft
             this.spacecraft.updateCamera(this.cameraManager.camera);
-            
+
             // Update HUD display
             this.updateHUD();
         }
-        
+
         // Update planet hover info
         if (this.planetHoverInfo) {
             this.planetHoverInfo.update();
@@ -538,7 +542,9 @@ class App {
 
 // Initialize application when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new App());
+    document.addEventListener('DOMContentLoaded', () => {
+        window.app = new App();
+    });
 } else {
-    new App();
+    window.app = new App();
 }

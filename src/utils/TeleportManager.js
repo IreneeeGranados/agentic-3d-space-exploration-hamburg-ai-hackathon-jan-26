@@ -21,14 +21,14 @@ export class TeleportManager {
         }
 
         const coords = planetData.characteristics.coordinates_3d;
-        
-        // Check if coordinates are valid
-        if (!coords.x_light_years || coords.x_light_years === null) {
+
+        // Check if coordinates are valid (use proper null check, not falsy - 0 is valid)
+        if (coords.x_light_years === null || coords.x_light_years === undefined) {
             console.error('Planet has no valid coordinates:', planetData.pl_name);
             alert(`Cannot teleport to ${planetData.pl_name}: No coordinates available`);
             return false;
         }
-        
+
         // Convert light years to scene units (1 light year = 10 scene units)
         const sceneScale = 10;
         const targetPosition = new THREE.Vector3(
@@ -52,17 +52,17 @@ export class TeleportManager {
 
         // Instantly set spacecraft position
         this.spacecraft.group.position.copy(approachPosition);
-        
+
         // Reset velocity to zero
         if (this.spacecraft.velocity) {
             this.spacecraft.velocity.set(0, 0, 0);
         }
-        
+
         // Disengage autopilot first to reset state
         if (this.spacecraft.disengageAutopilot) {
             this.spacecraft.disengageAutopilot();
         }
-        
+
         // Reset speed to default
         this.spacecraft.forwardSpeed = this.spacecraft.defaultSpeed || 1.0;
 
@@ -87,7 +87,7 @@ export class TeleportManager {
         const position = new THREE.Vector3(x, y, z);
         this.spacecraft.group.position.copy(position);
         this.spacecraft.velocity.set(0, 0, 0);
-        
+
         console.log(`Teleported to coordinates:`, position);
         return true;
     }
@@ -96,8 +96,10 @@ export class TeleportManager {
      * Teleport with visual effect (flash)
      */
     teleportWithEffect(planetData, onComplete) {
-        // Validate first
-        if (!planetData || !planetData.characteristics?.coordinates_3d?.x_light_years) {
+        // Validate first (use proper null checks)
+        if (!planetData || !planetData.characteristics?.coordinates_3d ||
+            planetData.characteristics.coordinates_3d.x_light_years === null ||
+            planetData.characteristics.coordinates_3d.x_light_years === undefined) {
             console.error('Cannot teleport: Invalid planet data');
             return false;
         }
