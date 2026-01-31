@@ -7,6 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "test-ai": "node src/ai/testAIService.js",
+    "test-elevenlabs": "node src/ai/testElevenLabsService.js",
+    "test-ai-combined": "node src/ai/example-combined-usage.js",
     "test-planet-service": "node src/services/testPlanetService.js"
   },
   "keywords": [],

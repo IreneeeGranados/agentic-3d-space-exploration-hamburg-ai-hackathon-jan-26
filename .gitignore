@@ -15,3 +15,10 @@ dist/
 
 # OS
 .DS_Store
+
+# NASA Data - Large files (can be regenerated with scripts)
+nasa_data/nasa_data.csv
+nasa_data/nasa_exoplanets_frontend.json
+nasa_data/clusters/no_position.json
+nasa_data/clusters/veryfar_quad1.json
+nasa_data/venv/
