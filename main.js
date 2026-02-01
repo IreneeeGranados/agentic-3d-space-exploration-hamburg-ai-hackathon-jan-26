@@ -498,11 +498,7 @@ class App {
             heading.textContent = `${degrees.toFixed(1)}°`;
         }
 
-        // Debug: Show key states in HUD (temporary for debugging)
-        const debugElem = document.getElementById('debug-keys');
-        if (debugElem) {
-            debugElem.textContent = `Keys: +${this.keys.speedUp} -${this.keys.speedDown} Shift:${this.keys.boost} Space:${this.keys.brake}`;
-        }
+
     }
 
     animate() {
