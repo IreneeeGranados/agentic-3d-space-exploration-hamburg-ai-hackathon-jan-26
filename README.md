@@ -63,20 +63,8 @@ graph TB
 
 ---
 
-## 🎮 Controls
-
-| Key | Action |
-|:---:|--------|
-| `W A S D` | Steer spacecraft |
-| `SHIFT` | Boost speed |
-| `SPACE` | Brake |
-| `V` | Toggle camera view |
-| `T` | Planet navigator |
-| `Click` | Explore planet |
-
----
-
 ## 🛠️ Quick Start
+
 
 ```bash
 # Clone & Install
