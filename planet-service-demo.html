@@ -253,7 +253,6 @@
     
     <script type="module">
         import { planetService } from './src/services/FrontendPlanetService.js';
-        import { PLANETS_DATA } from './src/config/planets.js';
         
         // Elements
         const loadBtn = document.getElementById('loadBtn');
@@ -325,15 +324,21 @@
         }
         
         // Load planets
-        loadBtn.addEventListener('click', () => {
+        loadBtn.addEventListener('click', async () => {
             log('Initializing Planet Service...', 'info');
             
             // Note: In real app, API key would come from import.meta.env.VITE_OPENAI_API_KEY
             // For this demo, it will use fallback descriptions
             planetService.init();
-            planetService.loadPlanets(PLANETS_DATA);
             
-            log(`✅ Loaded ${PLANETS_DATA.length} planets`, 'success');
+            log('Loading NASA exoplanet data from clusters...', 'info');
+            
+            try {
+                const nasaPlanets = await planetService.loadNasaData();
+                log(`Loaded ${nasaPlanets.length} planets from NASA data`, 'success');
+            } catch (error) {
+                log(`Error loading NASA data: ${error.message}`, 'error');
+            }
             
             renderPlanets();
             updateStats();
