@@ -711,3 +711,174 @@
         font-size: 11px;
     }
 }
+
+/* ========================================
+   MULTIPLAYER UI STYLES - ENHANCED
+   ======================================== */
+
+.multiplayer-btn {
+    position: fixed;
+    bottom: 140px;
+    right: 20px;
+    padding: 20px 40px;
+    background: linear-gradient(145deg, rgba(0, 217, 255, 0.3), rgba(0, 255, 136, 0.3));
+    border: 3px solid var(--accent-blue);
+    border-radius: 16px;
+    color: var(--text-primary);
+    font-family: 'Orbitron', var(--font-main);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1001;
+    backdrop-filter: blur(15px);
+    box-shadow: 
+        0 8px 32px rgba(0, 217, 255, 0.5),
+        0 0 40px rgba(0, 217, 255, 0.3),
+        inset 0 2px 10px rgba(255, 255, 255, 0.2);
+    text-shadow: 0 2px 10px rgba(0, 217, 255, 0.8);
+    animation: multiplayerPulse 2s ease-in-out infinite;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+@keyframes multiplayerPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 
+            0 8px 32px rgba(0, 217, 255, 0.5),
+            0 0 40px rgba(0, 217, 255, 0.3),
+            inset 0 2px 10px rgba(255, 255, 255, 0.2);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 
+            0 12px 40px rgba(0, 217, 255, 0.8),
+            0 0 60px rgba(0, 217, 255, 0.5),
+            inset 0 2px 15px rgba(255, 255, 255, 0.3);
+    }
+}
+
+.multiplayer-btn:hover {
+    background: linear-gradient(145deg, rgba(0, 217, 255, 0.5), rgba(0, 255, 136, 0.5));
+    border-color: var(--accent-success);
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 
+        0 15px 50px rgba(0, 255, 136, 0.8),
+        0 0 80px rgba(0, 255, 136, 0.6),
+        inset 0 2px 15px rgba(255, 255, 255, 0.4);
+    animation: none;
+}
+
+.multiplayer-btn:active {
+    transform: translateY(-3px) scale(1.08);
+}
+
+.multiplayer-btn.connected {
+    background: linear-gradient(145deg, rgba(0, 255, 136, 0.4), rgba(0, 217, 255, 0.4));
+    border-color: var(--accent-success);
+    animation: connectedGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes connectedGlow {
+    0%, 100% { 
+        border-color: var(--accent-success);
+        box-shadow: 
+            0 8px 32px rgba(0, 255, 136, 0.6),
+            0 0 50px rgba(0, 255, 136, 0.4);
+    }
+    50% { 
+        border-color: #00FF88;
+        box-shadow: 
+            0 12px 40px rgba(0, 255, 136, 0.9),
+            0 0 70px rgba(0, 255, 136, 0.6);
+    }
+}
+
+.multiplayer-btn.connected:hover {
+    background: linear-gradient(145deg, rgba(255, 51, 102, 0.4), rgba(255, 184, 0, 0.4));
+    border-color: var(--accent-danger);
+    box-shadow: 
+        0 15px 50px rgba(255, 51, 102, 0.6),
+        0 0 60px rgba(255, 51, 102, 0.4);
+}
+
+.multiplayer-panel {
+    top: 20px;
+    right: 20px;
+    min-width: 250px;
+    border: 3px solid var(--accent-success);
+    box-shadow: 
+        0 8px 32px rgba(0, 255, 136, 0.4),
+        0 0 40px rgba(0, 255, 136, 0.2);
+}
+
+.multiplayer-panel .panel-title {
+    color: var(--accent-success);
+    font-size: 16px;
+}
+
+/* Multiplayer Notifications */
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+.multiplayer-notification {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .multiplayer-btn {
+        bottom: 120px;
+        right: 15px;
+        padding: 16px 32px;
+        font-size: 16px;
+    }
+    
+    .multiplayer-panel {
+        right: 15px;
+        top: 15px;
+        min-width: 200px;
+    }
+}
+
+/* Multiplayer URL Input */
+#multiplayer-url {
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s ease;
+}
+
+#multiplayer-url:focus {
+    outline: none;
+    border-color: #00FF88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    background: rgba(0, 255, 136, 0.05);
+}
+
+#multiplayer-url:hover {
+    border-color: #00FF88;
+}
+
+#multiplayer-url::placeholder {
+    color: #555;
+    font-style: italic;
+}
