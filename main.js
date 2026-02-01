@@ -13,6 +13,9 @@ import { PlanetNavigator } from './src/controls/PlanetNavigator.js';
 import { PlanetHoverInfo } from './src/utils/PlanetHoverInfo.js';
 import { PlanetExplorationDialog } from './src/ui/PlanetExplorationDialog.js';
 import { PlanetTargetingSquare } from './src/ui/PlanetTargetingSquare.js';
+import { ProximityDetector } from './src/utils/ProximityDetector.js';
+import { NarrationService } from './src/services/NarrationService.js';
+import { NarratorDialog } from './src/ui/NarratorDialog.js';
 import OpenAIService from './src/ai/OpenAIService.js';
 import ElevenLabsService from './src/ai/ElevenLabsService.js';
 import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
@@ -78,7 +81,43 @@ class App {
 
     setupControls() {
         window.addEventListener('keydown', (e) => {
-            // Skip all controls if navigation is disabled (e.g., dialog is open)
+            // Check if narrator dialog is open
+            const narratorOpen = this.narratorDialog && this.narratorDialog.isShowing();
+            
+            // If narrator is open, only allow arrow keys for movement
+            if (narratorOpen) {
+                // Allow arrow keys
+                if (e.code === 'ArrowUp') {
+                    this.keys.up = true;
+                    e.preventDefault();
+                    return;
+                }
+                if (e.code === 'ArrowDown') {
+                    this.keys.down = true;
+                    e.preventDefault();
+                    return;
+                }
+                if (e.code === 'ArrowLeft') {
+                    this.keys.left = true;
+                    e.preventDefault();
+                    return;
+                }
+                if (e.code === 'ArrowRight') {
+                    this.keys.right = true;
+                    e.preventDefault();
+                    return;
+                }
+                
+                // Allow ESC (handled by NarratorDialog)
+                if (e.code === 'Escape') {
+                    return;
+                }
+                
+                // Block all other keys
+                return;
+            }
+            
+            // Normal mode - skip controls if navigation is disabled
             if (!this.controlsEnabled) return;
 
             if (e.code === 'KeyW') this.keys.speedUp = true;
@@ -93,12 +132,25 @@ class App {
             if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') this.handleViewToggle();
             if (e.code === 'KeyT') this.togglePlanetNavigator();
             if (e.code === 'KeyH') this.toggleUI();
+            if (e.code === 'KeyN') this.narrateClosestPlanet(); // Narrate closest planet
 
             if (e.code === 'Escape') this.closePlanetNavigator();
         });
 
         window.addEventListener('keyup', (e) => {
-            // Skip all controls if navigation is disabled (e.g., dialog is open)
+            // Check if narrator dialog is open
+            const narratorOpen = this.narratorDialog && this.narratorDialog.isShowing();
+            
+            // If narrator is open, only handle arrow keys
+            if (narratorOpen) {
+                if (e.code === 'ArrowUp') this.keys.up = false;
+                if (e.code === 'ArrowDown') this.keys.down = false;
+                if (e.code === 'ArrowLeft') this.keys.left = false;
+                if (e.code === 'ArrowRight') this.keys.right = false;
+                return;
+            }
+            
+            // Normal mode - skip controls if navigation is disabled
             if (!this.controlsEnabled) return;
 
             if (e.code === 'KeyW') this.keys.speedUp = false;
@@ -362,11 +414,18 @@ class App {
 
         // Initialize exploration dialog
         this.explorationDialog = new PlanetExplorationDialog(openAIService, elevenLabsService, this);
+        
+        // Initialize proximity-based narration system
+        this.proximityDetector = new ProximityDetector(this.planetDataService, this.exoplanetField);
+        this.narrationService = new NarrationService(openAIService, elevenLabsService);
+        this.narratorDialog = new NarratorDialog(this.narrationService); // Pass service for chat
 
         // Make it globally accessible for debugging
         window.planetExplorationDialog = this.explorationDialog;
+        window.narratorDialog = this.narratorDialog;
 
         console.log('✓ Planet exploration dialog initialized');
+        console.log('✓ Proximity narration system initialized');
     }
 
     initTargetingSquare() {
@@ -446,6 +505,67 @@ class App {
             this.explorationDialog.show(this.lastClickedPlanet);
         } else {
             console.log('No planet selected yet. Click on a planet first.');
+        }
+    }
+
+    /**
+     * Narrate closest planet (triggered by 'N' key)
+     */
+    async narrateClosestPlanet() {
+        if (!this.spacecraft || !this.proximityDetector || !this.narrationService || !this.narratorDialog) {
+            console.warn('⚠️ Narration system not initialized');
+            return;
+        }
+
+        // Check if narrator is already showing
+        if (this.narratorDialog.isShowing()) {
+            console.log('⏩ Narration already in progress');
+            return;
+        }
+
+        // Get closest planet
+        const closest = this.proximityDetector.getClosestPlanet(this.spacecraft.group.position);
+        
+        if (!closest) {
+            console.log('⚠️ No planet nearby to narrate');
+            return;
+        }
+
+        const planet = closest.planet;
+        const distance = closest.distance;
+        
+        console.log(`🎙️ Narrating ${planet.pl_name} (${(distance / 10000).toFixed(2)} scaled units away)`);
+
+        // Show dialog with loading state first
+        this.narratorDialog.container.classList.add('visible');
+        this.narratorDialog.isVisible = true;
+        this.narratorDialog.elements.planetName.textContent = planet.pl_name || 'Unknown Planet';
+        this.narratorDialog.showLoading();
+
+        // Target the planet (show targeting square)
+        if (this.targetingSquare && closest.mesh) {
+            const parentGroup = planet.isSolar ? null : this.exoplanetField?.meshGroup;
+            this.targetingSquare.target(closest.mesh, planet, parentGroup);
+            console.log('🎯 Targeting square shown for', planet.pl_name);
+        } else {
+            console.warn('⚠️ Could not show targeting square - mesh not found');
+        }
+
+        try {
+            console.log('📝 Generating narration...');
+            // Generate narration
+            const { text, audio } = await this.narrationService.generateNarration(planet);
+            
+            console.log('💬 Showing narrator dialog...');
+            // Show narrator dialog with text and audio
+            await this.narratorDialog.show(planet, text, audio);
+            
+            console.log('✅ Narrator dialog displayed');
+            
+        } catch (error) {
+            console.error('❌ Narration failed:', error);
+            this.narratorDialog.hideLoading();
+            this.narratorDialog.hide();
         }
     }
 
