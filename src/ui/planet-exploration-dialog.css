@@ -16,7 +16,7 @@
     border-radius: 8px;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
-    z-index: 10003; /* Above all other UI */
+    z-index: 99999; /* Above all other UI - highest priority */
     display: none;
     flex-direction: column;
     opacity: 0;
@@ -447,7 +447,7 @@
     bottom: 0;
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(3px);
-    z-index: 299;
+    z-index: 99998; /* Just below dialog, blocks all other UI */
     display: none;
 }
 

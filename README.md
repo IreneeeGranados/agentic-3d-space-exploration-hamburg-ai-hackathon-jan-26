@@ -86,7 +86,7 @@ All exoplanet data comes directly from the **[NASA Exoplanet Archive](https://ex
 
 ## 👥 Team
 
-Built with ❤️ at **Hamburg AI Hackathon 2025**
+Built with ❤️ at **Hamburg AI Hackathon 2026** by **Eduardo Pertierra Puche** & **Irene Granados Montosa**
 
 ---
 
