@@ -3,18 +3,16 @@
  * Handles batch loading, caching, and AI description generation for all planets
  */
 
-import OpenAI from 'openai';
-
 class PlanetService {
     constructor(apiKey) {
+        this.enabled = false;
+        this.client = null;
+        
         if (!apiKey) {
             console.warn('OpenAI API key not provided. AI descriptions will be disabled.');
-            this.client = null;
         } else {
-            this.client = new OpenAI({
-                apiKey: apiKey,
-                dangerouslyAllowBrowser: true
-            });
+            // Initialize client asynchronously
+            this.initPromise = this.initializeClient(apiKey);
         }
         
         this.config = {
@@ -32,6 +30,23 @@ class PlanetService {
         this.batchProcessing = false;
         this.batchSize = 3; // Process 3 planets at a time
         this.batchDelay = 1000; // 1 second between batches to avoid rate limits
+    }
+    
+    async initializeClient(apiKey) {
+        try {
+            // Dynamic import - only works in environments where openai is available
+            const { default: OpenAI } = await import('openai');
+            this.client = new OpenAI({
+                apiKey: apiKey,
+                dangerouslyAllowBrowser: true
+            });
+            this.enabled = true;
+            console.log('✅ PlanetService OpenAI client initialized');
+        } catch (error) {
+            console.warn('⚠️ OpenAI module not available (static build). AI features disabled.');
+            this.enabled = false;
+            this.client = null;
+        }
     }
 
     /**
@@ -138,7 +153,13 @@ class PlanetService {
      * @returns {Promise<string>} Generated description
      */
     async generateDescription(planet, useCache = true) {
-        if (!this.client) {
+        // Wait for initialization if still pending
+        if (this.initPromise) {
+            await this.initPromise;
+        }
+        
+        if (!this.enabled || !this.client) {
+            console.log('AI not available, using fallback description');
             return this.getFallbackDescription(planet);
         }
 
