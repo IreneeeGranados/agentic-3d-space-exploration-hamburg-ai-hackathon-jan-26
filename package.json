@@ -12,17 +12,22 @@
     "test-ai": "node src/ai/testAIService.js",
     "test-elevenlabs": "node src/ai/testElevenLabsService.js",
     "test-ai-combined": "node src/ai/example-combined-usage.js",
-    "test-planet-service": "node src/services/testPlanetService.js"
+    "test-planet-service": "node src/services/testPlanetService.js",
+    "multiplayer-server": "node server/multiplayer-server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "openai": "^6.17.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "three": "^0.182.0"
   },
   "devDependencies": {
-    "vite": "^6.4.1"
+    "vite": "^6.4.1",
+    "vite-plugin-static-copy": "^3.2.0"
   }
 }
