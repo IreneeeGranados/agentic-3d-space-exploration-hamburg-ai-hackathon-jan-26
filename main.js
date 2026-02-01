@@ -375,6 +375,9 @@ class App {
         // Start loading all planets in the navigator
         this.planetNavigator.loadPlanets();
 
+        // Setup SpAIce floating button
+        setTimeout(() => this.setupSpAIceButton(), 100);
+
         // Initialize planet hover info (for backward compatibility, kept minimal)
         this.planetHoverInfo = new PlanetHoverInfo(
             this.cameraManager.camera,
@@ -459,8 +462,6 @@ class App {
             this.planetNavigator.hide();
         }
     }
-
-
 
     handleViewToggle() {
         if (this.spacecraft) {
@@ -547,8 +548,13 @@ class App {
             const parentGroup = planet.isSolar ? null : this.exoplanetField?.meshGroup;
             this.targetingSquare.target(closest.mesh, planet, parentGroup);
             console.log('🎯 Targeting square shown for', planet.pl_name);
+            console.log('   Mesh:', closest.mesh.type, 'Position:', closest.worldPosition);
+            console.log('   Parent group scale:', parentGroup ? parentGroup.scale.x : 'none');
         } else {
-            console.warn('⚠️ Could not show targeting square - mesh not found');
+            console.warn('⚠️ Could not show targeting square');
+            console.warn('   targetingSquare exists:', !!this.targetingSquare);
+            console.warn('   closest.mesh exists:', !!closest.mesh);
+            console.warn('   closest object:', closest);
         }
 
         try {
@@ -605,7 +611,20 @@ class App {
             heading.textContent = `${degrees.toFixed(1)}°`;
         }
 
+        // Update target display in cockpit
+        this.updateTargetDisplay();
+    }
 
+    updateTargetDisplay() {
+        const targetElem = document.querySelector('.cockpit-data-right .data-line');
+        if (!targetElem) return;
+
+        if (this.targetingSquare && this.targetingSquare.isTargeting() && this.targetingSquare.planetData) {
+            const planetName = this.targetingSquare.planetData.pl_name || 'Unknown';
+            targetElem.textContent = `TARGET: ${planetName}`;
+        } else {
+            targetElem.textContent = 'TARGET: NONE';
+        }
     }
 
     animate() {
@@ -861,6 +880,23 @@ class App {
         } catch (e) {
             console.warn('Web Audio API not supported:', e);
         }
+    }
+
+    setupSpAIceButton() {
+        const spAIceBtn = document.getElementById('spaice-btn');
+        if (!spAIceBtn) {
+            console.warn('⚠️ SpAIce button not found in DOM');
+            return;
+        }
+
+        spAIceBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🤖 SpAIce button clicked!');
+            this.narrateClosestPlanet();
+        });
+
+        console.log('✅ SpAIce floating button initialized');
     }
 
     dispose() {

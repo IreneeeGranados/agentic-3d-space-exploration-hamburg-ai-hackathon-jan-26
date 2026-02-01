@@ -143,29 +143,6 @@
             </div>
         </div>
 
-        <!-- BOTTOM RIGHT: Planet Selector -->
-        <div id="planet-selector" class="ui-panel hidden">
-            <div class="panel-header">
-                <h2 class="panel-title">Planet Navigator</h2>
-                <p class="panel-subtitle">Select destination</p>
-            </div>
-
-            <div class="search-container">
-                <input type="text" class="search-input" id="planet-search" placeholder="Search planets...">
-            </div>
-
-            <div class="filter-bar">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="solar">Solar</button>
-                <button class="filter-btn" data-filter="nearby">Nearby</button>
-                <button class="filter-btn" data-filter="habitable">Habitable</button>
-            </div>
-
-            <div class="planet-list" id="planet-list">
-                <!-- Populated by JavaScript -->
-            </div>
-        </div>
-
         <!-- Planet Details Modal -->
         <div class="modal-overlay" id="modal-overlay"></div>
         <div id="planet-modal" class="ui-panel">
@@ -185,6 +162,27 @@
 
         <!-- Toggle UI Button -->
         <button class="toggle-btn" id="toggle-ui-btn">UI</button>
+        
+        <!-- SpAIce Floating Button -->
+        <button class="spaice-floating-btn" id="spaice-btn" title="Talk to SpAIce (N)">
+            <div class="spaice-btn-face">
+                <div class="spaice-btn-inner">
+                    <div class="spaice-btn-eye spaice-btn-eye-left">
+                        <div class="spaice-btn-pupil"></div>
+                    </div>
+                    <div class="spaice-btn-eye spaice-btn-eye-right">
+                        <div class="spaice-btn-pupil"></div>
+                    </div>
+                    <div class="spaice-btn-mouth">
+                        <div class="spaice-btn-mouth-line"></div>
+                    </div>
+                    <div class="spaice-btn-antenna">
+                        <div class="spaice-btn-antenna-tip"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="spaice-btn-label">SpAIce</div>
+        </button>
     </div>
 
     <!-- Three.js Library -->
