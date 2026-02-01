@@ -33,11 +33,11 @@ export class PostProcessingManager {
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
-        // 3. Unreal Bloom (Glow for Stars/Atmosphere)
+        // 3. Unreal Bloom (Glow for Stars/Atmosphere) - DISABLED for now to fix transparency
         // Resoln, Strength, Radius, Threshold
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(width, height),
-            0.2, // Drastically lowered to prevent washing out colors
+            0.0, // DISABLED - was causing stars to bleed through planets
             0.4, // Radius
             0.95 // Higher threshold to protect highlights
         );

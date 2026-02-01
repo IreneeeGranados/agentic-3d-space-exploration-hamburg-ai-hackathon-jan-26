@@ -183,9 +183,10 @@ export function createAtmosphere(planetRadius, atmosphereConfig) {
         vertexShader: AtmosphereShader.vertexShader,
         fragmentShader: AtmosphereShader.fragmentShader,
         transparent: true,
-        blending: THREE.AdditiveBlending,
+        blending: THREE.NormalBlending, // Changed from AdditiveBlending
         side: THREE.BackSide,
-        depthWrite: false
+        depthWrite: false,
+        depthTest: true // Respect depth buffer
     });
 
     innerMaterial.uniforms.atmosphereColor.value = new THREE.Color(atmosphereConfig.color || 0x4a90e2);
@@ -194,6 +195,7 @@ export function createAtmosphere(planetRadius, atmosphereConfig) {
     innerMaterial.uniforms.falloff.value = 3.0;
 
     const innerMesh = new THREE.Mesh(innerGeometry, innerMaterial);
+    innerMesh.renderOrder = 11; // Render after planets
     layers.push(innerMesh);
 
     // Outer scatter layer
@@ -204,9 +206,10 @@ export function createAtmosphere(planetRadius, atmosphereConfig) {
         vertexShader: AtmosphereShader.vertexShader,
         fragmentShader: AtmosphereShader.fragmentShader,
         transparent: true,
-        blending: THREE.AdditiveBlending,
+        blending: THREE.NormalBlending, // Changed from AdditiveBlending
         side: THREE.BackSide,
-        depthWrite: false
+        depthWrite: false,
+        depthTest: true // Respect depth buffer
     });
 
     outerMaterial.uniforms.atmosphereColor.value = new THREE.Color(atmosphereConfig.color || 0x4a90e2);
@@ -216,6 +219,7 @@ export function createAtmosphere(planetRadius, atmosphereConfig) {
     outerMaterial.uniforms.scatterStrength.value = 0.7;
 
     const outerMesh = new THREE.Mesh(outerGeometry, outerMaterial);
+    outerMesh.renderOrder = 11; // Render after planets
     layers.push(outerMesh);
 
     return layers;
@@ -234,6 +238,7 @@ export function createCloudLayer(planetRadius, cloudTexture = null) {
         fragmentShader: CloudShader.fragmentShader,
         transparent: true,
         depthWrite: false,
+        depthTest: true, // Respect depth buffer
         side: THREE.FrontSide
     });
 
@@ -245,7 +250,9 @@ export function createCloudLayer(planetRadius, cloudTexture = null) {
     material.uniforms.cloudCoverage.value = 0.6;
     material.uniforms.cloudSpeed.value = 0.005;
 
-    return new THREE.Mesh(geometry, material);
+    const cloudMesh = new THREE.Mesh(geometry, material);
+    cloudMesh.renderOrder = 11; // Render after planets
+    return cloudMesh;
 }
 
 /**

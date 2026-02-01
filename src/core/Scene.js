@@ -16,19 +16,19 @@ export class SceneManager {
         this.scene.background = new THREE.Color(0x000011);
 
         // Add exponential fog for depth (ajustado para escala x10000)
-        // El fog comienza a 1M de distancia y es denso a 50M
-        this.scene.fog = new THREE.FogExp2(0x000011, 0.00000002);
+        // DISABLED - fog was causing transparency issues
+        // this.scene.fog = new THREE.FogExp2(0x000011, 0.00000002);
 
-        // Add ambient light for general visibility - Lowered for space realism
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+        // Add strong ambient light for equal illumination from all sides
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
         this.scene.add(ambientLight);
 
         // Add Hemisphere light for better 3D depth (simulates galactic glow)
-        const hemiLight = new THREE.HemisphereLight(0x445566, 0x000000, 0.2);
+        const hemiLight = new THREE.HemisphereLight(0x445566, 0x222222, 0.8);
         this.scene.add(hemiLight);
 
-        // Add directional light (simulating local star/sun) - Reduced intensity
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        // Add directional light (simulating local star/sun) - Reduced intensity since we have strong ambient
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
         directionalLight.position.set(2000, 500, 2000); // Placed further away
         directionalLight.castShadow = true;
 

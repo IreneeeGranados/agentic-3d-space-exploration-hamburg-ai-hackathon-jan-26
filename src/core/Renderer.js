@@ -34,6 +34,9 @@ export class RendererManager {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
+        
+        // Ensure proper depth sorting for stars vs planets
+        this.renderer.sortObjects = true;
     }
 
     /**

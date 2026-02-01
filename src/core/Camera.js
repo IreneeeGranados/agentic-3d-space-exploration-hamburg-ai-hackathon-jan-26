@@ -24,6 +24,11 @@ export class CameraManager {
         // Position camera for good initial view
         this.camera.position.set(0, 50, 150);
         this.camera.lookAt(0, 0, 0);
+        
+        // Add light that follows camera for better visibility
+        this.cameraLight = new THREE.PointLight(0xffffff, 2.5, 2000);
+        this.cameraLight.position.set(0, 0, 0); // Will follow camera
+        this.camera.add(this.cameraLight);
     }
 
     updateAspect(canvas) {

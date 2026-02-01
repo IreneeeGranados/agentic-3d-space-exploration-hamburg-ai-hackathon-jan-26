@@ -70,11 +70,11 @@ export class Planet {
     }
 
     createPlanet() {
-        // Create planet geometry
+        // Create planet geometry - optimized
         const geometry = new THREE.SphereGeometry(
             this.config.radius,
-            64,
-            64
+            32, // Reduced from 64 for performance
+            32
         );
 
         // Get colors from composition
@@ -178,16 +178,20 @@ export class Planet {
             }
         }
 
-        // Create material with realistic lighting
+        // Create material with realistic lighting - NEVER TRANSPARENT
         const materialOptions = {
             map: texture,
             normalMap: normalMap,
+            color: new THREE.Color(0xffffff), // White to not tint textures
             roughness: isEarth ? 0.8 : (this.config.planetType === 'iceGiant' ? 0.4 : 0.9),
             metalness: isEarth ? 0.0 : 0.1,
             emissive: emissiveMap ? new THREE.Color(0xffffff) : new THREE.Color(baseColor),
             emissiveIntensity: (this.config.isSolar || isEarth) ? 0.3 : (emissiveMap ? 1.0 : (parseFloat(this.config.temperature) > 1000 ? 0.1 : 0.0)),
             transparent: false,
             opacity: 1.0,
+            alphaTest: 0,
+            depthWrite: true,
+            depthTest: true,
             side: THREE.FrontSide
         };
 
@@ -211,6 +215,7 @@ export class Planet {
         const material = new THREE.MeshStandardMaterial(materialOptions);
 
         this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.renderOrder = 10; // Render planets AFTER stars
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.mesh.rotation.z = this.config.tilt;

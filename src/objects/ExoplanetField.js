@@ -93,10 +93,15 @@ export class ExoplanetField {
     async create3DMeshes(planetBatch = this.planets) {
         if (!planetBatch || planetBatch.length === 0) return;
 
-        // Shared geometries - High quality for close-up viewing
-        const lowPolyGeom = new THREE.SphereGeometry(1, 16, 16); // Tier 3: Far
-        const midPolyGeom = new THREE.SphereGeometry(1, 32, 32); // Tier 2: Medium
-        const highPolyGeom = new THREE.SphereGeometry(1, 64, 64); // Tier 1: Near (high detail)
+        // Shared geometries - Performance optimized
+        const lowPolyGeom = new THREE.SphereGeometry(1, 8, 6); // Tier 3: Far (very low poly)
+        lowPolyGeom.computeVertexNormals(); // Ensure normals face outward
+        
+        const midPolyGeom = new THREE.SphereGeometry(1, 12, 10); // Tier 2: Medium
+        midPolyGeom.computeVertexNormals();
+        
+        const highPolyGeom = new THREE.SphereGeometry(1, 24, 20); // Tier 1: Near (optimized)
+        highPolyGeom.computeVertexNormals();
 
         const distantMaterials = new Map();
         const batchSize = 30; // Smaller batches for smoother execution
@@ -189,47 +194,96 @@ export class ExoplanetField {
                     const isEarth = planetName === 'Earth';
 
                     if (isSolarPlanet || planet.isSolar || isEarth) {
-                        if (isEarth) {
-                            console.log('🌎 RENDERING REALISTIC EARTH (Tier 1)');
+                        console.log(`🪐 Loading solar system planet: ${planetName}`);
 
-                            // Load real photographic textures
-                            texture = this.textureLoader.load('/textures/planets/earth/earth_day_2048.jpg');
-                            specularMap = this.textureLoader.load('/textures/planets/earth/earth_specular_2048.jpg');
-                            normalMap = this.textureLoader.load('/textures/planets/earth/earth_normal_2048.jpg');
-                            emissiveMap = this.textureLoader.load('/textures/planets/earth/earth_lights_2048.png');
-
-                            texture.colorSpace = THREE.SRGBColorSpace;
-                            if (emissiveMap) emissiveMap.colorSpace = THREE.SRGBColorSpace;
-                            useRealTextures = true;
+                        switch (planetName) {
+                            case 'Earth':
+                                texture = this.textureLoader.load('/textures/planets/earth/earth_day_2048.jpg');
+                                specularMap = this.textureLoader.load('/textures/planets/earth/earth_specular_2048.jpg');
+                                normalMap = this.textureLoader.load('/textures/planets/earth/earth_normal_2048.jpg');
+                                emissiveMap = this.textureLoader.load('/textures/planets/earth/earth_lights_2048.png');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                if (emissiveMap) emissiveMap.colorSpace = THREE.SRGBColorSpace;
+                                useRealTextures = true;
+                                break;
+                            case 'Mars':
+                                texture = this.textureLoader.load('/textures/planets/mars/2k_mars.jpg');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                normalMap = generateNormalMap(512, 2.5);
+                                useRealTextures = true;
+                                break;
+                            case 'Jupiter':
+                                texture = this.textureLoader.load('/textures/planets/jupiter/2k_jupiter.jpg');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                normalMap = generateNormalMap(512, 0.5);
+                                useRealTextures = true;
+                                break;
+                            case 'Saturn':
+                                texture = this.textureLoader.load('/textures/planets/saturn/2k_saturn.jpg');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                normalMap = generateNormalMap(512, 0.3);
+                                useRealTextures = true;
+                                break;
+                            case 'Neptune':
+                                texture = this.textureLoader.load('/textures/planets/neptune/2k_neptune.jpg');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                normalMap = generateNormalMap(512, 0.4);
+                                useRealTextures = true;
+                                break;
+                            case 'Uranus':
+                                texture = this.textureLoader.load('/textures/planets/uranus/2k_uranus.jpg');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                normalMap = generateNormalMap(512, 0.2);
+                                useRealTextures = true;
+                                break;
+                            case 'Venus':
+                                texture = this.textureLoader.load('/textures/planets/venus/2k_venus_atmosphere.jpg');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                normalMap = generateNormalMap(512, 0.1);
+                                useRealTextures = true;
+                                break;
+                            case 'Mercury':
+                                texture = this.textureLoader.load('/textures/planets/mercury/2k_mercury.jpg');
+                                texture.colorSpace = THREE.SRGBColorSpace;
+                                normalMap = generateNormalMap(512, 3.0);
+                                useRealTextures = true;
+                                break;
                         }
                     }
 
                     if (!useRealTextures) {
-                        if (isEarth) {
-                            texture = generateEarthTexture(1024); // Higher res for near camera
-                            normalMap = generateNormalMap(1024, 1.5);
-                        } else {
-                            // High quality textures for nearby planets
-                            texture = (planetType === 'rocky') ? generateRockyTexture(colors.base, colors.detail, 512) :
-                                (planetType === 'gasGiant') ? generateGasGiantTexture(planet.gasColors || [colors.base, colors.detail], 512) :
-                                    generateIceGiantTexture(colors.base, 512);
-                            normalMap = generateNormalMap(512, 2.0);
-                        }
+                        // Use simple colors for performance - no procedural textures
+                        texture = null;
+                        normalMap = null;
                     }
 
                     material = new THREE.MeshStandardMaterial({
-                        map: texture,
-                        normalMap: normalMap,
-                        color: isEarth ? new THREE.Color(0xffffff) : 0xffffff,
+                        color: new THREE.Color(colors.base),
                         roughness: isEarth ? 0.35 : roughness,
                         metalness: isEarth ? 0.0 : metalness,
-                        emissive: (isEarth && emissiveMap) ? new THREE.Color(0xffaa44) : emissive,
-                        emissiveIntensity: isEarth ? 0.05 : emissiveIntensity,
-                        transparent: false,
+                        emissive: (emissiveMap) ? new THREE.Color(0xffaa44) : (emissive || new THREE.Color(0x000000)),
+                        emissiveIntensity: emissiveMap ? 0.8 : emissiveIntensity,
+                        transparent: false, // NEVER transparent
                         opacity: 1.0,
+                        alphaTest: 0,
+                        depthWrite: true,
+                        depthTest: true,
                         side: THREE.FrontSide
                     });
 
+                    // Add textures only for real solar system planets
+                    if (useRealTextures && texture) {
+                        material.map = texture;
+                        material.color = new THREE.Color(0xffffff); // Don't tint the texture
+                        if (normalMap) material.normalMap = normalMap;
+                    }
+
+                    // Add emissive map if it exists (Earth night lights)
+                    if (emissiveMap) {
+                        material.emissiveMap = emissiveMap;
+                    }
+
+                    // Add specular/metalness for Earth water
                     if (useRealTextures && isEarth && specularMap) {
                         material.metalnessMap = specularMap;
                         material.metalness = 0.5;
@@ -237,7 +291,7 @@ export class ExoplanetField {
                     }
 
                 } else if (tier === 2) {
-                    // Medium distance - decent quality textures
+                    // Medium distance - simple colors, no textures
                     let colors;
                     if (planet.color && planet.detailColor) {
                         colors = { base: planet.color, detail: planet.detailColor };
@@ -245,18 +299,16 @@ export class ExoplanetField {
                         colors = getColorByComposition(planet.characteristics?.principal_material || planetType, temperature);
                     }
 
-                    let texture = (planetType === 'rocky') ? generateRockyTexture(colors.base, colors.detail, 256) :
-                        (planetType === 'gasGiant') ? generateGasGiantTexture([colors.base, colors.detail], 256) :
-                            generateIceGiantTexture(colors.base, 256);
-                    let normalMap = generateNormalMap(256, 1.5);
-
                     material = new THREE.MeshStandardMaterial({
-                        map: texture,
-                        normalMap: normalMap,
+                        color: new THREE.Color(colors.base),
                         roughness: 0.9,
                         metalness: 0.1,
-                        transparent: false,
-                        opacity: 1.0
+                        transparent: false, // NEVER transparent
+                        opacity: 1.0,
+                        alphaTest: 0,
+                        depthWrite: true,
+                        depthTest: true,
+                        side: THREE.FrontSide
                     });
 
                 } else {
@@ -277,8 +329,12 @@ export class ExoplanetField {
                             color: new THREE.Color(baseColor),
                             roughness: 0.9,
                             metalness: 0,
-                            transparent: false,
-                            opacity: 1.0
+                            transparent: false, // NEVER transparent
+                            opacity: 1.0,
+                            alphaTest: 0,
+                            depthWrite: true,
+                            depthTest: true,
+                            side: THREE.FrontSide
                         });
                         distantMaterials.set(colorKey, material);
                     }
@@ -288,6 +344,9 @@ export class ExoplanetField {
                 geometry.scale(radius, radius, radius);
 
                 const mesh = new THREE.Mesh(geometry, material);
+
+                // Force planets to render AFTER stars (write depth buffer)
+                mesh.renderOrder = 10;
 
                 // Apply Oblateness (Flattening)
                 if (planet.flattening) {
@@ -319,7 +378,7 @@ export class ExoplanetField {
                         // Use cloud shader for Earth
                         const cloudTex = this.textureLoader.load('/textures/planets/earth/earth_clouds_2048.png');
                         cloudTex.colorSpace = THREE.SRGBColorSpace;
-                        
+
                         const cloudMesh = createCloudLayer(radius, cloudTex);
                         cloudMesh.material.uniforms.cloudOpacity.value = 0.5;
                         cloudMesh.material.uniforms.cloudCoverage.value = 0.5;
@@ -337,25 +396,8 @@ export class ExoplanetField {
                             mesh.add(layer);
                         });
                         mesh.name = 'Earth';
-                    } else if (planet.atmosphere && planet.atmosphere.enabled) {
-                        // Use atmosphere shader for other planets with atmospheres
-                        const atmosphereConfig = {
-                            color: planet.atmosphere.color || 0x87CEEB,
-                            enabled: true
-                        };
-                        const atmosphereLayers = createAtmosphere(radius, atmosphereConfig);
-                        atmosphereLayers.forEach(layer => {
-                            mesh.add(layer);
-                        });
-                        
-                        // Add clouds if specified
-                        if (planet.atmosphere.hasClouds) {
-                            const cloudMesh = createCloudLayer(radius);
-                            cloudMesh.material.uniforms.cloudOpacity.value = 0.6;
-                            cloudMesh.material.uniforms.cloudCoverage.value = 0.6;
-                            mesh.add(cloudMesh);
-                        }
                     }
+                    // Removed atmosphere for other planets for performance
 
                     // 2. Ring System
                     if (planet.rings && planet.rings.enabled) {
@@ -367,6 +409,8 @@ export class ExoplanetField {
                             side: THREE.DoubleSide,
                             transparent: true,
                             opacity: 0.8,
+                            depthWrite: true, // Rings write depth
+                            depthTest: true,  // Rings respect depth
                             roughness: 0.8,
                             metalness: 0.2
                         });
@@ -380,6 +424,7 @@ export class ExoplanetField {
                         }
 
                         const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+                        ringMesh.renderOrder = 10; // Same as planets
                         ringMesh.rotation.x = Math.PI / 2; // Flat relative to planet
                         ringMesh.receiveShadow = true;
                         ringMesh.castShadow = true;
