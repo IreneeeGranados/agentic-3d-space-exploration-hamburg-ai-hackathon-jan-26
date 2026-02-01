@@ -88,21 +88,28 @@ export class PlanetExplorationDialog {
                     
                     <!-- AI Chat Tab -->
                     <div class="exploration-tab-panel" id="panel-ai-description">
-                        <div class="ai-description-container" id="ai-description-container">
-                            <!-- Chat interface will be dynamically inserted here -->
-                        </div>
-                        
-                        <!-- Audio Player -->
-                        <div class="audio-player" id="audio-player" style="display: none;">
-                            <div class="audio-player-header">
-                                <span class="audio-player-title">Audio Narration</span>
+                        <div class="ai-chat-section">
+                            <h3 class="ai-chat-title">💬 Chat with AI</h3>
+                            
+                            <!-- Chat messages container -->
+                            <div class="ai-chat-messages" id="ai-chat-messages">
+                                <!-- Messages appear here -->
                             </div>
-                            <div class="audio-controls">
-                                <button class="audio-btn" id="audio-play" title="Play">▶</button>
-                                <button class="audio-btn secondary" id="audio-pause" title="Pause" style="display: none;">⏸</button>
-                                <button class="audio-btn secondary" id="audio-stop" title="Stop">⏹</button>
+                            
+                            <!-- Input container -->
+                            <div class="ai-chat-input-container">
+                                <input 
+                                    type="text" 
+                                    id="ai-chat-input" 
+                                    class="ai-chat-input" 
+                                    placeholder="💬 Ask a question..."
+                                    maxlength="200"
+                                />
+                                <button class="ai-chat-send-btn" id="ai-chat-send-btn">
+                                    <span class="btn-icon">🚀</span>
+                                    <span class="btn-text">Send</span>
+                                </button>
                             </div>
-                            <div class="audio-status" id="audio-status">Ready to play</div>
                         </div>
                     </div>
                 </div>
@@ -117,41 +124,92 @@ export class PlanetExplorationDialog {
         document.body.appendChild(this.overlay);
         document.body.appendChild(this.dialog);
         
-        // Cache DOM references
+        // Cache DOM references - use querySelector on dialog element for reliability
         this.elements = {
-            title: document.getElementById('exploration-title'),
-            subtitle: document.getElementById('exploration-subtitle'),
-            overviewGrid: document.getElementById('overview-grid'),
-            characteristicsContent: document.getElementById('characteristics-content'),
-            aiDescriptionContainer: document.getElementById('ai-description-container'),
-            audioPlayer: document.getElementById('audio-player'),
-            audioStatus: document.getElementById('audio-status'),
+            title: this.dialog.querySelector('#exploration-title'),
+            subtitle: this.dialog.querySelector('#exploration-subtitle'),
+            overviewGrid: this.dialog.querySelector('#overview-grid'),
+            characteristicsContent: this.dialog.querySelector('#characteristics-content'),
+            chatMessages: this.dialog.querySelector('#ai-chat-messages'),
+            chatInput: this.dialog.querySelector('#ai-chat-input'),
+            chatSendBtn: this.dialog.querySelector('#ai-chat-send-btn'),
             tabs: this.dialog.querySelectorAll('.exploration-tab'),
             tabPanels: this.dialog.querySelectorAll('.exploration-tab-panel')
         };
+        
+        // Verify critical elements were found
+        const criticalElements = ['title', 'subtitle', 'overviewGrid', 'characteristicsContent', 'chatMessages', 'chatInput', 'chatSendBtn'];
+        const missing = criticalElements.filter(key => !this.elements[key]);
+        
+        if (missing.length > 0) {
+            console.error('❌ Missing dialog elements:', missing);
+            console.error('Dialog HTML:', this.dialog.innerHTML.substring(0, 500));
+        } else {
+            console.log('✅ All dialog elements cached successfully');
+        }
     }
 
     /**
      * Attach event listeners
      */
     attachEventListeners() {
-        // Close buttons
-        document.getElementById('exploration-close').addEventListener('click', () => this.hide());
-        document.getElementById('exploration-close-btn').addEventListener('click', () => this.hide());
-        this.overlay.addEventListener('click', () => this.hide());
+        // Close buttons - use cached references
+        const closeBtn = this.dialog.querySelector('#exploration-close');
+        const closeFooterBtn = this.dialog.querySelector('#exploration-close-btn');
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hide());
+        } else {
+            console.warn('⚠️ Close button not found');
+        }
+        
+        if (closeFooterBtn) {
+            closeFooterBtn.addEventListener('click', () => this.hide());
+        } else {
+            console.warn('⚠️ Footer close button not found');
+        }
+        
+        if (this.overlay) {
+            this.overlay.addEventListener('click', () => this.hide());
+        }
         
         // Tab switching
-        this.elements.tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
-                this.switchTab(tabName);
+        if (this.elements.tabs && this.elements.tabs.length > 0) {
+            this.elements.tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.dataset.tab;
+                    console.log('🔄 Switching to tab:', tabName);
+                    this.switchTab(tabName);
+                });
             });
-        });
+            console.log(`✅ Attached ${this.elements.tabs.length} tab listeners`);
+        } else {
+            console.error('❌ No tabs found for event listeners');
+        }
         
-        // Audio controls
-        document.getElementById('audio-play').addEventListener('click', () => this.playAudio());
-        document.getElementById('audio-pause').addEventListener('click', () => this.pauseAudio());
-        document.getElementById('audio-stop').addEventListener('click', () => this.stopAudio());
+        // Chat send button
+        if (this.elements.chatSendBtn) {
+            this.elements.chatSendBtn.addEventListener('click', () => {
+                console.log('🚀 Chat send button clicked');
+                this.handleChatSend();
+            });
+            console.log('✅ Chat send button listener attached');
+        } else {
+            console.warn('⚠️ Chat send button not found');
+        }
+        
+        // Chat input - Enter key
+        if (this.elements.chatInput) {
+            this.elements.chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    console.log('⏎ Enter key pressed in chat');
+                    this.handleChatSend();
+                }
+            });
+            console.log('✅ Chat input listener attached');
+        } else {
+            console.warn('⚠️ Chat input not found');
+        }
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -185,31 +243,15 @@ export class PlanetExplorationDialog {
         // Populate characteristics tab
         this.populateCharacteristics(planetData);
         
+        // Initialize chat for this planet
+        this.initializeChatForPlanet(planetData);
+        
         // Reset to overview tab
         this.switchTab('overview');
         
         // Show dialog
         this.overlay.classList.add('visible');
         this.dialog.classList.add('visible');
-        
-        // Setup chat interface if OpenAI is available
-        if (this.openAIService) {
-            this.setupChatInterface(planetData);
-        } else {
-            // Show "AI not configured" message
-            const container = document.getElementById('ai-description-container');
-            if (container) {
-                container.innerHTML = `
-                    <div class="ai-description-loading">
-                        <div class="ai-spinner"></div>
-                        <p>AI not configured</p>
-                    </div>
-                `;
-            }
-        }
-        
-        // Load AI description if service is available (for backwards compatibility)
-        // Note: This is now replaced by chat interface
     }
 
     /**
@@ -220,7 +262,16 @@ export class PlanetExplorationDialog {
         this.dialog.classList.remove('visible');
         this.stopAudio();
         this.stopInsightsAudio();
-        this.chatHistory = []; // Clear chat history
+        
+        // Clear chat state
+        this.chatHistory = [];
+        if (this.elements.chatMessages) {
+            this.elements.chatMessages.innerHTML = '';
+        }
+        if (this.elements.chatInput) {
+            this.elements.chatInput.value = '';
+        }
+        
         this.currentPlanet = null;
         
         // Re-enable keyboard navigation controls
@@ -230,85 +281,82 @@ export class PlanetExplorationDialog {
     }
 
     /**
-     * Setup chat interface event listeners
+     * Handle chat message send
      */
-    setupChatInterface(planetData) {
-        console.log('setupChatInterface called for planet:', planetData.pl_name);
-        
-        const container = document.getElementById('ai-description-container');
-        
-        if (!container) {
-            console.error('AI description container not found!');
+    handleChatSend() {
+        if (!this.elements.chatInput) {
+            console.error('❌ Chat input element not found');
             return;
         }
         
-        // Create the chat interface HTML
-        container.innerHTML = `
-            <div class="ai-chat-section">
-                <h3 class="ai-chat-title">💬 Chat with AI about this Planet</h3>
-                <div class="ai-chat-messages" id="ai-chat-messages">
-                    <p class="ai-chat-welcome">👋 Ask me anything about ${planetData.pl_name}!</p>
-                </div>
-                <div class="ai-chat-input-container">
-                    <input 
-                        type="text" 
-                        id="ai-chat-input" 
-                        class="ai-chat-input" 
-                        placeholder="💬 Ask a question about this planet..."
-                        maxlength="200"
-                    />
-                    <button class="ai-chat-send-btn" id="ai-chat-send-btn">
-                        <span class="btn-icon">🚀</span>
-                        <span class="btn-text">Send</span>
-                    </button>
-                </div>
+        if (!this.currentPlanet) {
+            console.error('❌ No current planet set');
+            return;
+        }
+        
+        const message = this.elements.chatInput.value.trim();
+        
+        if (!message) {
+            console.log('Empty message, ignoring');
+            return;
+        }
+        
+        console.log('📤 Sending chat message:', message);
+        
+        // Clear input immediately
+        this.elements.chatInput.value = '';
+        
+        // Send to AI
+        this.sendChatMessage(message, this.currentPlanet);
+    }
+
+    /**
+     * Initialize chat for current planet
+     */
+    initializeChatForPlanet(planetData) {
+        console.log('🔧 Initializing chat for planet:', planetData.pl_name);
+        
+        if (!this.elements.chatMessages) {
+            console.error('❌ Chat messages container not found');
+            return;
+        }
+        
+        // Clear previous chat
+        this.chatHistory = [];
+        
+        // Show welcome message
+        this.elements.chatMessages.innerHTML = `
+            <div class="ai-chat-welcome">
+                <span class="welcome-icon">👋</span>
+                <p>Hi! I'm your AI assistant for <strong>${planetData.pl_name}</strong>.</p>
+                <p>Ask me anything about this planet!</p>
             </div>
         `;
         
-        console.log('Chat HTML created, waiting for DOM...');
-        
-        // Use setTimeout to ensure DOM is ready
-        setTimeout(() => {
-            const sendBtn = document.getElementById('ai-chat-send-btn');
-            const chatInput = document.getElementById('ai-chat-input');
-            const messagesContainer = document.getElementById('ai-chat-messages');
-            
-            console.log('Setting up chat listeners:', {
-                sendBtn: !!sendBtn,
-                chatInput: !!chatInput,
-                messagesContainer: !!messagesContainer
-            });
-            
-            if (!sendBtn || !chatInput || !messagesContainer) {
-                console.error('Chat elements not found after rendering!');
-                return;
+        // Enable/disable input based on OpenAI availability
+        if (this.elements.chatInput && this.elements.chatSendBtn) {
+            if (this.openAIService) {
+                this.elements.chatInput.disabled = false;
+                this.elements.chatSendBtn.disabled = false;
+                this.elements.chatInput.placeholder = `💬 Ask about ${planetData.pl_name}...`;
+                console.log('✅ Chat interface enabled');
+            } else {
+                this.elements.chatInput.disabled = true;
+                this.elements.chatSendBtn.disabled = true;
+                this.elements.chatInput.placeholder = 'AI not configured';
+                
+                // Show error message
+                this.elements.chatMessages.innerHTML += `
+                    <div class="ai-chat-message error-message">
+                        <div class="message-avatar">⚠️</div>
+                        <div class="message-content">OpenAI service is not configured. Please check your API key.</div>
+                    </div>
+                `;
+                console.warn('⚠️ OpenAI service not available');
             }
-            
-            // Send on button click
-            sendBtn.addEventListener('click', () => {
-                console.log('Send button clicked!');
-                const message = chatInput.value.trim();
-                console.log('Message:', message);
-                if (message) {
-                    this.sendChatMessage(message, planetData);
-                    chatInput.value = '';
-                }
-            });
-            
-            // Send on Enter key
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    console.log('Enter pressed!');
-                    const message = chatInput.value.trim();
-                    if (message) {
-                        this.sendChatMessage(message, planetData);
-                        chatInput.value = '';
-                    }
-                }
-            });
-            
-            console.log('✓ Chat interface setup complete');
-        }, 100);
+        } else {
+            console.error('❌ Chat input or send button not found');
+        }
     }
 
     /**
@@ -348,6 +396,13 @@ export class PlanetExplorationDialog {
      * Populate overview tab with planet data
      */
     populateOverview(planetData) {
+        if (!this.elements.overviewGrid) {
+            console.error('❌ Overview grid element not found');
+            return;
+        }
+        
+        console.log('📊 Populating overview for:', planetData.pl_name);
+        
         const char = planetData.characteristics || {};
         
         const fields = [
@@ -421,12 +476,21 @@ export class PlanetExplorationDialog {
                 <div class="overview-field-value ${field.highlight}">${field.value}</div>
             </div>
         `).join('');
+        
+        console.log('✅ Overview populated successfully');
     }
 
     /**
      * Populate characteristics tab
      */
     populateCharacteristics(planetData) {
+        if (!this.elements.characteristicsContent) {
+            console.error('❌ Characteristics content element not found');
+            return;
+        }
+        
+        console.log('📋 Populating characteristics for:', planetData.pl_name);
+        
         const char = planetData.characteristics || {};
         
         const sections = [
@@ -494,62 +558,7 @@ export class PlanetExplorationDialog {
             </div>
         `).join('');
         
-        // Add AI Insights section if OpenAI is available
-        if (this.openAIService) {
-            this.elements.characteristicsContent.innerHTML += `
-                <div class="characteristics-section ai-insights-section">
-                    <div class="ai-insights-header">
-                        <h3 class="characteristics-title">💬 Chat with AI about this Planet</h3>
-                    </div>
-                    <div class="ai-insights-container" id="ai-insights-container">
-                        <div class="ai-chat-messages" id="ai-chat-messages">
-                            <p class="ai-chat-welcome">👋 Ask me anything about ${planetData.pl_name}!</p>
-                        </div>
-                        <div class="ai-chat-input-container">
-                            <input 
-                                type="text" 
-                                id="ai-chat-input" 
-                                class="ai-chat-input" 
-                                placeholder="💬 Ask a question about this planet..."
-                                maxlength="200"
-                            />
-                            <button class="ai-chat-send-btn" id="ai-chat-send-btn">
-                                <span class="btn-icon">🚀</span>
-                                <span class="btn-text">Send</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Attach event listener for the button
-            setTimeout(() => {
-                const sendBtn = document.getElementById('ai-chat-send-btn');
-                const chatInput = document.getElementById('ai-chat-input');
-                
-                if (sendBtn && chatInput) {
-                    // Send on button click
-                    sendBtn.addEventListener('click', () => {
-                        const message = chatInput.value.trim();
-                        if (message) {
-                            this.sendChatMessage(message, planetData);
-                            chatInput.value = '';
-                        }
-                    });
-                    
-                    // Send on Enter key
-                    chatInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') {
-                            const message = chatInput.value.trim();
-                            if (message) {
-                                this.sendChatMessage(message, planetData);
-                                chatInput.value = '';
-                            }
-                        }
-                    });
-                }
-            }, 0);
-        }
+        console.log('✅ Characteristics populated successfully');
     }
 
     /**
@@ -934,94 +943,83 @@ export class PlanetExplorationDialog {
      * Send a chat message to AI
      */
     async sendChatMessage(message, planetData) {
-        console.log('sendChatMessage called with:', message);
-        
-        const messagesContainer = document.getElementById('ai-chat-messages');
-        const sendBtn = document.getElementById('ai-chat-send-btn');
-        const chatInput = document.getElementById('ai-chat-input');
-        
-        if (!messagesContainer) {
-            console.error('Messages container not found!');
+        if (!this.elements.chatMessages) {
+            console.error('Chat messages container not found!');
             return;
         }
         
-        console.log('Adding user message to chat...');
+        console.log('📤 Sending:', message);
         
-        // Add user message to chat
-        const userMessageEl = document.createElement('div');
-        userMessageEl.className = 'ai-chat-message user-message';
-        userMessageEl.innerHTML = `
-            <div class="message-avatar">👤</div>
-            <div class="message-content">${message}</div>
-        `;
-        messagesContainer.appendChild(userMessageEl);
+        // Add user message
+        this.addChatMessage('user', message);
         
-        // Add to chat history
-        this.chatHistory.push({ role: 'user', content: message });
+        // Add loading message
+        const loadingId = this.addChatMessage('loading', 'Thinking...');
         
         // Disable input while processing
-        if (sendBtn) sendBtn.disabled = true;
-        if (chatInput) chatInput.disabled = true;
-        
-        // Show loading message
-        const loadingMessageEl = document.createElement('div');
-        loadingMessageEl.className = 'ai-chat-message ai-message loading';
-        loadingMessageEl.id = 'ai-loading-message';
-        loadingMessageEl.innerHTML = `
-            <div class="message-avatar">🤖</div>
-            <div class="message-content">
-                <div class="ai-spinner"></div>
-                <span>Thinking...</span>
-            </div>
-        `;
-        messagesContainer.appendChild(loadingMessageEl);
-        
-        // Scroll to bottom
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        if (this.elements.chatInput) this.elements.chatInput.disabled = true;
+        if (this.elements.chatSendBtn) this.elements.chatSendBtn.disabled = true;
         
         try {
-            // Get AI response
-            const response = await this.openAIService.chatAboutPlanet(message, planetData, this.chatHistory);
+            // Call AI
+            const response = await this.openAIService.chatAboutPlanet(
+                message, 
+                planetData, 
+                this.chatHistory
+            );
             
-            // Add to chat history
+            // Update history
+            this.chatHistory.push({ role: 'user', content: message });
             this.chatHistory.push({ role: 'assistant', content: response });
             
-            // Remove loading message
-            const loadingEl = document.getElementById('ai-loading-message');
-            if (loadingEl) loadingEl.remove();
-            
-            // Add AI response to chat
-            const aiMessageEl = document.createElement('div');
-            aiMessageEl.className = 'ai-chat-message ai-message';
-            aiMessageEl.innerHTML = `
-                <div class="message-avatar">🤖</div>
-                <div class="message-content">${response}</div>
-            `;
-            messagesContainer.appendChild(aiMessageEl);
+            // Remove loading, add AI response
+            this.removeChatMessage(loadingId);
+            this.addChatMessage('ai', response);
             
         } catch (error) {
-            console.error('Error getting AI response:', error);
-            
-            // Remove loading message
-            const loadingEl = document.getElementById('ai-loading-message');
-            if (loadingEl) loadingEl.remove();
-            
-            // Show error message
-            const errorMessageEl = document.createElement('div');
-            errorMessageEl.className = 'ai-chat-message ai-message error';
-            errorMessageEl.innerHTML = `
-                <div class="message-avatar">⚠️</div>
-                <div class="message-content">Sorry, I couldn't process that. ${error.message}</div>
-            `;
-            messagesContainer.appendChild(errorMessageEl);
+            console.error('Chat error:', error);
+            this.removeChatMessage(loadingId);
+            this.addChatMessage('error', `Sorry, I couldn't process that. ${error.message}`);
         } finally {
             // Re-enable input
-            if (sendBtn) sendBtn.disabled = false;
-            if (chatInput) chatInput.disabled = false;
-            
-            // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            if (this.elements.chatInput) this.elements.chatInput.disabled = false;
+            if (this.elements.chatSendBtn) this.elements.chatSendBtn.disabled = false;
         }
+    }
+
+    /**
+     * Add message to chat UI
+     * @returns {string} Message ID for removal
+     */
+    addChatMessage(type, text) {
+        if (!this.elements.chatMessages) return;
+        
+        const messageId = `msg-${Date.now()}-${Math.random()}`;
+        const messageEl = document.createElement('div');
+        messageEl.id = messageId;
+        messageEl.className = `ai-chat-message ${type}-message`;
+        
+        const avatar = type === 'user' ? '👤' : 
+                       type === 'ai' ? '🤖' : 
+                       type === 'loading' ? '⏳' : '⚠️';
+        
+        messageEl.innerHTML = `
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-content">${text}</div>
+        `;
+        
+        this.elements.chatMessages.appendChild(messageEl);
+        this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
+        
+        return messageId;
+    }
+
+    /**
+     * Remove message from chat UI
+     */
+    removeChatMessage(messageId) {
+        const el = document.getElementById(messageId);
+        if (el) el.remove();
     }
 
     /**
