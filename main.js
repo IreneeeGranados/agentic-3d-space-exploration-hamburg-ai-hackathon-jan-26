@@ -584,9 +584,9 @@ class App {
         // Create flash effect overlay
         this.createTeleportFlash();
 
-        // Calculate approach position - offset escalado también
+        // Calculate approach position - cerca del planeta pero no dentro
         const planetRadius = (planet.pl_rade || 1.0) * 0.5 * globalScale; // Radio del planeta escalado
-        const offset = planetRadius * 50; // 50x el radio del planeta para verlo completo
+        const offset = planetRadius * 3; // 3x el radio del planeta (suficiente para verlo completo)
         const direction = targetPosition.clone().normalize();
         const approachPosition = targetPosition.clone().sub(direction.multiplyScalar(offset));
 

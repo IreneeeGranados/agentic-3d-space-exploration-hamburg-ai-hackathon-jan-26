@@ -13,7 +13,11 @@ export class SceneManager {
 
     setupScene() {
         // Set background to dark space
-        this.scene.background = new THREE.Color(0x000000);
+        this.scene.background = new THREE.Color(0x000011);
+
+        // Add exponential fog for depth (ajustado para escala x10000)
+        // El fog comienza a 1M de distancia y es denso a 50M
+        this.scene.fog = new THREE.FogExp2(0x000011, 0.00000002);
 
         // Add ambient light for general visibility (Base Illumination)
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Increased from 0.3
