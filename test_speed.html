@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Speed Control Test</title>
+    <style>
+        body { 
+            font-family: monospace; 
+            padding: 20px; 
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .info { 
+            background: #16213e; 
+            padding: 20px; 
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .speed-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00ff88;
+            margin: 20px 0;
+        }
+        .controls {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .key { 
+            background: #00ff88; 
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .status {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .active {
+            background: #00ff88;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h1>🚀 Unlimited Speed Control Test</h1>
+        <div class="speed-display">Speed: <span id="speed">50</span> units/sec</div>
+        
+        <div class="controls">
+            <h3>Controls:</h3>
+            <div class="status">
+                <span class="key">+</span> Speed Up | Status: <span id="speedUp" class="status-indicator">Released</span>
+            </div>
+            <div class="status">
+                <span class="key">-</span> Slow Down | Status: <span id="speedDown" class="status-indicator">Released</span>
+            </div>
+            <div class="status">
+                <span class="key">Shift</span> Boost | Status: <span id="boost" class="status-indicator">Released</span>
+            </div>
+            <div class="status">
+                <span class="key">Space</span> Brake | Status: <span id="brake" class="status-indicator">Released</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3>Settings:</h3>
+            <div>Max Speed: <span style="color: #ff0088;">Infinity ∞</span></div>
+            <div>Speed Increment: <span style="color: #00ff88;">150 units/sec²</span></div>
+            <div>Auto-Slow: <span style="color: #ff0088;">DISABLED</span></div>
+        </div>
+        
+        <div class="controls">
+            <h3>Test Instructions:</h3>
+            <ol>
+                <li>Press and hold <span class="key">+</span> to accelerate</li>
+                <li>Release <span class="key">+</span> - speed should PERSIST (not decay)</li>
+                <li>Press <span class="key">-</span> to slow down</li>
+                <li>Press <span class="key">Shift</span> for quick boost to 200</li>
+                <li>Press <span class="key">Space</span> to brake to 0</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Simulated spacecraft speed control
+        let forwardSpeed = 50.0;
+        const defaultSpeed = 50.0;
+        const boostSpeed = 200.0;
+        const speedIncrement = 150.0;
+        const maxSpeed = Infinity;
+        const minSpeed = 0.0;
+        
+        const keys = {
+            speedUp: false,
+            speedDown: false,
+            boost: false,
+            brake: false
+        };
+        
+        // Key bindings
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Equal' || e.code === 'NumpadAdd') {
+                keys.speedUp = true;
+                document.getElementById('speedUp').textContent = 'PRESSED';
+                document.getElementById('speedUp').classList.add('active');
+            }
+            if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+                keys.speedDown = true;
+                document.getElementById('speedDown').textContent = 'PRESSED';
+                document.getElementById('speedDown').classList.add('active');
+            }
+            if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                keys.boost = true;
+                document.getElementById('boost').textContent = 'PRESSED';
+                document.getElementById('boost').classList.add('active');
+            }
+            if (e.code === 'Space') {
+                keys.brake = true;
+                document.getElementById('brake').textContent = 'PRESSED';
+                document.getElementById('brake').classList.add('active');
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Equal' || e.code === 'NumpadAdd') {
+                keys.speedUp = false;
+                document.getElementById('speedUp').textContent = 'Released';
+                document.getElementById('speedUp').classList.remove('active');
+            }
+            if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+                keys.speedDown = false;
+                document.getElementById('speedDown').textContent = 'Released';
+                document.getElementById('speedDown').classList.remove('active');
+            }
+            if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                keys.boost = false;
+                document.getElementById('boost').textContent = 'Released';
+                document.getElementById('boost').classList.remove('active');
+            }
+            if (e.code === 'Space') {
+                keys.brake = false;
+                document.getElementById('brake').textContent = 'Released';
+                document.getElementById('brake').classList.remove('active');
+            }
+        });
+        
+        // Simplified lerp
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+        
+        // Update loop (matches Spacecraft.js logic)
+        function update() {
+            const deltaTime = 0.016; // ~60fps
+            
+            // Speed adjustment with +/- keys
+            if (keys.speedUp) {
+                forwardSpeed += speedIncrement * deltaTime;
+                console.log(`⚡ Speed UP: ${forwardSpeed.toFixed(0)} units/sec`);
+            }
+            if (keys.speedDown) {
+                forwardSpeed -= speedIncrement * deltaTime;
+                console.log(`🔻 Speed DOWN: ${forwardSpeed.toFixed(0)} units/sec`);
+            }
+            
+            // Boost with Shift
+            if (keys.boost) {
+                forwardSpeed = lerp(forwardSpeed, boostSpeed, deltaTime * 3.0);
+            }
+            // NO AUTO-SLOW! Speed persists until manually changed
+            
+            // Brake with Space
+            if (keys.brake) {
+                forwardSpeed = lerp(forwardSpeed, 0, deltaTime * 5.0);
+            }
+            
+            // Only clamp to minimum, NO MAXIMUM!
+            forwardSpeed = Math.max(forwardSpeed, minSpeed);
+            
+            // Update display
+            document.getElementById('speed').textContent = forwardSpeed.toFixed(0);
+            
+            requestAnimationFrame(update);
+        }
+        
+        update();
+    </script>
+</body>
+</html>

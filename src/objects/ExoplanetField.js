@@ -96,10 +96,10 @@ export class ExoplanetField {
         // Shared geometries - Performance optimized
         const lowPolyGeom = new THREE.SphereGeometry(1, 8, 6); // Tier 3: Far (very low poly)
         lowPolyGeom.computeVertexNormals(); // Ensure normals face outward
-        
+
         const midPolyGeom = new THREE.SphereGeometry(1, 12, 10); // Tier 2: Medium
         midPolyGeom.computeVertexNormals();
-        
+
         const highPolyGeom = new THREE.SphereGeometry(1, 24, 20); // Tier 1: Near (optimized)
         highPolyGeom.computeVertexNormals();
 
@@ -198,52 +198,52 @@ export class ExoplanetField {
 
                         switch (planetName) {
                             case 'Earth':
-                                texture = this.textureLoader.load('/textures/planets/earth/earth_day_2048.jpg');
-                                specularMap = this.textureLoader.load('/textures/planets/earth/earth_specular_2048.jpg');
-                                normalMap = this.textureLoader.load('/textures/planets/earth/earth_normal_2048.jpg');
-                                emissiveMap = this.textureLoader.load('/textures/planets/earth/earth_lights_2048.png');
+                                texture = this.textureLoader.load('textures/planets/earth/earth_day_2048.jpg');
+                                specularMap = this.textureLoader.load('textures/planets/earth/earth_specular_2048.jpg');
+                                normalMap = this.textureLoader.load('textures/planets/earth/earth_normal_2048.jpg');
+                                emissiveMap = this.textureLoader.load('textures/planets/earth/earth_lights_2048.png');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 if (emissiveMap) emissiveMap.colorSpace = THREE.SRGBColorSpace;
                                 useRealTextures = true;
                                 break;
                             case 'Mars':
-                                texture = this.textureLoader.load('/textures/planets/mars/2k_mars.jpg');
+                                texture = this.textureLoader.load('textures/planets/mars/2k_mars.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 normalMap = generateNormalMap(512, 2.5);
                                 useRealTextures = true;
                                 break;
                             case 'Jupiter':
-                                texture = this.textureLoader.load('/textures/planets/jupiter/2k_jupiter.jpg');
+                                texture = this.textureLoader.load('textures/planets/jupiter/2k_jupiter.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 normalMap = generateNormalMap(512, 0.5);
                                 useRealTextures = true;
                                 break;
                             case 'Saturn':
-                                texture = this.textureLoader.load('/textures/planets/saturn/2k_saturn.jpg');
+                                texture = this.textureLoader.load('textures/planets/saturn/2k_saturn.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 normalMap = generateNormalMap(512, 0.3);
                                 useRealTextures = true;
                                 break;
                             case 'Neptune':
-                                texture = this.textureLoader.load('/textures/planets/neptune/2k_neptune.jpg');
+                                texture = this.textureLoader.load('textures/planets/neptune/2k_neptune.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 normalMap = generateNormalMap(512, 0.4);
                                 useRealTextures = true;
                                 break;
                             case 'Uranus':
-                                texture = this.textureLoader.load('/textures/planets/uranus/2k_uranus.jpg');
+                                texture = this.textureLoader.load('textures/planets/uranus/2k_uranus.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 normalMap = generateNormalMap(512, 0.2);
                                 useRealTextures = true;
                                 break;
                             case 'Venus':
-                                texture = this.textureLoader.load('/textures/planets/venus/2k_venus_atmosphere.jpg');
+                                texture = this.textureLoader.load('textures/planets/venus/2k_venus_atmosphere.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 normalMap = generateNormalMap(512, 0.1);
                                 useRealTextures = true;
                                 break;
                             case 'Mercury':
-                                texture = this.textureLoader.load('/textures/planets/mercury/2k_mercury.jpg');
+                                texture = this.textureLoader.load('textures/planets/mercury/2k_mercury.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
                                 normalMap = generateNormalMap(512, 3.0);
                                 useRealTextures = true;
@@ -387,7 +387,7 @@ export class ExoplanetField {
                     // 1. Earth Atmosphere & Clouds
                     if (isEarth) {
                         // Use cloud shader for Earth
-                        const cloudTex = this.textureLoader.load('/textures/planets/earth/earth_clouds_2048.png');
+                        const cloudTex = this.textureLoader.load('textures/planets/earth/earth_clouds_2048.png');
                         cloudTex.colorSpace = THREE.SRGBColorSpace;
 
                         const cloudMesh = createCloudLayer(radius, cloudTex);

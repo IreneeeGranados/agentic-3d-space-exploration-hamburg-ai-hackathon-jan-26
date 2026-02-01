@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multiplayer Debug Test</title>
+</head>
+<body>
+    <h1>Multiplayer Connection Test</h1>
+    <div id="results"></div>
+    <button id="testBtn">Test Connection</button>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        function log(message, isError = false) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.style.color = isError ? 'red' : 'green';
+            results.appendChild(p);
+            console.log(message);
+        }
+        
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            results.innerHTML = '';
+            log('🔍 Testing multiplayer server connection...');
+            
+            // Test 1: Health endpoint
+            try {
+                log('Test 1: Fetching /health...');
+                const response = await fetch('http://localhost:3000/health');
+                const data = await response.json();
+                log(`✅ Health check: ${JSON.stringify(data)}`);
+            } catch (error) {
+                log(`❌ Health check failed: ${error.message}`, true);
+            }
+            
+            // Test 2: Status endpoint  
+            try {
+                log('Test 2: Fetching /status...');
+                const response = await fetch('http://localhost:3000/status');
+                const data = await response.json();
+                log(`✅ Status check: ${JSON.stringify(data)}`);
+            } catch (error) {
+                log(`❌ Status check failed: ${error.message}`, true);
+            }
+            
+            // Test 3: Import MultiplayerManager
+            try {
+                log('Test 3: Importing MultiplayerManager...');
+                const { MultiplayerManager } = await import('./src/multiplayer/MultiplayerManager.js');
+                log('✅ MultiplayerManager imported successfully');
+                
+                // Test 4: Check server availability
+                log('Test 4: Checking server availability...');
+                const available = await MultiplayerManager.checkServerAvailability('http://localhost:3000');
+                log(`✅ Server available: ${available}`);
+                
+            } catch (error) {
+                log(`❌ Import/Check failed: ${error.message}`, true);
+                console.error(error);
+            }
+        });
+        
+        // Auto-run on load
+        document.getElementById('testBtn').click();
+    </script>
+</body>
+</html>

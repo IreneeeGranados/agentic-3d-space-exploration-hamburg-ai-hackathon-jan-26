@@ -1,0 +1,179 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                   MULTIPLAYER ARCHITECTURE DIAGRAM                    ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                          BROWSER CLIENT 1                            │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃                      main.js (App)                            ┃  │
+│  ┃  ┌──────────────────────────────────────────────────────┐    ┃  │
+│  ┃  │           3D Scene (Three.js)                        │    ┃  │
+│  ┃  │  ┌────────────────┐  ┌────────────────────────┐     │    ┃  │
+│  ┃  │  │ Local Player   │  │  Remote Players        │     │    ┃  │
+│  ┃  │  │  - Spacecraft  │  │  - RemotePlayer x N    │     │    ┃  │
+│  ┃  │  │  - Camera      │  │  - Name Tags           │     │    ┃  │
+│  ┃  │  │  - Controls    │  │  - Trails              │     │    ┃  │
+│  ┃  │  └────────────────┘  └────────────────────────┘     │    ┃  │
+│  ┃  └──────────────────────────────────────────────────────┘    ┃  │
+│  ┃  ┌──────────────────────────────────────────────────────┐    ┃  │
+│  ┃  │      MultiplayerManager                              │    ┃  │
+│  ┃  │  - checkServerAvailability()                         │    ┃  │
+│  ┃  │  - connect()                                          │    ┃  │
+│  ┃  │  - sendUpdate() [every 50ms]                         │    ┃  │
+│  ┃  │  - update() [interpolate remote players]             │    ┃  │
+│  ┃  └──────────────────────────────────────────────────────┘    ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+│                                 │                                     │
+│                         WebSocket Connection                          │
+│                          (socket.io-client)                           │
+└─────────────────────────────────┼───────────────────────────────────┘
+                                  │
+                                  ▼
+        ┌─────────────────────────────────────────────────────┐
+        │        MULTIPLAYER SERVER (Port 3000)                │
+        │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+        │  ┃      multiplayer-server.js (Node.js)        ┃  │
+        │  ┃  ┌───────────────────────────────────────┐  ┃  │
+        │  ┃  │    Socket.io Server                   │  ┃  │
+        │  ┃  │  - Connection handling                │  ┃  │
+        │  ┃  │  - Player registry (Map)              │  ┃  │
+        │  ┃  │  - Event routing                      │  ┃  │
+        │  ┃  └───────────────────────────────────────┘  ┃  │
+        │  ┃  ┌───────────────────────────────────────┐  ┃  │
+        │  ┃  │    Express HTTP Server                │  ┃  │
+        │  ┃  │  - GET /health  → {"status":"ok"}     │  ┃  │
+        │  ┃  │  - GET /status  → player count/uptime │  ┃  │
+        │  ┃  └───────────────────────────────────────┘  ┃  │
+        │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+        └─────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────┴───────────────────────────────────┐
+│                          BROWSER CLIENT 2, 3, ...                    │
+│  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓  │
+│  ┃              Same as Client 1                                 ┃  │
+│  ┃  - Each client sees others as RemotePlayer instances         ┃  │
+│  ┃  - Smooth interpolation for network lag                      ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+└─────────────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         DATA FLOW DIAGRAM                             ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+   INITIALIZATION:
+   ===============
+   
+   1. App starts → checkServerAvailability()
+      └─→ HTTP GET /health
+          └─→ If OK: Show multiplayer button
+          └─→ If fail: Hide multiplayer UI
+   
+   2. User clicks "Join Multiplayer"
+      └─→ MultiplayerManager.connect()
+          └─→ WebSocket handshake
+          └─→ Server responds with 'init' event
+              └─→ Receive all existing players
+              └─→ Add RemotePlayer for each
+   
+   
+   GAME LOOP (every frame):
+   ========================
+   
+   1. Local player moves (keyboard/mouse)
+      └─→ Update local spacecraft immediately
+   
+   2. Every 50ms:
+      └─→ MultiplayerManager.sendUpdate()
+          └─→ Emit 'updatePosition' event
+              ├─→ position: {x, y, z}
+              ├─→ rotation: {x, y, z}
+              ├─→ speed: number
+              └─→ viewMode: string
+   
+   3. Server receives update
+      └─→ Broadcast to all OTHER clients
+          └─→ 'playerMoved' event
+   
+   4. Other clients receive 'playerMoved'
+      └─→ MultiplayerManager.updateRemotePlayer()
+          └─→ RemotePlayer.updateFromNetwork()
+              └─→ Set target position/rotation
+   
+   5. Every frame:
+      └─→ RemotePlayer.update()
+          └─→ Lerp to target position (smooth)
+          └─→ Update trail effect
+          └─→ Billboard name tag to camera
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                        EVENT PROTOCOL                                 ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+   CLIENT → SERVER:
+   ================
+   
+   'updatePosition'     → {position, rotation, speed, viewMode}
+   'updateNickname'     → {nickname}
+   'chatMessage'        → {message}
+   'shareTarget'        → {planetData}
+   
+   
+   SERVER → CLIENT:
+   ================
+   
+   'init'               → {playerId, players[], gameState}
+   'playerJoined'       → {id, position, rotation, nickname, ...}
+   'playerMoved'        → {id, position, rotation, speed, viewMode}
+   'playerUpdated'      → {id, nickname}
+   'playerLeft'         → {playerId}
+   'serverShutdown'     → {message}
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         FILE STRUCTURE                                ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+   project/
+   ├── server/
+   │   └── multiplayer-server.js           ← Server implementation
+   │
+   ├── src/
+   │   └── multiplayer/
+   │       ├── MultiplayerManager.js       ← Network layer
+   │       └── RemotePlayer.js             ← Remote player rendering
+   │
+   ├── main.js                             ← Integration (modified)
+   ├── index.html                          ← UI controls (modified)
+   ├── ui-style.css                        ← Styling (modified)
+   │
+   └── Documentation:
+       ├── MULTIPLAYER.md                  ← Full documentation
+       ├── MULTIPLAYER_QUICKSTART.md       ← Quick start guide
+       ├── MULTIPLAYER_IMPLEMENTATION.md   ← Implementation summary
+       └── MULTIPLAYER_ARCHITECTURE.txt    ← This file
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                    TECHNOLOGY STACK                                   ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+   Server:
+   -------
+   • Node.js v22+              (JavaScript runtime)
+   • Express                   (HTTP server)
+   • Socket.io                 (WebSocket library)
+   
+   Client:
+   -------
+   • Three.js                  (3D rendering)
+   • Socket.io-client          (WebSocket client)
+   • Vite                      (Build tool)
+   
+   Protocol:
+   ---------
+   • WebSocket                 (Bidirectional communication)
+   • JSON                      (Data serialization)
+   • HTTP/REST                 (Health checks)
+

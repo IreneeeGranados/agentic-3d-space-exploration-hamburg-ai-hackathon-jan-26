@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
+    base: '/agentic-3d-space-exploration-hamburg-ai-hackathon-jan-26/',
     plugins: [
         viteStaticCopy({
             targets: [

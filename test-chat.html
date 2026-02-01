@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Interface Test</title>
+    <script>
+        // Simple test to verify event listeners work
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('✅ Page loaded');
+            
+            const btn = document.getElementById('test-btn');
+            const input = document.getElementById('test-input');
+            
+            if (btn) {
+                console.log('✅ Button found');
+                btn.addEventListener('click', () => {
+                    console.log('🚀 Button clicked!');
+                    const msg = input.value.trim();
+                    console.log('Message:', msg);
+                    if (msg) {
+                        alert('You typed: ' + msg);
+                        input.value = '';
+                    }
+                });
+            }
+            
+            if (input) {
+                console.log('✅ Input found');
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        console.log('⏎ Enter pressed');
+                        btn.click();
+                    }
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>Event Listener Test</h1>
+    <input type="text" id="test-input" placeholder="Type something..." />
+    <button id="test-btn">Send</button>
+</body>
+</html>

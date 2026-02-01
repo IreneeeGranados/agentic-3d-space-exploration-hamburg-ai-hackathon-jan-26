@@ -96,47 +96,47 @@ export class Planet {
             switch (planetName) {
                 case 'Earth':
                     // Use real photographic textures for Earth
-                    texture = this.textureLoader.load('/textures/planets/earth/earth_day_2048.jpg');
-                    specularMap = this.textureLoader.load('/textures/planets/earth/earth_specular_2048.jpg');
-                    normalMap = this.textureLoader.load('/textures/planets/earth/earth_normal_2048.jpg');
-                    emissiveMap = this.textureLoader.load('/textures/planets/earth/earth_lights_2048.png');
+                    texture = this.textureLoader.load('textures/planets/earth/earth_day_2048.jpg');
+                    specularMap = this.textureLoader.load('textures/planets/earth/earth_specular_2048.jpg');
+                    normalMap = this.textureLoader.load('textures/planets/earth/earth_normal_2048.jpg');
+                    emissiveMap = this.textureLoader.load('textures/planets/earth/earth_lights_2048.png');
 
                     // Set texture properties for better quality
                     texture.colorSpace = THREE.SRGBColorSpace;
                     emissiveMap.colorSpace = THREE.SRGBColorSpace;
                     break;
                 case 'Mars':
-                    texture = this.textureLoader.load('/textures/planets/mars/2k_mars.jpg');
+                    texture = this.textureLoader.load('textures/planets/mars/2k_mars.jpg');
                     texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(1024, 2.5);
                     break;
                 case 'Jupiter':
-                    texture = this.textureLoader.load('/textures/planets/jupiter/2k_jupiter.jpg');
+                    texture = this.textureLoader.load('textures/planets/jupiter/2k_jupiter.jpg');
                     texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.5);
                     break;
                 case 'Saturn':
-                    texture = this.textureLoader.load('/textures/planets/saturn/2k_saturn.jpg');
+                    texture = this.textureLoader.load('textures/planets/saturn/2k_saturn.jpg');
                     texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.3);
                     break;
                 case 'Neptune':
-                    texture = this.textureLoader.load('/textures/planets/neptune/2k_neptune.jpg');
+                    texture = this.textureLoader.load('textures/planets/neptune/2k_neptune.jpg');
                     texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.4);
                     break;
                 case 'Uranus':
-                    texture = this.textureLoader.load('/textures/planets/uranus/2k_uranus.jpg');
+                    texture = this.textureLoader.load('textures/planets/uranus/2k_uranus.jpg');
                     texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.2);
                     break;
                 case 'Venus':
-                    texture = this.textureLoader.load('/textures/planets/venus/2k_venus_atmosphere.jpg');
+                    texture = this.textureLoader.load('textures/planets/venus/2k_venus_atmosphere.jpg');
                     texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.1);
                     break;
                 case 'Mercury':
-                    texture = this.textureLoader.load('/textures/planets/mercury/2k_mercury.jpg');
+                    texture = this.textureLoader.load('textures/planets/mercury/2k_mercury.jpg');
                     texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(1024, 3.0);
                     break;
@@ -275,15 +275,15 @@ export class Planet {
 
     createAtmosphere() {
         const atmosphereConfig = this.config.atmosphere;
-        
+
         // Use multi-layer atmosphere shader
         this.atmosphereLayers = createAtmosphere(this.config.radius, atmosphereConfig);
-        
+
         // Add all layers to the group
         this.atmosphereLayers.forEach(layer => {
             this.group.add(layer);
         });
-        
+
         // Store reference to first layer for compatibility
         this.atmosphereMesh = this.atmosphereLayers[0];
     }
@@ -291,12 +291,12 @@ export class Planet {
     createClouds() {
         let texture;
         if (this.config.isSolar && (this.config.name === 'Earth' || this.config.pl_name === 'Earth')) {
-            texture = this.textureLoader.load('/textures/planets/earth/earth_clouds_2048.png');
+            texture = this.textureLoader.load('textures/planets/earth/earth_clouds_2048.png');
         }
-        
+
         // Use new cloud shader for realistic clouds
         this.cloudMesh = createCloudLayer(this.config.radius, texture);
-        
+
         // Adjust cloud properties
         if (this.config.name === 'Earth' || this.config.pl_name === 'Earth') {
             this.cloudMesh.material.uniforms.cloudOpacity.value = 0.5;
@@ -305,7 +305,7 @@ export class Planet {
             this.cloudMesh.material.uniforms.cloudOpacity.value = 0.6;
             this.cloudMesh.material.uniforms.cloudCoverage.value = 0.6;
         }
-        
+
         this.group.add(this.cloudMesh);
     }
 
@@ -320,8 +320,8 @@ export class Planet {
         let texture, alphaMap;
         const isSaturn = this.config.isSolar && (this.config.name === 'Saturn' || this.config.pl_name === 'Saturn');
         if (isSaturn) {
-            texture = this.textureLoader.load('/textures/planets/saturn/2k_saturn.jpg');
-            alphaMap = this.textureLoader.load('/textures/planets/saturn/2k_saturn_ring_alpha.png');
+            texture = this.textureLoader.load('textures/planets/saturn/2k_saturn.jpg');
+            alphaMap = this.textureLoader.load('textures/planets/saturn/2k_saturn_ring_alpha.png');
             texture.colorSpace = THREE.SRGBColorSpace;
         } else {
             texture = generateRingTexture(512, ringConfig.color1, ringConfig.color2);
@@ -345,7 +345,7 @@ export class Planet {
             depthWrite: false,
             alphaTest: 0.01
         };
-        
+
         if (alphaMap) {
             materialOptions.alphaMap = alphaMap;
         }
