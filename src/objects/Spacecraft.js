@@ -14,22 +14,23 @@ export class Spacecraft {
         // Start in space
         this.group.position.set(0, 0, 0);
 
-        // Speed controls (NO SPEED LIMIT!)
-        this.forwardSpeed = 50.0;        // Current speed
-        this.defaultSpeed = 50.0;        // Normal speed
-        this.boostSpeed = 200.0;         // Boost speed (Shift)
-        this.minSpeed = 0.0;             // Minimum speed (can't go backwards)
-        this.maxSpeed = Infinity;        // NO LIMIT! Go as fast as you want!
-        this.brakeSpeed = 0.0;           // Full stop
-        this.autopilotSpeed = 150.0;     // Autopilot speed
-        
-        // Speed adjustment
-        this.speedIncrement = 150.0;     // Speed change per second when adjusting (increased!)
-        this.boostAcceleration = 500.0;  // How fast boost kicks in
+        // Constant forward speed
+        this.minSpeed = 15.0;
+        this.maxSpeed = 200000.0;
+        this.forwardSpeed = 30.0;
+        this.autopilotSpeed = 100.0;
 
-        // Steering
+        // Arcade flight parameters
+        this.turnSpeed = 1.5; // Faster turns
+        this.pitchSpeed = 1.2; // Faster pitch
+        this.bankLimit = 0.6;
+        this.strafeFactor = 30.0; // More drift
+        this.autoLevelSpeed = 4.0; // Snappier auto-leveling
+        this.strafeDecay = 4.0; // Snappier strafe decay
+
         this.steeringForce = 8;
         this.velocity = new THREE.Vector3(0, 0, 0);
+        this.lateralVelocity = 0; // Strafe speed component
 
         // Autopilot State
         this.autopilot = {
@@ -54,7 +55,7 @@ export class Spacecraft {
         this.loadModel();
 
         // Add FX
-        this.createEngines();
+        // Engines removed per user request
         this.createNavLights();
     }
 
@@ -73,7 +74,8 @@ export class Spacecraft {
             model.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.receiveShadow = true;
+                    child.castShadow = true;
+                    child.receiveShadow = false; // Disable self-shadowing to prevent "square" artifacts
                     if (child.material) {
                         child.material.metalness = 0.6;
                         child.material.roughness = 0.4;
@@ -82,46 +84,28 @@ export class Spacecraft {
             });
 
             this.mesh.add(model);
+            // Re-orient model: GLB standard is usually -Z forward. 
+            // We want nose to point towards +X (Forward).
+            // Rotating +90 deg (Math.PI/2) on Y makes -Z point to +X? 
+            // -Z -> +X is a 270 deg (or -90) rotation if we look from top.
+            // Let's use Math.PI (180 deg) to flip it if it was flying backwards.
+            // The user said it was flying backwards when it was at Math.PI/2. 
+            // So we flip it to -Math.PI/2.
             this.mesh.rotation.y = -Math.PI / 2;
         }, undefined, (error) => {
             console.error('An error occurred loading the spacecraft:', error);
         });
     }
 
-    createEngines() {
-        const glowMat = new THREE.MeshBasicMaterial({
-            color: 0x00ffff,
-            transparent: true,
-            opacity: 0.8
-        });
 
-        // Main Glow
-        this.mainGlow = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2, 32), glowMat);
-        this.mainGlow.rotation.x = Math.PI / 2;
-        this.mainGlow.position.set(0, 0, -6.5);
-        this.mesh.add(this.mainGlow);
-
-        this.secondaryGlows = [];
-        const leftOMS = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1, 16), glowMat);
-        leftOMS.rotation.x = Math.PI / 2;
-        leftOMS.position.set(1.5, 1.5, -6);
-        this.mesh.add(leftOMS);
-        this.secondaryGlows.push(leftOMS);
-
-        const rightOMS = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1, 16), glowMat);
-        rightOMS.rotation.x = Math.PI / 2;
-        rightOMS.position.set(-1.5, 1.5, -6);
-        this.mesh.add(rightOMS);
-        this.secondaryGlows.push(rightOMS);
-    }
 
     createNavLights() {
         const portLight = new THREE.PointLight(0xff0000, 1, 5);
-        portLight.position.set(4, -0.5, 2);
+        portLight.position.set(2, -0.5, 4); // +Z is Left
         this.mesh.add(portLight);
 
         const starboardLight = new THREE.PointLight(0x00ff00, 1, 5);
-        starboardLight.position.set(-4, -0.5, 2);
+        starboardLight.position.set(2, -0.5, -4); // -Z is Right
         this.mesh.add(starboardLight);
 
         this.portLight = portLight;
@@ -147,18 +131,27 @@ export class Spacecraft {
     }
 
     steer(keys, deltaTime, mouseInput = { x: 0, y: 0 }) {
-        const isSteering = keys.left || keys.right || keys.up || keys.down || keys.boost || keys.brake;
+        const isSteering = keys.left || keys.right || keys.up || keys.down || keys.speedUp || keys.speedDown || keys.boost || keys.brake;
         if (isSteering) this.disengageAutopilot();
 
         if (this.autopilot.enabled && this.autopilot.target) {
             this.updateAutopilot(deltaTime);
         } else {
-            this.updateManualControl(keys, deltaTime, mouseInput);
+            this.updateManualControl(keys, deltaTime);
         }
 
+        // Apply constant forward motion
         const forward = new THREE.Vector3(1, 0, 0);
         forward.applyQuaternion(this.group.quaternion);
         this.velocity.copy(forward).multiplyScalar(this.forwardSpeed);
+
+        // Apply lateral strafe (drift) - side vector is +Z (Right)
+        // Multiplying by lateralVelocity (negative on Left turn) moves us towards -Z (Left)
+        const side = new THREE.Vector3(0, 0, 1);
+        side.applyQuaternion(this.group.quaternion);
+        this.velocity.add(side.multiplyScalar(this.lateralVelocity));
+
+        // Update position
         this.group.position.add(this.velocity.clone().multiplyScalar(deltaTime));
     }
 
@@ -177,54 +170,51 @@ export class Spacecraft {
         this.group.quaternion.slerp(targetQuaternion, 2.0 * deltaTime);
     }
 
-    updateManualControl(keys, deltaTime, mouseInput) {
-        // Debug: Log keys state every few frames
-        if (Math.random() < 0.01) { // 1% chance per frame to avoid spam
-            console.log('🔍 Keys state:', { 
-                speedUp: keys.speedUp, 
-                speedDown: keys.speedDown, 
-                boost: keys.boost, 
-                brake: keys.brake 
-            });
-        }
-        
-        // Speed adjustment with +/- keys
-        if (keys.speedUp) {
-            this.forwardSpeed += this.speedIncrement * deltaTime;
-            console.log(`⚡ Speed UP: ${this.forwardSpeed.toFixed(0)} units/sec`);
-        }
-        if (keys.speedDown) {
-            this.forwardSpeed -= this.speedIncrement * deltaTime;
-            console.log(`🔻 Speed DOWN: ${this.forwardSpeed.toFixed(0)} units/sec`);
-        }
-        
-        // Boost with Shift - smoothly accelerate to boost speed
-        if (keys.boost) {
-            const targetSpeed = this.boostSpeed;
-            this.forwardSpeed = THREE.MathUtils.lerp(this.forwardSpeed, targetSpeed, deltaTime * 3.0);
-        }
-        // NO AUTO-SLOW! Speed persists until manually changed with +/- or brake
-        
-        // Brake with Space - immediate stop
-        if (keys.brake) {
-            this.forwardSpeed = THREE.MathUtils.lerp(this.forwardSpeed, this.brakeSpeed, deltaTime * 5.0);
+    updateManualControl(keys, deltaTime) {
+        // 1. Speed Control (W/S)
+        // 1. Speed Control (W/S) - Exponential Acceleration
+        // Scaling acceleration based on current speed allows reaching high speeds reasonably
+        // Adjusted factor for smoother control at high speeds
+        const acceleration = Math.max(50.0, this.forwardSpeed * 1.5);
+
+        if (keys.speedUp) this.forwardSpeed += acceleration * deltaTime;
+        if (keys.speedDown) this.forwardSpeed -= acceleration * deltaTime;
+
+        // Ensure perpetual motion within range
+        this.forwardSpeed = THREE.MathUtils.clamp(this.forwardSpeed, this.minSpeed, this.maxSpeed);
+
+        // 2. Turning (Arrows Left/Right)
+        // turnInput: 1 for Left, -1 for Right
+        let turnInput = (keys.left ? 1 : 0) - (keys.right ? 1 : 0);
+
+        if (Math.abs(turnInput) > 0.01) {
+            // Local Yaw Rotation (around local Y axis)
+            // Positive rotateY is CCW (Left) when nose is +X
+            this.group.rotateY(turnInput * this.turnSpeed * deltaTime);
+
+            // Lateral Strafe (Drift effect)
+            // +Z is Left, so positive lateralVelocity = Drift Left
+            const targetStrafe = turnInput * this.strafeFactor;
+            this.lateralVelocity = THREE.MathUtils.lerp(this.lateralVelocity, targetStrafe, deltaTime * 5);
+        } else {
+            // Decay strafe when not turning
+            this.lateralVelocity = THREE.MathUtils.lerp(this.lateralVelocity, 0, deltaTime * this.strafeDecay);
         }
 
-        // Only clamp to minimum (can't go backwards), NO MAXIMUM!
-        this.forwardSpeed = Math.max(this.forwardSpeed, this.minSpeed);
-        // NO SPEED LIMIT - removed maxSpeed clamp!
+        // 3. Pitching (Arrows Up/Down)
+        let pitchInput = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
+        if (Math.abs(pitchInput) > 0.01) {
+            // Local Pitch (around local Z axis)
+            // Positive rotateZ is Pitch Up
+            this.group.rotateZ(pitchInput * this.pitchSpeed * deltaTime);
+        }
 
-        // Steering controls
-        let steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-        let steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
-
-        const rotSpeed = 0.6 * deltaTime;
-        if (Math.abs(steerY) > 0.01) this.group.rotateZ(steerY * rotSpeed);
-        if (Math.abs(steerX) > 0.01) this.group.rotateY(-steerX * rotSpeed);
-
-        // Banking effect when turning
-        const targetBank = -steerX * 0.5;
-        this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, targetBank, deltaTime * 2);
+        // 4. Auto-Banking (Roll)
+        // Tilting left around +X axis... 
+        // In Three.js, Positive X rotation usually banks Right if looking down +X.
+        // So targetBank = -turnInput * bankLimit.
+        const targetBank = -turnInput * this.bankLimit;
+        this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, targetBank, deltaTime * this.autoLevelSpeed);
     }
 
     updateCamera(camera) {
@@ -236,23 +226,93 @@ export class Spacecraft {
             : new THREE.Vector3(20, 0, 0);
 
         offset.applyQuaternion(this.group.quaternion).add(this.group.position);
-        camera.position.lerp(offset, (this.viewMode === 'COCKPIT') ? 0.5 : 0.1);
+
+        // Dynamic camera catch-up
+        const distance = camera.position.distanceTo(offset);
+        let lerpFactor = 0.1;
+
+        if (this.viewMode === 'COCKPIT') {
+            // FIX: Hard lock for cockpit to prevent jitter/float
+            lerpFactor = 1.0;
+        } else {
+            // Chase Mode Logic
+            // If we are moving very fast and the camera falls behind, snap it quicker
+            if (distance > 500) {
+                lerpFactor = 0.5;
+            }
+            if (distance > 2000) {
+                // Hard teleport if way too far (warp speed)
+                camera.position.copy(offset);
+                lerpFactor = 1.0;
+            }
+        }
+
+        camera.position.lerp(offset, lerpFactor);
 
         lookAhead.applyQuaternion(this.group.quaternion).add(this.group.position);
         camera.lookAt(lookAhead);
     }
 
-    update(deltaTime) {
+    checkProximity(planets) {
+        if (!planets) return;
+
+        let nearestDist = Infinity;
+        let nearestPlanetRadius = 1.0;
+
+        for (const planet of planets) {
+            // Planet position might be direct or in a group
+            let planetPos = new THREE.Vector3();
+            let radius = 1000.0; // Default
+
+            if (planet.position) {
+                // Check if it's a Vector3 (Solar system planet mesh/group)
+                if (planet.position.isVector3) {
+                    planetPos.copy(planet.position);
+                    // Try to get radius from geometry or data
+                    if (planet.geometry && planet.geometry.parameters) {
+                        radius = planet.geometry.parameters.radius;
+                    } else if (planet.userData && planet.userData.radius) {
+                        radius = planet.userData.radius;
+                    }
+                }
+            }
+
+            const dist = this.group.position.distanceTo(planetPos);
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearestPlanetRadius = radius;
+            }
+        }
+
+        // Safety Bubble Logic
+        // If within 3x radius, enforce speed limit
+        const safetyThreshold = nearestPlanetRadius * 4.0;
+
+        if (nearestDist < safetyThreshold) {
+            // Calculate safety speed based on how close we are
+            // Closer = Slower
+            // at 1x radius (surface) -> max speed 50
+            // at 4x radius -> max speed 2000
+
+            const factor = Math.max(0, (nearestDist - nearestPlanetRadius) / (safetyThreshold - nearestPlanetRadius));
+            const safeMaxSpeed = THREE.MathUtils.lerp(50.0, 5000.0, factor);
+
+            // Apply damping if current speed is too high
+            if (this.forwardSpeed > safeMaxSpeed) {
+                this.forwardSpeed = THREE.MathUtils.lerp(this.forwardSpeed, safeMaxSpeed, 0.05); // Rapid deceleration
+            }
+        }
+    }
+
+    update(deltaTime, nearbyPlanets = []) {
         this.animationTime += deltaTime;
 
+        // Check proximity to nearby planets to adjust speed
+        this.checkProximity(nearbyPlanets);
+
+
         // Pulse engine glow
-        if (this.mainGlow) {
-            const flicker = 0.8 + Math.random() * 0.2;
-            const thrustScale = this.forwardSpeed > 0 ? 1 : 0.2;
-            this.mainGlow.material.opacity = flicker * thrustScale;
-            this.mainGlow.scale.setScalar(0.8 + (this.forwardSpeed / this.autopilotSpeed) * 0.5);
-            this.secondaryGlows.forEach(glow => glow.material.opacity = flicker * 0.8 * thrustScale);
-        }
+
 
         if (this.portLight && this.starboardLight) {
             const blink = Math.floor(this.animationTime * 2) % 2 === 0;
