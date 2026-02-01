@@ -3,18 +3,19 @@
  * Generates descriptive text about planets based on JSON data
  */
 
-import OpenAI from 'openai';
-
 class OpenAIService {
   constructor(apiKey) {
     if (!apiKey) {
-      throw new Error('OpenAI API key is required');
+      console.warn('OpenAI API key not provided. AI descriptions will be disabled.');
+      this.client = null;
+      this.enabled = false;
+      return;
     }
     
-    this.client = new OpenAI({
-      apiKey: apiKey,
-      dangerouslyAllowBrowser: true // Note: For production, use a backend proxy
-    });
+    // Try to dynamically import OpenAI - will fail gracefully in static builds
+    this.enabled = false;
+    this.client = null;
+    this.initPromise = this.initializeClient(apiKey);
     
     this.config = {
       model: 'gpt-3.5-turbo',
@@ -23,6 +24,23 @@ class OpenAIService {
     };
     
     this.cache = new Map();
+  }
+  
+  async initializeClient(apiKey) {
+    try {
+      // Dynamic import - only works in environments where openai is available
+      const { default: OpenAI } = await import('openai');
+      this.client = new OpenAI({
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true // Note: For production, use a backend proxy
+      });
+      this.enabled = true;
+      console.log('✅ OpenAI service initialized');
+    } catch (error) {
+      console.warn('⚠️ OpenAI module not available (static build). AI features disabled.');
+      this.enabled = false;
+      this.client = null;
+    }
   }
 
   /**
@@ -56,6 +74,15 @@ Write a vivid, scientifically-inspired description that highlights the unique ch
    * @returns {Promise<string>} Generated description
    */
   async generatePlanetDescription(planetData, useCache = true) {
+    // Wait for initialization to complete
+    await this.initPromise;
+    
+    // If service is not enabled, return fallback immediately
+    if (!this.enabled || !this.client) {
+      console.log('AI service not enabled, using fallback description');
+      return this.getFallbackDescription(planetData);
+    }
+    
     try {
       // Generate cache key
       const cacheKey = JSON.stringify(planetData);

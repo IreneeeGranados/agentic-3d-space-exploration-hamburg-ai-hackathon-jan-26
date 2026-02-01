@@ -33,7 +33,16 @@ export default defineConfig({
         })
     ],
     build: {
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            // Mark Node.js-only dependencies as external
+            // They will not be bundled, and dynamic imports will fail gracefully
+            external: ['openai', 'dotenv']
+        }
+    },
+    optimizeDeps: {
+        // Exclude these from pre-bundling
+        exclude: ['openai', 'dotenv']
     }
 });
 
