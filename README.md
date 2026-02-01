@@ -6,6 +6,8 @@
 
 [![GitHub Pages](https://img.shields.io/badge/🔬_ALTERNATIVE-GitHub_Pages_(Beta)-gray?style=for-the-badge)](https://zaexv.github.io/agentic-3d-space-exploration-hamburg-ai-hackathon-jan-26/)
 
+[![Video Demo](https://img.shields.io/badge/🎬_VIDEO_DEMO-Watch_on_YouTube-red?style=for-the-badge)](https://youtu.be/ZdC-fMK62Fg)
+
 > ⚠️ *The GitHub Pages version may be unstable. For the best experience, use the main demo above.*
 
 ---
