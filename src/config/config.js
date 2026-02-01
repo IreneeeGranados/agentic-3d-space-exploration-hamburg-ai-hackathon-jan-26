@@ -6,10 +6,13 @@
  * DO NOT commit real API keys to version control
  */
 
-// Safe access to environment variables (handles production builds where import.meta.env may be undefined)
+// Safe access to environment variables (handles cases where import.meta.env may be undefined)
 const getEnvVar = (key) => {
     try {
-        return import.meta?.env?.[key] || null;
+        if (typeof import.meta !== 'undefined' && import.meta.env) {
+            return import.meta.env[key] || null;
+        }
+        return null;
     } catch {
         return null;
     }
