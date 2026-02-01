@@ -90,6 +90,14 @@ All exoplanet data comes directly from the **[NASA Exoplanet Archive](https://ex
 
 ---
 
+## 📚 Documentation
+
+- **[START_HERE.md](./START_HERE.md)** - Complete setup and feature guide
+- **[Architecture.md](./Architecture.md)** - Technical architecture overview
+- **[docs/](./docs/)** - All guides, tutorials, and historical documentation
+
+---
+
 ## 👥 Team
 
 Built with ❤️ at **Hamburg AI Hackathon 2026** by **Eduardo Pertierra Puche** & **Irene Granados Montosa**
