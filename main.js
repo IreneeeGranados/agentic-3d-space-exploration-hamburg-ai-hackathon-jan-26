@@ -12,6 +12,7 @@ import { LoadingManager } from './src/utils/LoadingManager.js';
 import { PlanetNavigator } from './src/controls/PlanetNavigator.js';
 import { PlanetHoverInfo } from './src/utils/PlanetHoverInfo.js';
 import { PlanetExplorationDialog } from './src/ui/PlanetExplorationDialog.js';
+import { PlanetTargetingSquare } from './src/ui/PlanetTargetingSquare.js';
 import OpenAIService from './src/ai/OpenAIService.js';
 import ElevenLabsService from './src/ai/ElevenLabsService.js';
 import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
@@ -23,6 +24,7 @@ class App {
         this.loadingManager = new LoadingManager();
         this.uiVisible = true;
         this.exoplanetsVisible = true;
+        this.controlsEnabled = true; // Flag to enable/disable keyboard navigation
         this.init();
     }
 
@@ -52,6 +54,7 @@ class App {
             await this.createSceneObjects(); // Environment + All Planets (unified)
             this.initPlanetSelector();       // UI and navigation
             this.initExplorationDialog();    // Planet info dialog
+            this.initTargetingSquare();      // Planet targeting visual
             this.loadingManager.completeStep('Universe');
 
             // Step 4: Start animation and finalize
@@ -75,6 +78,9 @@ class App {
 
     setupControls() {
         window.addEventListener('keydown', (e) => {
+            // Skip all controls if navigation is disabled (e.g., dialog is open)
+            if (!this.controlsEnabled) return;
+
             if (e.code === 'KeyW') this.keys.speedUp = true;
             if (e.code === 'KeyS') this.keys.speedDown = true;
             if (e.code === 'ArrowUp') this.keys.up = true;
@@ -92,6 +98,9 @@ class App {
         });
 
         window.addEventListener('keyup', (e) => {
+            // Skip all controls if navigation is disabled (e.g., dialog is open)
+            if (!this.controlsEnabled) return;
+
             if (e.code === 'KeyW') this.keys.speedUp = false;
             if (e.code === 'KeyS') this.keys.speedDown = false;
             if (e.code === 'ArrowUp') this.keys.up = false;
@@ -186,6 +195,13 @@ class App {
 
                             // Store for info dialog
                             this.lastClickedPlanet = planetData;
+
+                            // Show targeting square on the planet
+                            if (this.targetingSquare) {
+                                // Determine parent group for proper scaling
+                                const parentGroup = planetData.isSolar ? null : this.exoplanetField?.meshGroup;
+                                this.targetingSquare.target(hit.object, planetData, parentGroup);
+                            }
 
                             // Show exploration dialog with planet info
                             if (this.explorationDialog) {
@@ -345,12 +361,18 @@ class App {
         }
 
         // Initialize exploration dialog
-        this.explorationDialog = new PlanetExplorationDialog(openAIService, elevenLabsService);
+        this.explorationDialog = new PlanetExplorationDialog(openAIService, elevenLabsService, this);
 
         // Make it globally accessible for debugging
         window.planetExplorationDialog = this.explorationDialog;
 
         console.log('✓ Planet exploration dialog initialized');
+    }
+
+    initTargetingSquare() {
+        // Initialize planet targeting square
+        this.targetingSquare = new PlanetTargetingSquare(this.sceneManager.scene);
+        console.log('✓ Planet targeting square initialized');
     }
 
     setupUIControls() {
@@ -518,6 +540,11 @@ class App {
                 this.cameraManager.camera.position,
                 this.cameraManager.camera.quaternion
             );
+        }
+
+        // Update targeting square animation
+        if (this.targetingSquare) {
+            this.targetingSquare.update(this.cameraManager.camera);
         }
 
         // Render the scene
