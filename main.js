@@ -208,11 +208,27 @@ class App {
 
     setupControls() {
         window.addEventListener('keydown', (e) => {
+            // Check if any input field is focused (user is typing)
+            const activeElement = document.activeElement;
+            const isTyping = activeElement && (
+                activeElement.tagName === 'INPUT' || 
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.isContentEditable
+            );
+            
+            // If user is typing, don't process game controls
+            if (isTyping) {
+                return;
+            }
+            
             // Check if narrator dialog is open
             const narratorOpen = this.narratorDialog && this.narratorDialog.isShowing();
             
-            // If narrator is open, only allow arrow keys for movement
-            if (narratorOpen) {
+            // Check if planet exploration dialog is open
+            const explorationOpen = this.explorationDialog && this.explorationDialog.isVisible();
+            
+            // If any dialog is open, only allow arrow keys for movement
+            if (narratorOpen || explorationOpen) {
                 // Allow arrow keys
                 if (e.code === 'ArrowUp') {
                     this.keys.up = true;
@@ -235,12 +251,12 @@ class App {
                     return;
                 }
                 
-                // Allow ESC (handled by NarratorDialog)
+                // Allow ESC (handled by dialogs)
                 if (e.code === 'Escape') {
                     return;
                 }
                 
-                // Block all other keys
+                // Block all other keys when dialog is open
                 return;
             }
             
@@ -265,11 +281,12 @@ class App {
         });
 
         window.addEventListener('keyup', (e) => {
-            // Check if narrator dialog is open
+            // Check if narrator dialog or exploration dialog is open
             const narratorOpen = this.narratorDialog && this.narratorDialog.isShowing();
+            const explorationOpen = this.explorationDialog && this.explorationDialog.isVisible();
             
-            // If narrator is open, only handle arrow keys
-            if (narratorOpen) {
+            // If any dialog is open, only handle arrow keys
+            if (narratorOpen || explorationOpen) {
                 if (e.code === 'ArrowUp') this.keys.up = false;
                 if (e.code === 'ArrowDown') this.keys.down = false;
                 if (e.code === 'ArrowLeft') this.keys.left = false;

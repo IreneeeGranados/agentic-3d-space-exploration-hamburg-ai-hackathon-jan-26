@@ -3,8 +3,10 @@
  * Handles real-time multiplayer synchronization
  */
 
-import { io } from 'socket.io-client';
 import { RemotePlayer } from './RemotePlayer.js';
+
+// Get io from global window object (loaded via CDN) or dynamic import
+let io = null;
 
 export class MultiplayerManager {
     constructor(sceneManager, localSpacecraft) {
@@ -19,6 +21,32 @@ export class MultiplayerManager {
         
         // Server detection
         this.serverAvailable = false;
+        this.ioAvailable = false;
+    }
+    
+    /**
+     * Load socket.io-client dynamically
+     */
+    static async loadSocketIO() {
+        if (io) return io;
+        
+        // Try global window.io first (CDN)
+        if (window.io) {
+            io = window.io;
+            console.log('✅ Socket.io-client loaded from CDN');
+            return io;
+        }
+        
+        // Fallback to dynamic import (development)
+        try {
+            const socketModule = await import('socket.io-client');
+            io = socketModule.io;
+            console.log('✅ Socket.io-client loaded via import');
+            return io;
+        } catch (error) {
+            console.warn('⚠️ Socket.io-client not available. Multiplayer disabled.');
+            return null;
+        }
     }
     
     /**
@@ -46,10 +74,17 @@ export class MultiplayerManager {
      * Connect to multiplayer server
      */
     async connect(serverUrl = 'http://localhost:3000') {
+        // Load socket.io-client dynamically
+        const ioClient = await MultiplayerManager.loadSocketIO();
+        
+        if (!ioClient) {
+            throw new Error('Socket.io-client not available. Multiplayer requires a full installation with Node.js dependencies.');
+        }
+        
         return new Promise((resolve, reject) => {
             console.log('🔌 Connecting to multiplayer server...');
             
-            this.socket = io(serverUrl, {
+            this.socket = ioClient(serverUrl, {
                 transports: ['websocket', 'polling'],
                 timeout: 5000,
                 reconnection: true,
@@ -61,6 +96,7 @@ export class MultiplayerManager {
                 console.log('✓ Connected to multiplayer server');
                 this.connected = true;
                 this.serverAvailable = true;
+                this.ioAvailable = true;
             });
             
             // Initialize with server data

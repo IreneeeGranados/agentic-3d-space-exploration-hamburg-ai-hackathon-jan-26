@@ -218,6 +218,8 @@ console.log(`✅ Attached ${this.elements.tabs.length} tab listeners`);
         if (this.elements.chatInput) {
             this.elements.chatInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
                     console.log('⏎ Enter key pressed in chat');
                     this.handleChatSend();
                 }
@@ -231,6 +233,14 @@ console.log(`✅ Attached ${this.elements.tabs.length} tab listeners`);
             if (this.isVisible()) {
                 if (e.key === 'Escape') {
                     this.hide();
+                }
+                
+                // Prevent other keyboard shortcuts when dialog is open and user is typing
+                if (document.activeElement === this.elements.chatInput) {
+                    // Only allow ESC, Enter, and normal typing
+                    if (e.key !== 'Escape' && e.key !== 'Enter') {
+                        e.stopPropagation();
+                    }
                 }
             }
         });

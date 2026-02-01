@@ -164,6 +164,8 @@ export class NarratorDialog {
         // Chat input - Enter key
         this.elements.chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
                 this.handleChatSend();
             }
         });
@@ -173,6 +175,14 @@ export class NarratorDialog {
             if (e.key === 'Escape' && this.isVisible) {
                 console.log('⌨️ ESC pressed - closing dialog');
                 this.hide();
+            }
+            
+            // Prevent other keyboard shortcuts when dialog is open and user is typing
+            if (this.isVisible && document.activeElement === this.elements.chatInput) {
+                // Only allow ESC, Enter, and normal typing
+                if (e.key !== 'Escape' && e.key !== 'Enter') {
+                    e.stopPropagation();
+                }
             }
         });
         
