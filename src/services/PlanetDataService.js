@@ -140,6 +140,9 @@ export class PlanetDataService {
      */
     applySolarSystemOverrides(planet) {
         const name = planet.pl_name;
+        
+        // Mark as Solar System planet
+        planet.isSolar = true;
 
         switch (name) {
             case 'Mercury':
