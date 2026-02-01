@@ -250,8 +250,8 @@ class App {
 
                             // Show targeting square on the planet
                             if (this.targetingSquare) {
-                                // Determine parent group for proper scaling
-                                const parentGroup = planetData.isSolar ? null : this.exoplanetField?.meshGroup;
+                                // ALL planets (Solar + Exo) are in meshGroup with x10000 scale
+                                const parentGroup = this.exoplanetField?.meshGroup;
                                 this.targetingSquare.target(hit.object, planetData, parentGroup);
                             }
 
@@ -545,7 +545,8 @@ class App {
 
         // Target the planet (show targeting square)
         if (this.targetingSquare && closest.mesh) {
-            const parentGroup = planet.isSolar ? null : this.exoplanetField?.meshGroup;
+            // ALL planets (Solar + Exo) are in meshGroup with x10000 scale
+            const parentGroup = this.exoplanetField?.meshGroup;
             this.targetingSquare.target(closest.mesh, planet, parentGroup);
             console.log('🎯 Targeting square shown for', planet.pl_name);
             console.log('   Mesh:', closest.mesh.type, 'Position:', closest.worldPosition);
