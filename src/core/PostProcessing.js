@@ -37,9 +37,9 @@ export class PostProcessingManager {
         // Resoln, Strength, Radius, Threshold
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(width, height),
-            0.6, // Strength (Lowered from 1.5 to reduce glare)
+            0.2, // Drastically lowered to prevent washing out colors
             0.4, // Radius
-            0.92 // Threshold (Only EXTREMELY bright things glow, preventing planet burnout)
+            0.95 // Higher threshold to protect highlights
         );
         this.composer.addPass(this.bloomPass);
 

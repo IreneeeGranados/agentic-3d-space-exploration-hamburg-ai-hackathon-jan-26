@@ -6,6 +6,7 @@ import {
     generateNormalMap,
     getColorByComposition
 } from '../utils/textureGenerator.js';
+import { generateEarthTexture } from '../utils/PlanetTextureGenerator.js';
 
 /**
  * ExoplanetField - Renders thousands of NASA exoplanets as realistic 3D spheres
@@ -26,6 +27,9 @@ export class ExoplanetField {
 
         // For compatibility with old code
         this.mesh = this.meshGroup;
+
+        // NEW: Texture loader for real photographic textures (Earth/Solar)
+        this.textureLoader = new THREE.TextureLoader();
     }
 
     /**
@@ -51,7 +55,7 @@ export class ExoplanetField {
 
         // Load in background
         this.loadClustersProgressively(otherClusters);
-        
+
         // APLICAR ESCALA x10000 DESPUÉS DE RENDERIZAR
         console.log('🔧 Applying x10000 scale to all planets...');
         this.meshGroup.scale.set(10000, 10000, 10000);
@@ -176,17 +180,57 @@ export class ExoplanetField {
                         roughness = 0.6;
                     }
 
-                    let texture = (planetType === 'rocky') ? generateRockyTexture(colors.base, colors.detail, 128) :
-                        (planetType === 'gasGiant') ? generateGasGiantTexture(planet.gasColors || [colors.base, colors.detail], 128) :
-                            generateIceGiantTexture(colors.base, 128);
+                    let texture, specularMap, normalMap, emissiveMap;
+                    let useRealTextures = false;
+
+                    // SPECIAL HANDLING: Earth and Solar System
+                    const planetName = planet.pl_name || planet.name;
+                    const isEarth = planetName === 'Earth';
+
+                    if (isSolarPlanet || planet.isSolar || isEarth) {
+                        if (isEarth) {
+                            console.log('🌎 RENDERING REALISTIC EARTH (Tier 1)');
+
+                            // Load real photographic textures
+                            texture = this.textureLoader.load('/textures/planets/earth/earth_day_2048.jpg');
+                            specularMap = this.textureLoader.load('/textures/planets/earth/earth_specular_2048.jpg');
+                            normalMap = this.textureLoader.load('/textures/planets/earth/earth_normal_2048.jpg');
+                            emissiveMap = this.textureLoader.load('/textures/planets/earth/earth_lights_2048.png');
+
+                            texture.colorSpace = THREE.SRGBColorSpace;
+                            if (emissiveMap) emissiveMap.colorSpace = THREE.SRGBColorSpace;
+                            useRealTextures = true;
+                        }
+                    }
+
+                    if (!useRealTextures) {
+                        if (isEarth) {
+                            texture = generateEarthTexture(512);
+                            normalMap = generateNormalMap(512, 1.0);
+                        } else {
+                            texture = (planetType === 'rocky') ? generateRockyTexture(colors.base, colors.detail, 128) :
+                                (planetType === 'gasGiant') ? generateGasGiantTexture(planet.gasColors || [colors.base, colors.detail], 128) :
+                                    generateIceGiantTexture(colors.base, 128);
+                            normalMap = generateNormalMap(128, 1.0);
+                        }
+                    }
 
                     material = new THREE.MeshStandardMaterial({
                         map: texture,
-                        roughness: roughness,
-                        metalness: metalness,
-                        emissive: emissive,
-                        emissiveIntensity: emissiveIntensity
+                        normalMap: normalMap,
+                        color: isEarth ? new THREE.Color(0xd4ffd4) : 0xffffff, // Subtle green tint for Earth
+                        roughness: isEarth ? 0.35 : roughness,
+                        metalness: isEarth ? 0.0 : metalness,
+                        emissive: (isEarth && emissiveMap) ? new THREE.Color(0xffaa44) : emissive,
+                        emissiveIntensity: isEarth ? 0.05 : emissiveIntensity
                     });
+
+                    if (useRealTextures && isEarth && specularMap) {
+                        material.metalnessMap = specularMap;
+                        material.metalness = 0.5; // Enough for reflections, not enough to wash out colors
+                        material.roughness = 0.2; // Smooth water for clearer colors
+                    }
+
                 } else {
                     // Use enriched color if available
                     let baseColor = planet.color;
@@ -238,8 +282,43 @@ export class ExoplanetField {
 
                 // --- Geometry Enhancements (Tier 1 Only) ---
                 if (tier === 1) {
-                    // 1. Atmosphere Glow
-                    if (planet.atmosphere && planet.atmosphere.enabled) {
+                    const isEarth = (planet.pl_name || planet.name) === 'Earth';
+
+                    // 1. Earth Atmosphere & Clouds (New Realistic System)
+                    if (isEarth) {
+                        // A. Cloud Layer - Textured and volumetric-ish
+                        const cloudGeom = new THREE.SphereGeometry(radius * 1.012, 64, 64);
+                        const cloudTex = this.textureLoader.load('/textures/planets/earth/earth_clouds_2048.png');
+                        cloudTex.colorSpace = THREE.SRGBColorSpace;
+
+                        const cloudMat = new THREE.MeshStandardMaterial({
+                            map: cloudTex,
+                            transparent: true,
+                            opacity: 0.7,
+                            roughness: 1.0,
+                            metalness: 0.0,
+                            blending: THREE.NormalBlending,
+                            depthWrite: false
+                        });
+                        const cloudMesh = new THREE.Mesh(cloudGeom, cloudMat);
+                        cloudMesh.name = 'EarthClouds';
+                        cloudMesh.userData.isClouds = true;
+                        mesh.add(cloudMesh);
+
+                        // B. Enhanced Atmosphere Glow for Earth
+                        const atmoGeom = new THREE.SphereGeometry(radius * 1.05, 32, 32);
+                        const atmoMat = new THREE.MeshBasicMaterial({
+                            color: 0x93ccff,
+                            transparent: true,
+                            opacity: 0.25,
+                            side: THREE.BackSide,
+                            blending: THREE.AdditiveBlending
+                        });
+                        const atmoMesh = new THREE.Mesh(atmoGeom, atmoMat);
+                        mesh.add(atmoMesh);
+                        mesh.name = 'Earth'; // Ensure we can find Earth for rotation if needed
+                    } else if (planet.atmosphere && planet.atmosphere.enabled) {
+                        // Standard atmosphere for other planets
                         const atmoGeom = new THREE.SphereGeometry(1.2, 16, 16);
                         const atmoMat = new THREE.MeshBasicMaterial({
                             color: planet.atmosphere.color || 0x87CEEB,
@@ -321,7 +400,18 @@ export class ExoplanetField {
      * Update animation
      */
     update(deltaTime) {
-        // Option: could implement frustum culling or distance-based visibility here
+        // High-fidelity animation for Earth
+        const earthMesh = this.meshGroup.getObjectByName('Earth');
+        if (earthMesh) {
+            // Standard planetary rotation
+            earthMesh.rotation.y += deltaTime * 0.1;
+
+            // Dynamic clouds: rotating at a slightly different speed for realism
+            const clouds = earthMesh.getObjectByName('EarthClouds');
+            if (clouds) {
+                clouds.rotation.y += deltaTime * 0.03;
+            }
+        }
     }
 
     /**
