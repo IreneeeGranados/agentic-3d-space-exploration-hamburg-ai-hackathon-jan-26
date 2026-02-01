@@ -118,6 +118,58 @@ Write a vivid, scientifically-inspired description that highlights the unique ch
   }
 
   /**
+   * Generate a completion from a custom prompt (for chat functionality)
+   * @param {string} prompt - The prompt to send to OpenAI
+   * @param {boolean} useCache - Whether to use cached results (default: false for chat)
+   * @returns {Promise<string>} Generated response
+   */
+  async generateCompletion(prompt, useCache = false) {
+    try {
+      // Generate cache key
+      const cacheKey = `completion_${prompt}`;
+      
+      // Check cache
+      if (useCache && this.cache.has(cacheKey)) {
+        console.log('Using cached completion');
+        return this.cache.get(cacheKey);
+      }
+
+      console.log('Generating AI completion...');
+      
+      // Call OpenAI API
+      const response = await this.client.chat.completions.create({
+        model: this.config.model,
+        temperature: this.config.temperature,
+        max_tokens: this.config.max_tokens,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      });
+
+      // Extract response
+      const completion = response.choices[0]?.message?.content?.trim();
+      
+      if (!completion) {
+        throw new Error('No completion generated from OpenAI');
+      }
+
+      // Cache the result if requested
+      if (useCache) {
+        this.cache.set(cacheKey, completion);
+      }
+      
+      return completion;
+      
+    } catch (error) {
+      console.error('Error generating completion:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate AI insights for planet characteristics
    * @param {Object} planetData - Planet information with characteristics
    * @param {boolean} useCache - Whether to use cached results (default: true)
@@ -224,19 +276,8 @@ Make the questions engaging and scientifically relevant.`;
       
       const char = planetData.characteristics || {};
       
-      // Build system message with planet context
-      const systemMessage = `You are an expert astronomer assistant helping someone explore the exoplanet "${planetData.pl_name || planetData.name}". 
-
-Planet Context:
-- Distance: ${planetData.sy_dist ? (planetData.sy_dist * 3.262).toFixed(2) : 'Unknown'} light-years from Earth
-- Type: ${char.radius_position || 'Unknown'}
-- Radius: ${planetData.pl_rade ? planetData.pl_rade.toFixed(2) : 'Unknown'} Earth radii
-- Mass: ${planetData.pl_masse ? planetData.pl_masse.toFixed(2) : 'Unknown'} Earth masses
-- Temperature: ${planetData.pl_eqt || 'Unknown'} K
-- Habitability Score: ${char.habitability_percent !== undefined ? char.habitability_percent + '%' : 'Unknown'}
-- Atmosphere: ${char.atmosphere_type || 'Unknown'}
-
-Answer questions about this planet in a friendly, conversational way. Be concise (2-3 sentences) but informative. Use emojis occasionally to keep it engaging.`;
+      // Build concise system message - only include key data
+      const systemMessage = `You are an astronomer assistant for "${planetData.pl_name || planetData.name}". Answer briefly (1-2 sentences). Data: ${(planetData.sy_dist * 3.262).toFixed(1)}ly away, ${char.radius_position || 'Unknown type'}, ${planetData.pl_rade?.toFixed(1) || '?'}R⊕, ${planetData.pl_eqt || '?'}K, ${char.habitability_percent || 0}% habitable.`;
 
       // Build messages array
       const messages = [
@@ -245,11 +286,11 @@ Answer questions about this planet in a friendly, conversational way. Be concise
         { role: 'user', content: userMessage }
       ];
       
-      // Call OpenAI API
+      // Call OpenAI API with faster model and settings
       const response = await this.client.chat.completions.create({
-        model: this.config.model,
+        model: 'gpt-3.5-turbo',
         temperature: 0.7,
-        max_tokens: 200,
+        max_tokens: 150, // Reduced for faster response
         messages: messages
       });
 

@@ -235,6 +235,13 @@ console.log(`✅ Attached ${this.elements.tabs.length} tab listeners`);
             this.app.controlsEnabled = false;
         }
 
+        // Stop any playing audio from previous planet
+        this.stopAudio();
+        this.stopInsightsAudio();
+
+        // Clear previous content
+        this.clearAllContent();
+
         // Update header
         this.elements.title.textContent = planetData.pl_name || 'Unknown Planet';
         this.elements.subtitle.textContent = this.getPlanetType(planetData);
@@ -247,7 +254,7 @@ console.log(`✅ Attached ${this.elements.tabs.length} tab listeners`);
 
         // Populate characteristics tab
         this.populateCharacteristics(planetData);
-// Initialize chat for this planet
+// Initialize chat for this planet (clears previous chat)
         this.initializeChatForPlanet(planetData);
 
         // Reset to overview tab
@@ -256,6 +263,32 @@ console.log(`✅ Attached ${this.elements.tabs.length} tab listeners`);
         // Show dialog
         this.overlay.classList.add('visible');
         this.dialog.classList.add('visible');
+    }
+
+    /**
+     * Clear all content from previous planet
+     */
+    clearAllContent() {
+        // Clear overview
+        if (this.elements.overviewGrid) {
+            this.elements.overviewGrid.innerHTML = '';
+        }
+
+        // Clear characteristics
+        if (this.elements.characteristicsContent) {
+            this.elements.characteristicsContent.innerHTML = '<div class="loading">Loading characteristics...</div>';
+        }
+
+        // Clear chat
+        if (this.elements.chatMessages) {
+            this.elements.chatMessages.innerHTML = '';
+        }
+        if (this.elements.chatInput) {
+            this.elements.chatInput.value = '';
+        }
+
+        // Reset chat history
+        this.chatHistory = [];
     }
 
     /**
