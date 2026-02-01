@@ -9,14 +9,14 @@
 export const CONFIG = {
     // OpenAI Configuration
     openai: {
-        apiKey: import.meta.env.VITE_OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE',
+        apiKey: (import.meta.env && import.meta.env.VITE_OPENAI_API_KEY) || 'YOUR_OPENAI_API_KEY_HERE',
         model: 'gpt-3.5-turbo', // Using gpt-3.5-turbo for faster/cheaper responses
         baseURL: 'https://api.openai.com/v1/chat/completions'
     },
 
     // Eleven Labs Configuration (optional)
     elevenLabs: {
-        apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || 'YOUR_ELEVENLABS_API_KEY_HERE',
+        apiKey: (import.meta.env && import.meta.env.VITE_ELEVENLABS_API_KEY) || 'YOUR_ELEVENLABS_API_KEY_HERE',
         voiceId: '21m00Tcm4TlvDq8ikWAM', // Default voice
         baseURL: 'https://api.elevenlabs.io/v1/text-to-speech'
     },
