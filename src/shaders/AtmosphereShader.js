@@ -73,6 +73,7 @@ export const AtmosphereShader = {
 export const CloudShader = {
     uniforms: {
         cloudTexture: { value: null },
+        useCloudTexture: { value: false },
         cloudColor: { value: new THREE.Color(0xffffff) },
         time: { value: 0.0 },
         cloudSpeed: { value: 0.01 },
@@ -96,6 +97,7 @@ export const CloudShader = {
 
     fragmentShader: `
         uniform sampler2D cloudTexture;
+        uniform bool useCloudTexture;
         uniform vec3 cloudColor;
         uniform float time;
         uniform float cloudSpeed;
@@ -145,7 +147,7 @@ export const CloudShader = {
             
             // Generate cloud pattern
             float cloudPattern;
-            if (cloudTexture != null) {
+            if (useCloudTexture) {
                 cloudPattern = texture2D(cloudTexture, animatedUv).r;
             } else {
                 cloudPattern = fbm(animatedUv * 8.0 + time * 0.1);
@@ -244,6 +246,7 @@ export function createCloudLayer(planetRadius, cloudTexture = null) {
 
     if (cloudTexture) {
         material.uniforms.cloudTexture.value = cloudTexture;
+        material.uniforms.useCloudTexture.value = true;
     }
 
     material.uniforms.cloudOpacity.value = 0.5;
