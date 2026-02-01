@@ -444,3 +444,390 @@
         flex-direction: column;
     }
 }
+
+/* ========================================
+   AI INSIGHTS SECTION (Characteristics Tab)
+   ======================================== */
+
+.ai-insights-section {
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--accent-blue);
+}
+
+.ai-insights-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-insights-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, var(--accent-blue), #00b8d4);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 217, 255, 0.3);
+}
+
+.ai-insights-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00b8d4, var(--accent-blue));
+    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+.ai-insights-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ai-insights-btn .btn-icon {
+    font-size: 16px;
+}
+
+.ai-insights-container {
+    min-height: 100px;
+    padding: var(--spacing-md);
+    background: rgba(0, 217, 255, 0.05);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 6px;
+}
+
+.ai-insights-placeholder {
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    margin: var(--spacing-lg) 0;
+}
+
+.ai-insights-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    gap: var(--spacing-md);
+}
+
+.ai-insights-content {
+    animation: fadeIn 0.5s ease;
+}
+
+.ai-insights-text {
+    color: var(--text-primary);
+    line-height: 1.8;
+    font-size: 15px;
+    white-space: pre-wrap;
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-insights-text p {
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-insights-footer {
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(0, 217, 255, 0.2);
+}
+
+.ai-insights-attribution {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.ai-insights-error {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--danger-color);
+}
+
+.ai-insights-error p {
+    margin-bottom: var(--spacing-md);
+}
+
+.ai-retry-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--danger-color);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ai-retry-btn:hover {
+    background: #ff4444;
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* AI Chat Interface */
+.ai-chat-section {
+    padding: 20px;
+}
+
+.ai-chat-title {
+    color: var(--accent-blue);
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.ai-chat-messages {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-chat-welcome {
+    text-align: center;
+    color: var(--accent-blue);
+    font-size: 14px;
+    padding: 20px;
+    font-style: italic;
+}
+
+.ai-chat-message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    animation: messageSlideIn 0.3s ease;
+}
+
+.ai-chat-message.user-message {
+    flex-direction: row-reverse;
+}
+
+.ai-chat-message.user-message .message-content {
+    background: linear-gradient(135deg, #00D9FF, #00b8d4);
+    color: #000;
+    text-align: right;
+}
+
+.ai-chat-message.ai-message .message-content {
+    background: rgba(0, 217, 255, 0.1);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.ai-chat-message.error .message-content {
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    color: #ff4444;
+}
+
+.message-avatar {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.message-content {
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 80%;
+    word-wrap: break-word;
+    line-height: 1.5;
+}
+
+.ai-chat-message.loading .message-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-chat-input-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.ai-chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(0, 217, 255, 0.3);
+    border-radius: 24px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.ai-chat-input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.4);
+}
+
+.ai-chat-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.ai-chat-send-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--accent-blue), #00b8d4);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 217, 255, 0.3);
+}
+
+.ai-chat-send-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00b8d4, var(--accent-blue));
+    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.ai-chat-send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Audio Loading Bar */
+.audio-loading-bar-container {
+    display: block !important;
+    margin-bottom: 20px;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 184, 212, 0.2));
+    border: 3px solid #00D9FF;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 217, 255, 0.5);
+    position: relative;
+    z-index: 10;
+}
+
+.audio-loading-bar-header {
+    color: #00D9FF;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+
+.audio-loading-bar {
+    width: 100%;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid rgba(0, 217, 255, 0.6);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.audio-loading-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, 
+        #00D9FF 0%, 
+        #00ffea 25%, 
+        #00b8d4 50%, 
+        #00ffea 75%, 
+        #00D9FF 100%);
+    background-size: 400% 100%;
+    animation: loadingBarAnimation 2s linear infinite;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 217, 255, 1);
+}
+
+@keyframes loadingBarAnimation {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 400% 50%;
+    }
+}
+
+.audio-loading-error {
+    color: #ff4444;
+    text-align: center;
+    padding: 16px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* Insights Audio Player */
+.insights-audio-player {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    background: rgba(0, 217, 255, 0.08);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.insights-audio-player .audio-player-header {
+    background: rgba(0, 217, 255, 0.1);
+}
+
+.insights-audio-player .audio-btn.primary {
+    background: linear-gradient(135deg, var(--accent-blue), #00b8d4);
+}
+
+.insights-audio-player .audio-btn.primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #00b8d4, var(--accent-blue));
+}
+
+.insights-audio-player .audio-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.audio-loading-spinner {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -212,21 +212,8 @@ def fix_solar_system():
                 'type': 'Known'
             }
             
-            # Calculate correct 3D coordinates (simple orbital positions)
-            # Use actual distance from Sun (not distance from Earth)
-            distance_ly = distance_au * AU_TO_LY
-            
-            # Simple orbital positions (simplified, not real ephemeris)
-            angle = hash(pl_name) % 360  # Deterministic angle based on name
-            angle_rad = math.radians(angle)
-            
-            char['coordinates_3d'] = {
-                'x_light_years': round(distance_ly * math.cos(angle_rad), 8),
-                'y_light_years': round(distance_ly * math.sin(angle_rad), 8),
-                'z_light_years': 0.0,  # Assume ecliptic plane
-                'system': 'Heliocentric (Sun centered)',
-                'note': f'Orbital distance: {distance_au} AU from Sun'
-            }
+            # PRESERVE existing coordinates - DO NOT recalculate positions
+            # Only update if coordinates_3d doesn't exist or is completely empty
             
             fixed_count += 1
             print(f"   ✓ Fixed {pl_name:12s} - Mass: {correct_data['pl_masse']:6.3f} Me, Distance: {distance_from_earth_au:.3f} AU, Hab: {correct_data['habitability']}%")

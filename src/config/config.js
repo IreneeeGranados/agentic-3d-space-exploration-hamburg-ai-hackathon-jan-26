@@ -9,14 +9,14 @@
 export const CONFIG = {
     // OpenAI Configuration
     openai: {
-        apiKey: 'YOUR_OPENAI_API_KEY_HERE', // Replace with your actual key
-        model: 'gpt-4', // or 'gpt-3.5-turbo' for faster/cheaper responses
+        apiKey: import.meta.env.VITE_OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE',
+        model: 'gpt-3.5-turbo', // Using gpt-3.5-turbo for faster/cheaper responses
         baseURL: 'https://api.openai.com/v1/chat/completions'
     },
 
     // Eleven Labs Configuration (optional)
     elevenLabs: {
-        apiKey: 'YOUR_ELEVENLABS_API_KEY_HERE', // Replace with your actual key
+        apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || 'YOUR_ELEVENLABS_API_KEY_HERE',
         voiceId: '21m00Tcm4TlvDq8ikWAM', // Default voice
         baseURL: 'https://api.elevenlabs.io/v1/text-to-speech'
     },
@@ -24,7 +24,7 @@ export const CONFIG = {
     // Feature flags
     features: {
         enableAI: true, // Set to false to disable AI features
-        enableNarration: false, // Set to true when Eleven Labs key is added
+        enableNarration: true, // Set to true when Eleven Labs key is added
         cacheResponses: true // Cache AI responses to save API calls
     },
 
