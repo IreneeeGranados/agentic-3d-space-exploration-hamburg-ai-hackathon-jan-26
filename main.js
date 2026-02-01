@@ -16,6 +16,7 @@ import { PlanetTargetingSquare } from './src/ui/PlanetTargetingSquare.js';
 import OpenAIService from './src/ai/OpenAIService.js';
 import ElevenLabsService from './src/ai/ElevenLabsService.js';
 import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
+import { WarpTunnel } from './src/objects/WarpTunnel.js';
 
 class App {
     constructor() {
@@ -42,10 +43,7 @@ class App {
 
             // Step 2: Setup controls
             this.loadingManager.updateStatus('Configuring Controls', 'Mapping keyboard and mouse...');
-            this.keys = {
-                forward: false, backward: false, left: false, right: false, up: false, down: false,
-                boost: false, brake: false, speedUp: false, speedDown: false
-            };
+            this.keys = { up: false, down: false, left: false, right: false, speedUp: false, speedDown: false, boost: false, brake: false };
             this.setupControls();
             this.mouse = { x: 0, y: 0 };
             this.setupMouse();
@@ -82,40 +80,33 @@ class App {
         window.addEventListener('keydown', (e) => {
             // Skip all controls if navigation is disabled (e.g., dialog is open)
             if (!this.controlsEnabled) return;
-            
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.up = true;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = true;
-            if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = true;
-            if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
+
+            if (e.code === 'KeyW') this.keys.speedUp = true;
+            if (e.code === 'KeyS') this.keys.speedDown = true;
+            if (e.code === 'ArrowUp') this.keys.up = true;
+            if (e.code === 'ArrowDown') this.keys.down = true;
+            if (e.code === 'ArrowLeft') this.keys.left = true;
+            if (e.code === 'ArrowRight') this.keys.right = true;
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = true;
             if (e.code === 'Space') this.keys.brake = true;
 
-            // Speed controls - multiple ways to trigger
-            if (e.code === 'Equal' || e.code === 'NumpadAdd' || e.key === '+' || e.key === '=') {
-                this.keys.speedUp = true;
-                console.log('🚀 Speed UP key pressed!', e.code, e.key);
-            }
-            if (e.code === 'Minus' || e.code === 'NumpadSubtract' || e.key === '-' || e.key === '_') {
-                this.keys.speedDown = true;
-                console.log('🔻 Speed DOWN key pressed!', e.code, e.key);
-            }
-
-            // Navigation shortcuts
+            if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') this.handleViewToggle();
             if (e.code === 'KeyT') this.togglePlanetNavigator();
-            if (e.code === 'KeyE') this.toggleExoplanets();
             if (e.code === 'KeyH') this.toggleUI();
-            if (e.code === 'KeyI') this.showLastClickedPlanetInfo(); // 'I' for Info
+
             if (e.code === 'Escape') this.closePlanetNavigator();
         });
 
         window.addEventListener('keyup', (e) => {
             // Skip all controls if navigation is disabled (e.g., dialog is open)
             if (!this.controlsEnabled) return;
-            
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.up = false;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.down = false;
-            if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = false;
-            if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = false;
+
+            if (e.code === 'KeyW') this.keys.speedUp = false;
+            if (e.code === 'KeyS') this.keys.speedDown = false;
+            if (e.code === 'ArrowUp') this.keys.up = false;
+            if (e.code === 'ArrowDown') this.keys.down = false;
+            if (e.code === 'ArrowLeft') this.keys.left = false;
+            if (e.code === 'ArrowRight') this.keys.right = false;
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = false;
             if (e.code === 'Space') this.keys.brake = false;
 
@@ -134,29 +125,8 @@ class App {
     setupMouse() {
         console.log('Initializing Mouse Controls...');
 
-        // ensure cursor exists (create it if missing to guarantee visibility)
-        let cursor = document.getElementById('flight-cursor');
-        if (!cursor) {
-            console.log('Creating cursor element dynamically...');
-            cursor = document.createElement('div');
-            cursor.id = 'flight-cursor';
-            document.body.appendChild(cursor);
-        }
+        // Cursor logic removed per user request
 
-        // FORCE styles via JS to override any CSS issues
-        Object.assign(cursor.style, {
-            position: 'fixed', // Fixed to viewport
-            width: '40px',
-            height: '40px',
-            borderLeft: '20px solid transparent',
-            borderRight: '20px solid transparent',
-            borderBottom: '40px solid #00d4ff',
-            transform: 'translate(-50%, -50%) rotate(45deg)', // Point up-left ish
-            pointerEvents: 'none',
-            zIndex: '100000',
-            display: 'block',
-            filter: 'drop-shadow(0 0 10px #00d4ff)'
-        });
 
         // Track mouse position relative to center (for steering)
         this.canvas.addEventListener('mousemove', (e) => {
@@ -173,27 +143,12 @@ class App {
             this.mouse.y = Math.max(-1, Math.min(1, this.mouse.y));
 
             // Update visual cursor position
-            if (cursor) {
-                cursor.style.left = `${e.clientX}px`;
-                cursor.style.top = `${e.clientY}px`;
 
-                // --- DYNAMIC CURSOR LOGIC ---
-                // In Cockpit: Cursor must be INVISIBLE (Aim with Crosshair)
-                if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
-                    cursor.style.display = 'none';
-                } else {
-                    // In Chase Mode: Always show
-                    cursor.style.display = 'block';
-                }
-
-                // Cursor Styling (Standard Blue)
-                cursor.style.borderBottomColor = '#00d4ff';
-                cursor.style.filter = 'drop-shadow(0 0 10px #00d4ff)';
-            }
         });
 
         // Hide default cursor on canvas hover
-        this.canvas.style.cursor = 'none';
+        // System cursor restored
+        this.canvas.style.cursor = 'default';
 
         // Raycasting for planet selection (engage autopilot)
         const raycaster = new THREE.Raycaster();
@@ -261,17 +216,6 @@ class App {
             }
         });
 
-        // View Toggle (V)
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') {
-                console.log('V Key Pressed');
-                if (this.spacecraft) {
-                    this.spacecraft.toggleView();
-                    this.updateViewUI();
-                }
-            }
-        });
-
         // Setup UI Buttons
         const viewBtn = document.getElementById('btn-toggle-view');
         if (viewBtn) {
@@ -279,10 +223,7 @@ class App {
                 console.log('View Button Clicked');
                 // Prevent focus from sticking to button (which steals keyboard input)
                 viewBtn.blur();
-                if (this.spacecraft) {
-                    this.spacecraft.toggleView();
-                    this.updateViewUI();
-                }
+                this.handleViewToggle();
             });
         }
     }
@@ -293,12 +234,8 @@ class App {
 
         if (this.spacecraft.viewMode === 'COCKPIT') {
             if (overlay) overlay.classList.add('visible');
-            // Hide standard flight cursor initially in cockpit
-            if (cursor) cursor.style.display = 'none';
         } else {
             if (overlay) overlay.classList.remove('visible');
-            // Show standard flight cursor in chase
-            if (cursor) cursor.style.display = 'block';
         }
     }
 
@@ -330,6 +267,10 @@ class App {
         // Create dynamic star field that follows camera
         this.dynamicStarField = new DynamicStarField(20000, 2000);
         this.sceneManager.add(this.dynamicStarField.mesh);
+
+        // Warp Tunnel Effect
+        this.warpTunnel = new WarpTunnel();
+        this.sceneManager.add(this.warpTunnel.group);
 
         // SpaceDust removed - cleaner view
         console.log('  ✓ Environment created');
@@ -460,16 +401,22 @@ class App {
         }
     }
 
-    toggleExoplanets() {
-        this.exoplanetsVisible = !this.exoplanetsVisible;
-        if (this.exoplanetField && this.exoplanetField.mesh) {
-            this.exoplanetField.mesh.visible = this.exoplanetsVisible;
+
+
+    handleViewToggle() {
+        if (this.spacecraft) {
+            console.log('🚀 Toggling viewpoint');
+            this.spacecraft.toggleView();
+            this.updateViewUI();
+        } else {
+            console.warn('⚠️ Spacecraft not ready for view toggle');
         }
-        console.log(`Exoplanets ${this.exoplanetsVisible ? 'shown' : 'hidden'}`);
     }
 
     toggleUI() {
         this.uiVisible = !this.uiVisible;
+
+        // Toggle standard UI panels
         const panels = document.querySelectorAll('.ui-panel:not(#planet-modal)');
         panels.forEach(panel => {
             if (this.uiVisible) {
@@ -478,6 +425,16 @@ class App {
                 panel.classList.add('hidden');
             }
         });
+
+        // Toggle Planet Navigator
+        if (this.planetNavigator) {
+            if (this.uiVisible) {
+                this.planetNavigator.container.style.display = 'flex';
+            } else {
+                this.planetNavigator.container.style.display = 'none';
+            }
+        }
+
         const toggleBtn = document.getElementById('toggle-ui-btn');
         if (toggleBtn) {
             toggleBtn.style.opacity = this.uiVisible ? '1' : '0.3';
@@ -527,12 +484,8 @@ class App {
             const degrees = ((rotation.y * 180 / Math.PI) % 360 + 360) % 360;
             heading.textContent = `${degrees.toFixed(1)}°`;
         }
-        
-        // Debug: Show key states in HUD (temporary for debugging)
-        const debugElem = document.getElementById('debug-keys');
-        if (debugElem) {
-            debugElem.textContent = `Keys: +${this.keys.speedUp} -${this.keys.speedDown} Shift:${this.keys.boost} Space:${this.keys.brake}`;
-        }
+
+
     }
 
     animate() {
@@ -560,8 +513,12 @@ class App {
             // Steer spacecraft with keyboard and mouse
             this.spacecraft.steer(this.keys, deltaTime, this.mouse);
 
-            // Update spacecraft animation
-            this.spacecraft.update(deltaTime);
+            // Collect potential obstacles/planets for proximity check
+            // Filter scene children for objects that look like planets (have planetData)
+            const nearbyObjects = this.sceneManager.scene.children.filter(obj => obj.userData && obj.userData.planetData);
+
+            // Update spacecraft animation with proximity check
+            this.spacecraft.update(deltaTime, nearbyObjects);
 
             // Update camera to follow spacecraft
             this.spacecraft.updateCamera(this.cameraManager.camera);
@@ -573,6 +530,16 @@ class App {
         // Update planet hover info
         if (this.planetHoverInfo) {
             this.planetHoverInfo.update();
+        }
+
+        // Update Warp Tunnel
+        if (this.warpTunnel && this.spacecraft) {
+            this.warpTunnel.update(
+                deltaTime,
+                this.spacecraft.getSpeed(),
+                this.cameraManager.camera.position,
+                this.cameraManager.camera.quaternion
+            );
         }
 
         // Update targeting square animation
@@ -635,7 +602,7 @@ class App {
 
         // Calculate approach position - cerca del planeta pero no dentro
         const planetRadius = (planet.pl_rade || 1.0) * 0.5 * globalScale; // Radio del planeta escalado
-        const offset = planetRadius * 3; // 3x el radio del planeta (suficiente para verlo completo)
+        const offset = planetRadius * 1.5; // 1.5x el radio -> Closer arrival per user request
         const direction = targetPosition.clone().normalize();
         const approachPosition = targetPosition.clone().sub(direction.multiplyScalar(offset));
 
@@ -644,9 +611,11 @@ class App {
             // Move spacecraft
             this.spacecraft.group.position.copy(approachPosition);
 
-            // Reset velocity
+            // Reset velocity and set safe arrival speed
             if (this.spacecraft.velocity) {
                 this.spacecraft.velocity.set(0, 0, 0);
+                // Keep some forward momentum but slow
+                this.spacecraft.forwardSpeed = 100.0;
             }
 
             // Point spacecraft towards planet
