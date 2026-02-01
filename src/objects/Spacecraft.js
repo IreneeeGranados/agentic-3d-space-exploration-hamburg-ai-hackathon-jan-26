@@ -229,16 +229,22 @@ export class Spacecraft {
 
         // Dynamic camera catch-up
         const distance = camera.position.distanceTo(offset);
-        let lerpFactor = (this.viewMode === 'COCKPIT') ? 0.5 : 0.1;
+        let lerpFactor = 0.1;
 
-        // If we are moving very fast and the camera falls behind, snap it quicker
-        if (distance > 500) {
-            lerpFactor = 0.5;
-        }
-        if (distance > 2000) {
-            // Hard teleport if way too far (warp speed)
-            camera.position.copy(offset);
+        if (this.viewMode === 'COCKPIT') {
+            // FIX: Hard lock for cockpit to prevent jitter/float
             lerpFactor = 1.0;
+        } else {
+            // Chase Mode Logic
+            // If we are moving very fast and the camera falls behind, snap it quicker
+            if (distance > 500) {
+                lerpFactor = 0.5;
+            }
+            if (distance > 2000) {
+                // Hard teleport if way too far (warp speed)
+                camera.position.copy(offset);
+                lerpFactor = 1.0;
+            }
         }
 
         camera.position.lerp(offset, lerpFactor);
