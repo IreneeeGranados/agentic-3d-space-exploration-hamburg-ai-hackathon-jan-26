@@ -51,6 +51,10 @@ export class ExoplanetField {
 
         // Load in background
         this.loadClustersProgressively(otherClusters);
+        
+        // APLICAR ESCALA x10000 DESPUÉS DE RENDERIZAR
+        console.log('🔧 Applying x10000 scale to all planets...');
+        this.meshGroup.scale.set(10000, 10000, 10000);
     }
 
     /**
