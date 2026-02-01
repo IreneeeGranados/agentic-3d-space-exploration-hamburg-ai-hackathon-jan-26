@@ -187,13 +187,20 @@ export class PlanetDataService {
                 planet.color = 0xD1E7E7; // Pale Cyan
                 planet.detailColor = 0x88B0C3;
                 planet.rings.enabled = true; // Yes, it has rings
-                planet.rings.color1 = 0x777777;
-                planet.rings.color2 = 0x999999;
+                planet.rings.innerRadius = 1.6;
+                planet.rings.outerRadius = 2.0;
+                planet.rings.color1 = 0x555555; // Very dark
+                planet.rings.color2 = 0x777777;
+                planet.tilt = 97.77 * (Math.PI / 180); // Uranus is tilted on its side!
                 break;
             case 'Neptune':
                 planet.color = 0x5B5DDF; // Deep Blue
                 planet.detailColor = 0x2E308E;
-                planet.rings.enabled = true; // Faint rings
+                planet.rings.enabled = true; // Very faint rings
+                planet.rings.innerRadius = 1.5;
+                planet.rings.outerRadius = 2.2;
+                planet.rings.color1 = 0x3a3a3a; // Very dark, almost invisible
+                planet.rings.color2 = 0x4a4a4a;
                 break;
             case 'Pluto':
                 planet.color = 0xE3CFB4; // Off-white/brown
@@ -523,6 +530,8 @@ export class PlanetDataService {
         const solarPlanets = await this.loadCluster('solar_system');
 
         if (solarPlanets && solarPlanets.length > 0) {
+            // Tag them as solar so other components know (like Planet.js for textures)
+            solarPlanets.forEach(p => p.isSolar = true);
             console.log(`  ✓ Loaded ${solarPlanets.length} solar system planets`);
         } else {
             console.warn('  ⚠️ No solar system planets loaded');

@@ -24,7 +24,7 @@ export class PlanetExplorationDialog {
         this.isAudioPlaying = false;
         this.cachedDescriptions = new Map();
         this.cachedAudio = new Map();
-        
+
         this.init();
     }
 
@@ -45,12 +45,12 @@ export class PlanetExplorationDialog {
         this.overlay = document.createElement('div');
         this.overlay.className = 'exploration-dialog-overlay';
         this.overlay.id = 'exploration-dialog-overlay';
-        
+
         // Create dialog
         this.dialog = document.createElement('div');
         this.dialog.className = 'planet-exploration-dialog';
         this.dialog.id = 'planet-exploration-dialog';
-        
+
         this.dialog.innerHTML = `
             <div class="exploration-dialog-header">
                 <h2 class="exploration-dialog-title" id="exploration-title">Planet Name</h2>
@@ -59,6 +59,10 @@ export class PlanetExplorationDialog {
             </div>
             
             <div class="exploration-dialog-body">
+                <div class="exploration-hero-container" id="exploration-hero">
+                    <!-- Hero image set dynamically -->
+                </div>
+                
                 <div class="exploration-tabs">
                     <button class="exploration-tab active" data-tab="overview">Overview</button>
                     <button class="exploration-tab" data-tab="characteristics">Characteristics</button>
@@ -109,11 +113,11 @@ export class PlanetExplorationDialog {
                 <button class="exploration-btn" id="exploration-close-btn">Close</button>
             </div>
         `;
-        
+
         // Append to body
         document.body.appendChild(this.overlay);
         document.body.appendChild(this.dialog);
-        
+
         // Cache DOM references
         this.elements = {
             title: document.getElementById('exploration-title'),
@@ -124,7 +128,8 @@ export class PlanetExplorationDialog {
             audioPlayer: document.getElementById('audio-player'),
             audioStatus: document.getElementById('audio-status'),
             tabs: this.dialog.querySelectorAll('.exploration-tab'),
-            tabPanels: this.dialog.querySelectorAll('.exploration-tab-panel')
+            tabPanels: this.dialog.querySelectorAll('.exploration-tab-panel'),
+            heroContainer: document.getElementById('exploration-hero')
         };
     }
 
@@ -136,7 +141,7 @@ export class PlanetExplorationDialog {
         document.getElementById('exploration-close').addEventListener('click', () => this.hide());
         document.getElementById('exploration-close-btn').addEventListener('click', () => this.hide());
         this.overlay.addEventListener('click', () => this.hide());
-        
+
         // Tab switching
         this.elements.tabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -144,12 +149,12 @@ export class PlanetExplorationDialog {
                 this.switchTab(tabName);
             });
         });
-        
+
         // Audio controls
         document.getElementById('audio-play').addEventListener('click', () => this.playAudio());
         document.getElementById('audio-pause').addEventListener('click', () => this.pauseAudio());
         document.getElementById('audio-stop').addEventListener('click', () => this.stopAudio());
-        
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (this.isVisible()) {
@@ -166,24 +171,27 @@ export class PlanetExplorationDialog {
      */
     async show(planetData) {
         this.currentPlanet = planetData;
-        
+
         // Update header
         this.elements.title.textContent = planetData.pl_name || 'Unknown Planet';
         this.elements.subtitle.textContent = this.getPlanetType(planetData);
-        
+
+        // Update hero image
+        this.updateHeroImage(planetData);
+
         // Populate overview tab
         this.populateOverview(planetData);
-        
+
         // Populate characteristics tab
         this.populateCharacteristics(planetData);
-        
+
         // Reset to overview tab
         this.switchTab('overview');
-        
+
         // Show dialog
         this.overlay.classList.add('visible');
         this.dialog.classList.add('visible');
-        
+
         // Load AI description if service is available
         if (this.openAIService) {
             this.loadAIDescription(planetData);
@@ -201,6 +209,24 @@ export class PlanetExplorationDialog {
     }
 
     /**
+     * Update hero image based on planet
+     */
+    updateHeroImage(planetData) {
+        const isEarth = planetData.pl_name === 'Earth' || planetData.name === 'Earth';
+
+        if (isEarth) {
+            this.elements.heroContainer.innerHTML = `
+                <img src="/textures/planets/earth/earth_day_2048.jpg" class="exploration-hero-img" alt="Planet Earth">
+                <div class="exploration-hero-overlay"></div>
+            `;
+            this.elements.heroContainer.style.display = 'block';
+        } else {
+            this.elements.heroContainer.innerHTML = '';
+            this.elements.heroContainer.style.display = 'none';
+        }
+    }
+
+    /**
      * Check if dialog is visible
      */
     isVisible() {
@@ -213,7 +239,7 @@ export class PlanetExplorationDialog {
      */
     switchTab(tabName) {
         this.currentTab = tabName;
-        
+
         // Update tab buttons
         this.elements.tabs.forEach(tab => {
             if (tab.dataset.tab === tabName) {
@@ -222,7 +248,7 @@ export class PlanetExplorationDialog {
                 tab.classList.remove('active');
             }
         });
-        
+
         // Update tab panels
         this.elements.tabPanels.forEach(panel => {
             if (panel.id === `panel-${tabName}`) {
@@ -238,11 +264,11 @@ export class PlanetExplorationDialog {
      */
     populateOverview(planetData) {
         const char = planetData.characteristics || {};
-        
+
         const fields = [
             {
                 label: 'Distance',
-                value: planetData.sy_dist !== undefined && planetData.sy_dist !== null 
+                value: planetData.sy_dist !== undefined && planetData.sy_dist !== null
                     ? `${(planetData.sy_dist * 3.262).toFixed(4)} light-years`
                     : 'Unknown',
                 highlight: false
@@ -303,7 +329,7 @@ export class PlanetExplorationDialog {
                 highlight: false
             }
         ];
-        
+
         this.elements.overviewGrid.innerHTML = fields.map(field => `
             <div class="overview-field">
                 <div class="overview-field-label">${field.label}</div>
@@ -317,7 +343,7 @@ export class PlanetExplorationDialog {
      */
     populateCharacteristics(planetData) {
         const char = planetData.characteristics || {};
-        
+
         const sections = [
             {
                 title: 'Orbital Data',
@@ -368,7 +394,7 @@ export class PlanetExplorationDialog {
                 ]
             }
         ];
-        
+
         this.elements.characteristicsContent.innerHTML = sections.map(section => `
             <div class="characteristics-section">
                 <h3 class="characteristics-title">${section.title}</h3>
@@ -389,13 +415,13 @@ export class PlanetExplorationDialog {
      */
     async loadAIDescription(planetData) {
         const planetName = planetData.pl_name;
-        
+
         // Check cache
         if (this.cachedDescriptions.has(planetName)) {
             this.displayAIDescription(this.cachedDescriptions.get(planetName));
             return;
         }
-        
+
         // Show loading state
         this.elements.aiDescriptionContainer.innerHTML = `
             <div class="ai-description-loading">
@@ -403,17 +429,17 @@ export class PlanetExplorationDialog {
                 <p>Generating AI description...</p>
             </div>
         `;
-        
+
         try {
             // Generate description using OpenAI
             const description = await this.openAIService.generatePlanetDescription(planetData);
-            
+
             // Cache it
             this.cachedDescriptions.set(planetName, description);
-            
+
             // Display it
             this.displayAIDescription(description);
-            
+
             // Load audio if Eleven Labs is available
             if (this.elevenLabsService) {
                 this.loadAudio(description, planetName);
@@ -445,7 +471,7 @@ export class PlanetExplorationDialog {
                 </button>
             </div>
         `;
-        
+
         // Add regenerate handler
         document.getElementById('regenerate-description').addEventListener('click', () => {
             if (this.currentPlanet) {
@@ -467,17 +493,17 @@ export class PlanetExplorationDialog {
             this.setupAudioPlayer(this.cachedAudio.get(planetName));
             return;
         }
-        
+
         try {
             document.getElementById('audio-status').textContent = 'Generating audio...';
-            
+
             // Generate audio
             const audioBlob = await this.elevenLabsService.textToSpeech(text);
             const audioUrl = URL.createObjectURL(audioBlob);
-            
+
             // Cache it
             this.cachedAudio.set(planetName, audioUrl);
-            
+
             // Setup player
             this.setupAudioPlayer(audioUrl);
         } catch (error) {
@@ -493,7 +519,7 @@ export class PlanetExplorationDialog {
         this.audioElement = new Audio(audioUrl);
         this.elements.audioPlayer.style.display = 'block';
         document.getElementById('audio-status').textContent = 'Ready to play';
-        
+
         // Audio event listeners
         this.audioElement.addEventListener('ended', () => {
             this.isAudioPlaying = false;
@@ -561,7 +587,7 @@ export class PlanetExplorationDialog {
         if (this.dialog && this.dialog.parentNode) {
             this.dialog.parentNode.removeChild(this.dialog);
         }
-        
+
         // Clear caches
         this.cachedDescriptions.clear();
         this.cachedAudio.forEach(url => URL.revokeObjectURL(url));

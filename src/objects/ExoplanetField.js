@@ -6,6 +6,7 @@ import {
     generateNormalMap,
     getColorByComposition
 } from '../utils/textureGenerator.js';
+import { generateEarthTexture } from '../utils/PlanetTextureGenerator.js';
 
 /**
  * ExoplanetField - Renders thousands of NASA exoplanets as realistic 3D spheres
@@ -26,6 +27,9 @@ export class ExoplanetField {
 
         // For compatibility with old code
         this.mesh = this.meshGroup;
+
+        // NEW: Texture loader for real photographic textures (Earth/Solar)
+        this.textureLoader = new THREE.TextureLoader();
     }
 
     /**
@@ -51,7 +55,7 @@ export class ExoplanetField {
 
         // Load in background
         this.loadClustersProgressively(otherClusters);
-        
+
         // APLICAR ESCALA x10000 DESPUÉS DE RENDERIZAR
         console.log('🔧 Applying x10000 scale to all planets...');
         this.meshGroup.scale.set(10000, 10000, 10000);
@@ -176,17 +180,56 @@ export class ExoplanetField {
                         roughness = 0.6;
                     }
 
-                    let texture = (planetType === 'rocky') ? generateRockyTexture(colors.base, colors.detail, 128) :
-                        (planetType === 'gasGiant') ? generateGasGiantTexture(planet.gasColors || [colors.base, colors.detail], 128) :
-                            generateIceGiantTexture(colors.base, 128);
+                    let texture, specularMap, normalMap, emissiveMap;
+                    let useRealTextures = false;
+
+                    // SPECIAL HANDLING: Earth and Solar System
+                    const planetName = planet.pl_name || planet.name;
+                    const isEarth = planetName === 'Earth';
+
+                    if (isSolarPlanet || planet.isSolar || isEarth) {
+                        if (isEarth) {
+                            console.log('🌎 RENDERING REALISTIC EARTH (Tier 1)');
+
+                            // Load real photographic textures
+                            texture = this.textureLoader.load('/textures/planets/earth/earth_day_2048.jpg');
+                            specularMap = this.textureLoader.load('/textures/planets/earth/earth_specular_2048.jpg');
+                            normalMap = this.textureLoader.load('/textures/planets/earth/earth_normal_2048.jpg');
+                            emissiveMap = this.textureLoader.load('/textures/planets/earth/earth_lights_2048.png');
+
+                            texture.colorSpace = THREE.SRGBColorSpace;
+                            if (emissiveMap) emissiveMap.colorSpace = THREE.SRGBColorSpace;
+                            useRealTextures = true;
+                        }
+                    }
+
+                    if (!useRealTextures) {
+                        if (isEarth) {
+                            texture = generateEarthTexture(512);
+                            normalMap = generateNormalMap(512, 1.0);
+                        } else {
+                            texture = (planetType === 'rocky') ? generateRockyTexture(colors.base, colors.detail, 128) :
+                                (planetType === 'gasGiant') ? generateGasGiantTexture(planet.gasColors || [colors.base, colors.detail], 128) :
+                                    generateIceGiantTexture(colors.base, 128);
+                            normalMap = generateNormalMap(128, 1.0);
+                        }
+                    }
 
                     material = new THREE.MeshStandardMaterial({
                         map: texture,
-                        roughness: roughness,
-                        metalness: metalness,
-                        emissive: emissive,
-                        emissiveIntensity: emissiveIntensity
+                        normalMap: normalMap,
+                        roughness: isEarth ? 0.35 : roughness,
+                        metalness: isEarth ? 0.0 : metalness,
+                        emissive: (isEarth && emissiveMap) ? new THREE.Color(0xffaa44) : emissive,
+                        emissiveIntensity: isEarth ? 0.05 : emissiveIntensity
                     });
+
+                    if (useRealTextures && isEarth && specularMap) {
+                        material.metalnessMap = specularMap;
+                        material.metalness = 0.5; // Enough for reflections, not enough to wash out colors
+                        material.roughness = 0.2; // Smooth water for clearer colors
+                    }
+
                 } else {
                     // Use enriched color if available
                     let baseColor = planet.color;

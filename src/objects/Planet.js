@@ -15,6 +15,17 @@ import {
     generateCratersTexture,
     getColorByComposition
 } from '../utils/textureGenerator.js';
+import {
+    generateEarthTexture,
+    generateEarthSpecularMap,
+    generateMarsTexture,
+    generateJupiterTexture,
+    generateSaturnTexture,
+    generateSaturnRingTexture,
+    generateNeptuneTexture,
+    generateUranusTexture,
+    generateVenusTexture
+} from '../utils/PlanetTextureGenerator.js';
 
 export class Planet {
     constructor(config) {
@@ -52,6 +63,7 @@ export class Planet {
 
         this.angle = Math.random() * Math.PI * 2; // Random starting position in orbit
         this.group = new THREE.Group();
+        this.textureLoader = new THREE.TextureLoader();
         this.createPlanet();
     }
 
@@ -69,43 +81,129 @@ export class Planet {
         const detailColor = this.config.detailColor || colors.detail;
 
         // Generate procedural texture based on planet type/composition
-        let texture, normalMap, emissiveMap;
+        let texture, normalMap, emissiveMap, specularMap;
         const isAirless = !this.config.atmosphere || !this.config.atmosphere.enabled;
+        const isSolarPlanet = this.config.isSolar;
 
-        if (this.config.planetType === 'rocky') {
-            if (isAirless && this.config.name !== 'Earth') {
-                texture = generateCratersTexture(baseColor, detailColor);
-            } else {
-                texture = generateRockyTexture(baseColor, detailColor);
-            }
-            normalMap = generateNormalMap(512, 2.0);
+        // Use specialized textures for solar system planets
+        const planetName = this.config.name || this.config.pl_name;
+        const isEarth = planetName === 'Earth';
 
-            // Add night lights for habitable planets
-            if (parseFloat(this.config.habitability) > 50) {
-                emissiveMap = generateNightLightsTexture(512, parseFloat(this.config.habitability) / 100);
+        // Use specialized textures for solar system planets
+        if (isSolarPlanet || isEarth) {
+            switch (planetName) {
+                case 'Earth':
+                    // Use real photographic textures for Earth
+                    texture = this.textureLoader.load('/textures/planets/earth/earth_day_2048.jpg');
+                    specularMap = this.textureLoader.load('/textures/planets/earth/earth_specular_2048.jpg');
+                    normalMap = this.textureLoader.load('/textures/planets/earth/earth_normal_2048.jpg');
+                    emissiveMap = this.textureLoader.load('/textures/planets/earth/earth_lights_2048.png');
+
+                    // Set texture properties for better quality
+                    texture.colorSpace = THREE.SRGBColorSpace;
+                    emissiveMap.colorSpace = THREE.SRGBColorSpace;
+                    break;
+                case 'Mars':
+                    texture = generateMarsTexture(2048);
+                    normalMap = generateNormalMap(1024, 2.5);
+                    break;
+                case 'Jupiter':
+                    texture = generateJupiterTexture(2048);
+                    normalMap = generateNormalMap(512, 0.5);
+                    break;
+                case 'Saturn':
+                    texture = generateSaturnTexture(2048);
+                    normalMap = generateNormalMap(512, 0.3);
+                    break;
+                case 'Neptune':
+                    texture = generateNeptuneTexture(1024);
+                    normalMap = generateNormalMap(512, 0.4);
+                    break;
+                case 'Uranus':
+                    texture = generateUranusTexture(1024);
+                    normalMap = generateNormalMap(512, 0.2);
+                    break;
+                case 'Venus':
+                    texture = generateVenusTexture(1024);
+                    normalMap = generateNormalMap(512, 0.1);
+                    break;
+                case 'Mercury':
+                    texture = generateCratersTexture(baseColor, detailColor, 1024);
+                    normalMap = generateNormalMap(1024, 3.0);
+                    break;
+                default:
+                    // Fallback for any other solar planets
+                    if (this.config.planetType === 'rocky') {
+                        texture = generateRockyTexture(baseColor, detailColor);
+                        normalMap = generateNormalMap(512, 2.0);
+                    } else if (this.config.planetType === 'gasGiant') {
+                        const gasColors = this.config.gasColors || [baseColor, detailColor, 0xffffff];
+                        texture = generateGasGiantTexture(gasColors);
+                        normalMap = generateNormalMap(512, 0.5);
+                    } else {
+                        texture = generateIceGiantTexture(baseColor);
+                        normalMap = generateNormalMap(512, 0.3);
+                    }
             }
-        } else if (this.config.planetType === 'gasGiant') {
-            const gasColors = this.config.gasColors || [new THREE.Color(baseColor).getHex(), new THREE.Color(detailColor).getHex(), 0xffffff];
-            texture = generateGasGiantTexture(gasColors);
-            normalMap = generateNormalMap(512, 0.5);
-        } else if (this.config.planetType === 'iceGiant') {
-            texture = generateIceGiantTexture(baseColor);
-            normalMap = generateNormalMap(512, 0.3);
+        } else {
+            // Exoplanets use standard procedural textures
+            if (this.config.planetType === 'rocky') {
+                if (isAirless && this.config.name !== 'Earth') {
+                    texture = generateCratersTexture(baseColor, detailColor);
+                } else {
+                    texture = generateRockyTexture(baseColor, detailColor);
+                }
+                normalMap = generateNormalMap(512, 2.0);
+
+                // Add night lights for habitable planets
+                if (parseFloat(this.config.habitability) > 50) {
+                    emissiveMap = generateNightLightsTexture(512, parseFloat(this.config.habitability) / 100);
+                }
+            } else if (this.config.planetType === 'gasGiant') {
+                const gasColors = this.config.gasColors || [new THREE.Color(baseColor).getHex(), new THREE.Color(detailColor).getHex(), 0xffffff];
+                texture = generateGasGiantTexture(gasColors);
+                normalMap = generateNormalMap(512, 0.5);
+            } else if (this.config.planetType === 'iceGiant') {
+                texture = generateIceGiantTexture(baseColor);
+                normalMap = generateNormalMap(512, 0.3);
+            }
         }
 
         // Create material with realistic lighting
+        // isEarth is already defined above
+
         const materialOptions = {
             map: texture,
             normalMap: normalMap,
-            roughness: this.config.planetType === 'iceGiant' ? 0.4 : 0.9,
-            metalness: 0.1,
+            roughness: isEarth ? 0.8 : (this.config.planetType === 'iceGiant' ? 0.4 : 0.9),
+            metalness: isEarth ? 0.0 : 0.1,
             emissive: emissiveMap ? new THREE.Color(0xffffff) : new THREE.Color(baseColor),
-            emissiveIntensity: emissiveMap ? 1.0 : (parseFloat(this.config.temperature) > 1000 ? 0.1 : 0.0)
+            emissiveIntensity: (this.config.isSolar || isEarth) ? 0.3 : (emissiveMap ? 1.0 : (parseFloat(this.config.temperature) > 1000 ? 0.1 : 0.0))
         };
 
-        // Only add emissiveMap if it exists
+        // Add emissive map if exists
         if (emissiveMap) {
             materialOptions.emissiveMap = emissiveMap;
+        }
+
+        // Add surface map for Earth
+        if (specularMap && isEarth) {
+            // earth_specular has Water = White (shiny), Land = Black (rough)
+            // In Three.js StandardMaterial, we can use this as a metalnessMap 
+            // to make water reflective like a metal (specular), 
+            // and keep land non-reflective.
+            materialOptions.metalnessMap = specularMap;
+            materialOptions.metalness = 1.0;
+
+            // For roughness, we'd want water to be 0 and land 1.
+            // Since the map is inverted (Water=1, Land=0), we don't use it as roughnessMap directly
+            // unless we want matte water. We'll stick to a high base roughness for land.
+            materialOptions.roughness = 0.7;
+        } else if (specularMap) {
+            materialOptions.metalnessMap = specularMap;
+            materialOptions.roughnessMap = specularMap;
+            materialOptions.metalness = 0.5;
+            materialOptions.roughness = 0.1;
         }
 
         const material = new THREE.MeshStandardMaterial(materialOptions);
@@ -215,12 +313,18 @@ export class Planet {
     createClouds() {
         const radius = this.config.radius * 1.02;
         const geometry = new THREE.SphereGeometry(radius, 64, 64);
-        const texture = generateCloudTexture(512);
+
+        let texture;
+        if (this.config.isSolar && (this.config.name === 'Earth' || this.config.pl_name === 'Earth')) {
+            texture = this.textureLoader.load('/textures/planets/earth/earth_clouds_2048.png');
+        } else {
+            texture = generateCloudTexture(512);
+        }
 
         const material = new THREE.MeshStandardMaterial({
             map: texture,
             transparent: true,
-            opacity: 0.8,
+            opacity: (this.config.name === 'Earth' || this.config.pl_name === 'Earth') ? 0.4 : 0.8,
             depthWrite: false
         });
 
@@ -234,7 +338,15 @@ export class Planet {
         const outerRadius = this.config.radius * (ringConfig.outerRadius || 2.5);
 
         const geometry = new THREE.RingGeometry(innerRadius, outerRadius, 128);
-        const texture = generateRingTexture(512, ringConfig.color1, ringConfig.color2);
+
+        // Use enhanced Saturn ring texture if this is Saturn
+        let texture;
+        const isSaturn = this.config.isSolar && (this.config.name === 'Saturn' || this.config.pl_name === 'Saturn');
+        if (isSaturn) {
+            texture = generateSaturnRingTexture(2048);
+        } else {
+            texture = generateRingTexture(512, ringConfig.color1, ringConfig.color2);
+        }
 
         // Proper UV mapping for rings
         const pos = geometry.attributes.position;
@@ -248,13 +360,17 @@ export class Planet {
             map: texture,
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: 0.8,
-            roughness: 0.5,
-            metalness: 0
+            opacity: isSaturn ? 0.95 : 0.8,
+            roughness: 0.8,
+            metalness: 0,
+            depthWrite: false,
+            alphaTest: 0.01
         });
 
         this.ringMesh = new THREE.Mesh(geometry, material);
         this.ringMesh.rotation.x = Math.PI / 2;
+        this.ringMesh.castShadow = true;
+        this.ringMesh.receiveShadow = true;
         this.group.add(this.ringMesh);
     }
 
