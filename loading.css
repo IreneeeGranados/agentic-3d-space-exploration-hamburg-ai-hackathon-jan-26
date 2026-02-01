@@ -53,7 +53,7 @@
     position: relative;
     text-align: center;
     z-index: 10;
-    max-width: 600px;
+    max-width: 700px;
     padding: 40px;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 20px;
@@ -274,6 +274,41 @@
     
     .loading-content {
         padding: 20px;
+        max-width: 90%;
+    }
+
+    .slide-icon {
+        font-size: 3em;
+    }
+
+    .slide-title {
+        font-size: 1.4em;
+    }
+
+    .slide-text {
+        font-size: 0.95em;
+        padding: 0 10px;
+    }
+
+    .control-row {
+        font-size: 0.9em;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .control-row .key {
+        min-width: 60px;
+        font-size: 0.85em;
+    }
+
+    .loading-slides {
+        min-height: 320px;
+    }
+
+    .start-exploring-btn {
+        font-size: 1.1em;
+        padding: 15px 40px;
+        margin-top: 20px;
     }
 }
 
@@ -288,4 +323,281 @@
 
 .loading-title:hover {
     animation: glitch 0.3s infinite, title-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   LOADING SLIDES - INFO CAROUSEL
+   ============================================ */
+
+.loading-slides {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    margin: 30px 0 20px 0;
+    overflow: hidden;
+}
+
+.loading-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.loading-slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    position: relative;
+}
+
+.loading-slide.exiting {
+    opacity: 0;
+    transform: translateX(-100%);
+}
+
+.slide-icon {
+    font-size: 4em;
+    margin-bottom: 15px;
+    animation: float-icon 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(57, 255, 20, 0.6));
+}
+
+@keyframes float-icon {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.slide-title {
+    font-family: 'Courier New', monospace;
+    font-size: 1.8em;
+    color: #39ff14;
+    margin: 0 0 15px 0;
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.8);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.slide-text {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    color: #fff;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 20px;
+}
+
+.slide-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.control-row {
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    color: #00ffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.control-row .key {
+    display: inline-block;
+    background: rgba(57, 255, 20, 0.2);
+    color: #39ff14;
+    padding: 5px 12px;
+    border-radius: 5px;
+    border: 1px solid rgba(57, 255, 20, 0.5);
+    font-weight: bold;
+    min-width: 80px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+}
+
+.slide-note {
+    font-family: 'Courier New', monospace;
+    font-size: 0.95em;
+    color: #ff00ff;
+    margin: 15px 0 0 0;
+    font-style: italic;
+}
+
+/* Slide Indicators */
+.slide-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(57, 255, 20, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    background: #39ff14;
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.8);
+    transform: scale(1.3);
+}
+
+.indicator:hover {
+    background: rgba(57, 255, 20, 0.6);
+}
+
+/* Floating particles around slides */
+@keyframes particle-float {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translate(10px, -20px) scale(1.2);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.3;
+    }
+}
+
+.loading-slide::before {
+    content: '✨';
+    position: absolute;
+    top: 10%;
+    left: 5%;
+    font-size: 1.5em;
+    animation: particle-float 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.loading-slide::after {
+    content: '⭐';
+    position: absolute;
+    bottom: 10%;
+    right: 5%;
+    font-size: 1.2em;
+    animation: particle-float 3s ease-in-out infinite reverse;
+    pointer-events: none;
+}
+
+/* ============================================
+   START EXPLORING BUTTON
+   ============================================ */
+
+.start-exploring-btn {
+    position: relative;
+    margin-top: 30px;
+    padding: 18px 50px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #000;
+    background: linear-gradient(135deg, #39ff14 0%, #00ff88 100%);
+    border: 3px solid #39ff14;
+    border-radius: 50px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 0 20px rgba(57, 255, 20, 0.6),
+        0 0 40px rgba(57, 255, 20, 0.4),
+        inset 0 0 20px rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 1;
+    transform: scale(1);
+    animation: button-pulse 2s ease-in-out infinite;
+}
+
+.start-exploring-btn.hidden {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+}
+
+.start-exploring-btn:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #00ff88 0%, #39ff14 100%);
+    box-shadow: 
+        0 0 30px rgba(57, 255, 20, 0.8),
+        0 0 60px rgba(57, 255, 20, 0.6),
+        inset 0 0 30px rgba(255, 255, 255, 0.3);
+    animation: none;
+}
+
+.start-exploring-btn:active {
+    transform: scale(0.95);
+}
+
+.btn-icon {
+    font-size: 1.2em;
+    animation: rocket-shake 0.5s ease-in-out infinite;
+}
+
+.start-exploring-btn:hover .btn-icon {
+    animation: rocket-launch 0.6s ease-in-out infinite;
+}
+
+@keyframes button-pulse {
+    0%, 100% {
+        box-shadow: 
+            0 0 20px rgba(57, 255, 20, 0.6),
+            0 0 40px rgba(57, 255, 20, 0.4),
+            inset 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        box-shadow: 
+            0 0 30px rgba(57, 255, 20, 0.8),
+            0 0 60px rgba(57, 255, 20, 0.6),
+            inset 0 0 30px rgba(255, 255, 255, 0.3);
+    }
+}
+
+@keyframes rocket-shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+@keyframes rocket-launch {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(-10deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+.btn-text {
+    position: relative;
+    z-index: 1;
+}
+
+.btn-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    transform: translate(-100%, -100%);
+    transition: transform 0.6s ease;
+    pointer-events: none;
+}
+
+.start-exploring-btn:hover .btn-glow {
+    transform: translate(0, 0);
 }

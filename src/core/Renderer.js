@@ -18,7 +18,8 @@ export class RendererManager {
             canvas: canvas,
             antialias: false, // FXAA/SMAA handled by composer usually, or disabled for performance
             alpha: false,
-            powerPreference: "high-performance"
+            powerPreference: "high-performance",
+            logarithmicDepthBuffer: true // Fix clipping at extreme distances
         });
 
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);

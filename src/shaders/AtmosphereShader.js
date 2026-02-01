@@ -14,7 +14,7 @@ export const AtmosphereShader = {
         rimPower: { value: 3.0 },
         scatterStrength: { value: 0.5 }
     },
-    
+
     vertexShader: `
         varying vec3 vNormal;
         varying vec3 vPosition;
@@ -28,7 +28,7 @@ export const AtmosphereShader = {
             gl_Position = projectionMatrix * mvPosition;
         }
     `,
-    
+
     fragmentShader: `
         uniform vec3 atmosphereColor;
         uniform vec3 sunDirection;
@@ -79,7 +79,7 @@ export const CloudShader = {
         cloudOpacity: { value: 0.6 },
         cloudCoverage: { value: 0.5 }
     },
-    
+
     vertexShader: `
         varying vec2 vUv;
         varying vec3 vNormal;
@@ -93,7 +93,7 @@ export const CloudShader = {
             gl_Position = projectionMatrix * mvPosition;
         }
     `,
-    
+
     fragmentShader: `
         uniform sampler2D cloudTexture;
         uniform vec3 cloudColor;
@@ -174,7 +174,7 @@ export const CloudShader = {
  */
 export function createAtmosphere(planetRadius, atmosphereConfig) {
     const layers = [];
-    
+
     // Inner glow layer
     const innerRadius = planetRadius * 1.03;
     const innerGeometry = new THREE.SphereGeometry(innerRadius, 64, 64);
@@ -187,15 +187,15 @@ export function createAtmosphere(planetRadius, atmosphereConfig) {
         side: THREE.BackSide,
         depthWrite: false
     });
-    
+
     innerMaterial.uniforms.atmosphereColor.value = new THREE.Color(atmosphereConfig.color || 0x4a90e2);
     innerMaterial.uniforms.intensity.value = 0.8;
     innerMaterial.uniforms.rimPower.value = 2.5;
     innerMaterial.uniforms.falloff.value = 3.0;
-    
+
     const innerMesh = new THREE.Mesh(innerGeometry, innerMaterial);
     layers.push(innerMesh);
-    
+
     // Outer scatter layer
     const outerRadius = planetRadius * 1.08;
     const outerGeometry = new THREE.SphereGeometry(outerRadius, 64, 64);
@@ -208,16 +208,16 @@ export function createAtmosphere(planetRadius, atmosphereConfig) {
         side: THREE.BackSide,
         depthWrite: false
     });
-    
+
     outerMaterial.uniforms.atmosphereColor.value = new THREE.Color(atmosphereConfig.color || 0x4a90e2);
     outerMaterial.uniforms.intensity.value = 0.4;
     outerMaterial.uniforms.rimPower.value = 4.0;
     outerMaterial.uniforms.falloff.value = 5.0;
     outerMaterial.uniforms.scatterStrength.value = 0.7;
-    
+
     const outerMesh = new THREE.Mesh(outerGeometry, outerMaterial);
     layers.push(outerMesh);
-    
+
     return layers;
 }
 
@@ -227,7 +227,7 @@ export function createAtmosphere(planetRadius, atmosphereConfig) {
 export function createCloudLayer(planetRadius, cloudTexture = null) {
     const cloudRadius = planetRadius * 1.02;
     const geometry = new THREE.SphereGeometry(cloudRadius, 64, 64);
-    
+
     const material = new THREE.ShaderMaterial({
         uniforms: THREE.UniformsUtils.clone(CloudShader.uniforms),
         vertexShader: CloudShader.vertexShader,
@@ -236,15 +236,15 @@ export function createCloudLayer(planetRadius, cloudTexture = null) {
         depthWrite: false,
         side: THREE.FrontSide
     });
-    
+
     if (cloudTexture) {
         material.uniforms.cloudTexture.value = cloudTexture;
     }
-    
+
     material.uniforms.cloudOpacity.value = 0.5;
     material.uniforms.cloudCoverage.value = 0.6;
     material.uniforms.cloudSpeed.value = 0.005;
-    
+
     return new THREE.Mesh(geometry, material);
 }
 
@@ -256,7 +256,7 @@ export function updateAtmosphere(atmosphereLayers, cloudLayer, deltaTime) {
     if (cloudLayer && cloudLayer.material.uniforms) {
         cloudLayer.material.uniforms.time.value += deltaTime;
     }
-    
+
     // Could add subtle atmosphere pulsing here if desired
     // atmosphereLayers.forEach(layer => {
     //     layer.material.uniforms.intensity.value = 0.8 + Math.sin(time) * 0.1;

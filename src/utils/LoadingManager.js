@@ -9,14 +9,62 @@ export class LoadingManager {
         this.statusElement = document.getElementById('loading-status');
         this.detailElement = document.getElementById('loading-detail');
         this.progressBar = document.querySelector('.loading-progress-bar');
+        this.startButton = document.getElementById('start-exploring-btn');
         
         this.totalSteps = 0;
         this.completedSteps = 0;
         this.startTime = Date.now();
         
+        // Slideshow control
+        this.currentSlide = 0;
+        this.totalSlides = 4;
+        this.slideInterval = null;
+        
         // Initialize 3D party scene
         this.partyScene = null;
         this.initPartyScene();
+        
+        // Start slideshow
+        this.startSlideshow();
+        
+        // Setup start button
+        this.setupStartButton();
+    }
+
+    /**
+     * Setup start button click handler
+     */
+    setupStartButton() {
+        if (this.startButton) {
+            this.startButton.addEventListener('click', () => {
+                this.hideLoadingScreen();
+            });
+        }
+    }
+
+    /**
+     * Hide the loading screen
+     */
+    hideLoadingScreen() {
+        // Stop slideshow
+        this.stopSlideshow();
+        
+        if (this.screen) {
+            this.screen.classList.add('hidden');
+        }
+        
+        // Dispose party scene
+        if (this.partyScene) {
+            this.partyScene.dispose();
+            this.partyScene = null;
+        }
+        
+        // Remove from DOM after transition
+        setTimeout(() => {
+            if (this.screen && this.screen.parentNode) {
+                this.screen.parentNode.removeChild(this.screen);
+            }
+        }, 500);
     }
 
     initPartyScene() {
@@ -27,6 +75,75 @@ export class LoadingManager {
             } catch (error) {
                 console.warn('Could not initialize party scene:', error);
             }
+        }
+    }
+
+    /**
+     * Start slideshow with manual control only
+     */
+    startSlideshow() {
+        // Setup click handlers for indicators (manual navigation only)
+        const indicators = document.querySelectorAll('.indicator');
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => {
+                this.goToSlide(index);
+            });
+        });
+        // No auto-advance - user must click to change slides
+    }
+
+    /**
+     * Go to specific slide
+     */
+    goToSlide(index) {
+        const slides = document.querySelectorAll('.loading-slide');
+        const indicators = document.querySelectorAll('.indicator');
+        
+        if (index < 0 || index >= this.totalSlides) return;
+        
+        // Remove active from current
+        slides[this.currentSlide]?.classList.remove('active');
+        slides[this.currentSlide]?.classList.add('exiting');
+        indicators[this.currentSlide]?.classList.remove('active');
+        
+        // Clean up exiting class after animation
+        setTimeout(() => {
+            slides[this.currentSlide]?.classList.remove('exiting');
+        }, 600);
+        
+        // Set new slide
+        this.currentSlide = index;
+        slides[this.currentSlide]?.classList.add('active');
+        indicators[this.currentSlide]?.classList.add('active');
+    }
+
+    /**
+     * Advance to next slide
+     */
+    nextSlide() {
+        const nextIndex = (this.currentSlide + 1) % this.totalSlides;
+        this.goToSlide(nextIndex);
+    }
+
+    /**
+     * Reset slide interval (useful when user manually changes slides)
+     */
+    resetSlideInterval() {
+        if (this.slideInterval) {
+            clearInterval(this.slideInterval);
+        }
+        this.slideInterval = setInterval(() => {
+            this.nextSlide();
+        }, this.SLIDE_DURATION);
+    }
+
+    /**
+     * Stop slideshow
+     */
+    stopSlideshow() {
+        if (this.slideInterval) {
+            clearInterval(this.slideInterval);
+            this.slideInterval = null;
         }
     }
 
@@ -90,25 +207,12 @@ export class LoadingManager {
         
         console.log(`✓ Loading complete in ${loadTime}s`);
         
-        // Wait a moment then fade out
-        setTimeout(() => {
-            if (this.screen) {
-                this.screen.classList.add('hidden');
-            }
-            
-            // Dispose party scene
-            if (this.partyScene) {
-                this.partyScene.dispose();
-                this.partyScene = null;
-            }
-            
-            // Remove from DOM after transition
+        // Show start button
+        if (this.startButton) {
             setTimeout(() => {
-                if (this.screen && this.screen.parentNode) {
-                    this.screen.parentNode.removeChild(this.screen);
-                }
-            }, 500);
-        }, 800);
+                this.startButton.classList.remove('hidden');
+            }, 300);
+        }
     }
 
     /**
@@ -119,6 +223,7 @@ export class LoadingManager {
         if (this.progressBar) {
             this.progressBar.style.background = 'linear-gradient(90deg, #ff0000, #ff6b00)';
         }
+        this.stopSlideshow();
         console.error('❌ Loading error:', message);
     }
 }
