@@ -252,13 +252,25 @@ export class ExoplanetField {
                     }
 
                     if (!useRealTextures) {
-                        // Use simple colors for performance - no procedural textures
-                        texture = null;
-                        normalMap = null;
+                        // Generate procedural textures for exoplanets (Tier 1 only)
+                        if (planetType === 'gasGiant') {
+                            // Gas giant bands
+                            const bandColors = [colors.base, colors.detail, colors.base];
+                            texture = generateGasGiantTexture(bandColors, 256);
+                            normalMap = generateNormalMap(256, 0.5);
+                        } else if (planetType === 'iceGiant') {
+                            // Ice giant smooth texture
+                            texture = generateIceGiantTexture(colors.base, 256);
+                            normalMap = generateNormalMap(256, 0.3);
+                        } else {
+                            // Rocky/terrestrial texture
+                            texture = generateRockyTexture(colors.base, colors.detail, 256);
+                            normalMap = generateNormalMap(256, 2.0);
+                        }
                     }
 
                     material = new THREE.MeshStandardMaterial({
-                        color: new THREE.Color(colors.base),
+                        color: texture ? new THREE.Color(0xffffff) : new THREE.Color(colors.base), // White if textured
                         roughness: isEarth ? 0.35 : roughness,
                         metalness: isEarth ? 0.0 : metalness,
                         emissive: (emissiveMap) ? new THREE.Color(0xffaa44) : (emissive || new THREE.Color(0x000000)),
@@ -271,10 +283,9 @@ export class ExoplanetField {
                         side: THREE.FrontSide
                     });
 
-                    // Add textures only for real solar system planets
-                    if (useRealTextures && texture) {
+                    // Add textures (both solar system and procedural)
+                    if (texture) {
                         material.map = texture;
-                        material.color = new THREE.Color(0xffffff); // Don't tint the texture
                         if (normalMap) material.normalMap = normalMap;
                     }
 
