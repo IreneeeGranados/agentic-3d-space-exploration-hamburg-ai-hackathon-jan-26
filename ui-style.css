@@ -44,6 +44,7 @@
     color: var(--text-primary);
     padding: var(--spacing-md);
     z-index: 1000; /* High z-index for all UI panels */
+    pointer-events: auto; /* Ensure UI elements capture clicks */
     transition: all 0.3s ease;
 }
 
@@ -347,7 +348,8 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     backdrop-filter: blur(10px);
-    z-index: 99;
+    z-index: 1100;
+    pointer-events: auto; /* Ensure toggle button captures clicks */
 }
 
 .toggle-btn:hover {
@@ -379,7 +381,8 @@
     border: 2px solid var(--accent-blue);
     border-radius: 8px;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
-    z-index: 200;
+    z-index: 10200;
+    pointer-events: auto; /* Ensure modal captures clicks */
     display: none;
     flex-direction: column;
 }
@@ -466,6 +469,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     cursor: pointer;
+    pointer-events: auto; /* Ensure buttons capture clicks */
     transition: all 0.2s ease;
 }
 
@@ -491,7 +495,8 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 199;
+    z-index: 10199;
+    pointer-events: auto; /* Ensure overlay captures clicks */
     display: none;
 }
 
@@ -541,6 +546,7 @@
     gap: 8px;
     padding: 10px;
     z-index: 1000;
+    pointer-events: auto; /* Ensure button captures clicks */
     box-shadow: 
         0 4px 20px rgba(0, 0, 0, 0.6),
         0 0 30px rgba(0, 217, 255, 0.3);

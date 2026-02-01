@@ -334,6 +334,25 @@ class App {
         const mouse = new THREE.Vector2();
 
         window.addEventListener('click', (event) => {
+            // Don't process clicks if they're on UI elements
+            const target = event.target;
+            if (target.closest('.ui-panel') || 
+                target.closest('.modal-overlay') || 
+                target.closest('#planet-modal') ||
+                target.closest('.planet-exploration-dialog') ||
+                target.closest('.exploration-dialog-overlay') ||
+                target.closest('.toggle-btn') ||
+                target.closest('.spaice-floating-btn') ||
+                target.closest('button') ||
+                target.closest('input')) {
+                return; // Ignore clicks on UI elements
+            }
+
+            // Only handle clicks on the canvas
+            if (event.target.id !== 'canvas') {
+                return;
+            }
+
             // Calculate mouse position in normalized device coordinates
             if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
                 // Cockpit Mode: Raycast from center (Crosshair)
@@ -399,6 +418,7 @@ class App {
         const viewBtn = document.getElementById('btn-toggle-view');
         if (viewBtn) {
             viewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 console.log('View Button Clicked');
                 // Prevent focus from sticking to button (which steals keyboard input)
                 viewBtn.blur();
@@ -568,14 +588,27 @@ class App {
         // Toggle UI button
         const toggleBtn = document.getElementById('toggle-ui-btn');
         if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => this.toggleUI());
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleUI();
+            });
         }
 
         // Modal controls
         const modalClose = document.getElementById('modal-close');
         const modalOverlay = document.getElementById('modal-overlay');
-        if (modalClose) modalClose.addEventListener('click', () => this.closeModal());
-        if (modalOverlay) modalOverlay.addEventListener('click', () => this.closeModal());
+        if (modalClose) {
+            modalClose.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeModal();
+            });
+        }
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeModal();
+            });
+        }
     }
 
     togglePlanetNavigator() {
@@ -1035,7 +1068,8 @@ class App {
         // Setup multiplayer button
         const mpBtn = document.getElementById('multiplayer-btn');
         if (mpBtn) {
-            mpBtn.addEventListener('click', () => {
+            mpBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.toggleMultiplayer();
             });
             console.log('✅ Multiplayer button initialized');

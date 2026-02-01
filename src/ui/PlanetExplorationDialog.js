@@ -163,24 +163,35 @@ this.cachedInsightsAudio = new Map();
         const closeFooterBtn = this.dialog.querySelector('#exploration-close-btn');
 
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.hide());
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.hide();
+            });
         } else {
             console.warn('⚠️ Close button not found');
         }
 
         if (closeFooterBtn) {
-            closeFooterBtn.addEventListener('click', () => this.hide());
+            closeFooterBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.hide();
+            });
         } else {
             console.warn('⚠️ Footer close button not found');
         }
 
-        if (this.overlay) {this.overlay.addEventListener('click', () => this.hide());
-}
+        if (this.overlay) {
+            this.overlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.hide();
+            });
+        }
 
         // Tab switching
         if (this.elements.tabs && this.elements.tabs.length > 0) {
             this.elements.tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
+                tab.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     const tabName = tab.dataset.tab;
                     console.log('🔄 Switching to tab:', tabName);
                 this.switchTab(tabName);
@@ -193,7 +204,8 @@ console.log(`✅ Attached ${this.elements.tabs.length} tab listeners`);
 
         // Chat send button
         if (this.elements.chatSendBtn) {
-            this.elements.chatSendBtn.addEventListener('click', () => {
+            this.elements.chatSendBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 console.log('🚀 Chat send button clicked');
                 this.handleChatSend();
             });

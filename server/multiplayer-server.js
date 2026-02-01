@@ -144,9 +144,10 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`✨ Multiplayer server running on port ${PORT}`);
-    console.log(`🌐 Status: http://localhost:${PORT}/status`);
+    console.log(`🌐 Local: http://localhost:${PORT}/status`);
+    console.log(`🌐 Network: http://<your-ip>:${PORT}/status`);
     console.log(`🎮 Ready for connections!`);
 });
 
