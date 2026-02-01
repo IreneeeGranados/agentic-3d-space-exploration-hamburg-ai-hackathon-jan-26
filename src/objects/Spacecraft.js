@@ -16,7 +16,7 @@ export class Spacecraft {
 
         // Constant forward speed
         this.minSpeed = 15.0;
-        this.maxSpeed = 200.0;
+        this.maxSpeed = 200000.0;
         this.forwardSpeed = 30.0;
         this.autopilotSpeed = 100.0;
 
@@ -55,7 +55,7 @@ export class Spacecraft {
         this.loadModel();
 
         // Add FX
-        this.createEngines();
+        // Engines removed per user request
         this.createNavLights();
     }
 
@@ -74,7 +74,8 @@ export class Spacecraft {
             model.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.receiveShadow = true;
+                    child.castShadow = true;
+                    child.receiveShadow = false; // Disable self-shadowing to prevent "square" artifacts
                     if (child.material) {
                         child.material.metalness = 0.6;
                         child.material.roughness = 0.4;
@@ -96,32 +97,7 @@ export class Spacecraft {
         });
     }
 
-    createEngines() {
-        const glowMat = new THREE.MeshBasicMaterial({
-            color: 0x00ffff,
-            transparent: true,
-            opacity: 0.8
-        });
 
-        // Main Glow - position at rear (-X)
-        this.mainGlow = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2, 32), glowMat);
-        this.mainGlow.rotation.z = -Math.PI / 2; // Point cone backwards (-X)
-        this.mainGlow.position.set(-6.5, 0, 0);
-        this.mesh.add(this.mainGlow);
-
-        this.secondaryGlows = [];
-        const leftOMS = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1, 16), glowMat);
-        leftOMS.rotation.z = -Math.PI / 2;
-        leftOMS.position.set(-6, 1.5, 1.5);
-        this.mesh.add(leftOMS);
-        this.secondaryGlows.push(leftOMS);
-
-        const rightOMS = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1, 16), glowMat);
-        rightOMS.rotation.z = -Math.PI / 2;
-        rightOMS.position.set(-6, 1.5, -1.5);
-        this.mesh.add(rightOMS);
-        this.secondaryGlows.push(rightOMS);
-    }
 
     createNavLights() {
         const portLight = new THREE.PointLight(0xff0000, 1, 5);
@@ -196,8 +172,13 @@ export class Spacecraft {
 
     updateManualControl(keys, deltaTime) {
         // 1. Speed Control (W/S)
-        if (keys.speedUp) this.forwardSpeed += 50.0 * deltaTime;
-        if (keys.speedDown) this.forwardSpeed -= 50.0 * deltaTime;
+        // 1. Speed Control (W/S) - Exponential Acceleration
+        // Scaling acceleration based on current speed allows reaching high speeds reasonably
+        // Adjusted factor for smoother control at high speeds
+        const acceleration = Math.max(50.0, this.forwardSpeed * 1.5);
+
+        if (keys.speedUp) this.forwardSpeed += acceleration * deltaTime;
+        if (keys.speedDown) this.forwardSpeed -= acceleration * deltaTime;
 
         // Ensure perpetual motion within range
         this.forwardSpeed = THREE.MathUtils.clamp(this.forwardSpeed, this.minSpeed, this.maxSpeed);
@@ -245,23 +226,87 @@ export class Spacecraft {
             : new THREE.Vector3(20, 0, 0);
 
         offset.applyQuaternion(this.group.quaternion).add(this.group.position);
-        camera.position.lerp(offset, (this.viewMode === 'COCKPIT') ? 0.5 : 0.1);
+
+        // Dynamic camera catch-up
+        const distance = camera.position.distanceTo(offset);
+        let lerpFactor = (this.viewMode === 'COCKPIT') ? 0.5 : 0.1;
+
+        // If we are moving very fast and the camera falls behind, snap it quicker
+        if (distance > 500) {
+            lerpFactor = 0.5;
+        }
+        if (distance > 2000) {
+            // Hard teleport if way too far (warp speed)
+            camera.position.copy(offset);
+            lerpFactor = 1.0;
+        }
+
+        camera.position.lerp(offset, lerpFactor);
 
         lookAhead.applyQuaternion(this.group.quaternion).add(this.group.position);
         camera.lookAt(lookAhead);
     }
 
-    update(deltaTime) {
+    checkProximity(planets) {
+        if (!planets) return;
+
+        let nearestDist = Infinity;
+        let nearestPlanetRadius = 1.0;
+
+        for (const planet of planets) {
+            // Planet position might be direct or in a group
+            let planetPos = new THREE.Vector3();
+            let radius = 1000.0; // Default
+
+            if (planet.position) {
+                // Check if it's a Vector3 (Solar system planet mesh/group)
+                if (planet.position.isVector3) {
+                    planetPos.copy(planet.position);
+                    // Try to get radius from geometry or data
+                    if (planet.geometry && planet.geometry.parameters) {
+                        radius = planet.geometry.parameters.radius;
+                    } else if (planet.userData && planet.userData.radius) {
+                        radius = planet.userData.radius;
+                    }
+                }
+            }
+
+            const dist = this.group.position.distanceTo(planetPos);
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearestPlanetRadius = radius;
+            }
+        }
+
+        // Safety Bubble Logic
+        // If within 3x radius, enforce speed limit
+        const safetyThreshold = nearestPlanetRadius * 4.0;
+
+        if (nearestDist < safetyThreshold) {
+            // Calculate safety speed based on how close we are
+            // Closer = Slower
+            // at 1x radius (surface) -> max speed 50
+            // at 4x radius -> max speed 2000
+
+            const factor = Math.max(0, (nearestDist - nearestPlanetRadius) / (safetyThreshold - nearestPlanetRadius));
+            const safeMaxSpeed = THREE.MathUtils.lerp(50.0, 5000.0, factor);
+
+            // Apply damping if current speed is too high
+            if (this.forwardSpeed > safeMaxSpeed) {
+                this.forwardSpeed = THREE.MathUtils.lerp(this.forwardSpeed, safeMaxSpeed, 0.05); // Rapid deceleration
+            }
+        }
+    }
+
+    update(deltaTime, nearbyPlanets = []) {
         this.animationTime += deltaTime;
 
+        // Check proximity to nearby planets to adjust speed
+        this.checkProximity(nearbyPlanets);
+
+
         // Pulse engine glow
-        if (this.mainGlow) {
-            const flicker = 0.8 + Math.random() * 0.2;
-            const thrustScale = this.forwardSpeed > 0 ? 1 : 0.2;
-            this.mainGlow.material.opacity = flicker * thrustScale;
-            this.mainGlow.scale.setScalar(0.8 + (this.forwardSpeed / this.autopilotSpeed) * 0.5);
-            this.secondaryGlows.forEach(glow => glow.material.opacity = flicker * 0.8 * thrustScale);
-        }
+
 
         if (this.portLight && this.starboardLight) {
             const blink = Math.floor(this.animationTime * 2) % 2 === 0;

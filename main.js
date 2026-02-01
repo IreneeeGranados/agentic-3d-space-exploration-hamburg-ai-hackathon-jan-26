@@ -15,6 +15,7 @@ import { PlanetExplorationDialog } from './src/ui/PlanetExplorationDialog.js';
 import OpenAIService from './src/ai/OpenAIService.js';
 import ElevenLabsService from './src/ai/ElevenLabsService.js';
 import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
+import { WarpTunnel } from './src/objects/WarpTunnel.js';
 
 class App {
     constructor() {
@@ -115,29 +116,8 @@ class App {
     setupMouse() {
         console.log('Initializing Mouse Controls...');
 
-        // ensure cursor exists (create it if missing to guarantee visibility)
-        let cursor = document.getElementById('flight-cursor');
-        if (!cursor) {
-            console.log('Creating cursor element dynamically...');
-            cursor = document.createElement('div');
-            cursor.id = 'flight-cursor';
-            document.body.appendChild(cursor);
-        }
+        // Cursor logic removed per user request
 
-        // FORCE styles via JS to override any CSS issues
-        Object.assign(cursor.style, {
-            position: 'fixed', // Fixed to viewport
-            width: '40px',
-            height: '40px',
-            borderLeft: '20px solid transparent',
-            borderRight: '20px solid transparent',
-            borderBottom: '40px solid #00d4ff',
-            transform: 'translate(-50%, -50%) rotate(45deg)', // Point up-left ish
-            pointerEvents: 'none',
-            zIndex: '100000',
-            display: 'block',
-            filter: 'drop-shadow(0 0 10px #00d4ff)'
-        });
 
         // Track mouse position relative to center (for steering)
         this.canvas.addEventListener('mousemove', (e) => {
@@ -154,27 +134,12 @@ class App {
             this.mouse.y = Math.max(-1, Math.min(1, this.mouse.y));
 
             // Update visual cursor position
-            if (cursor) {
-                cursor.style.left = `${e.clientX}px`;
-                cursor.style.top = `${e.clientY}px`;
 
-                // --- DYNAMIC CURSOR LOGIC ---
-                // In Cockpit: Cursor must be INVISIBLE (Aim with Crosshair)
-                if (this.spacecraft && this.spacecraft.viewMode === 'COCKPIT') {
-                    cursor.style.display = 'none';
-                } else {
-                    // In Chase Mode: Always show
-                    cursor.style.display = 'block';
-                }
-
-                // Cursor Styling (Standard Blue)
-                cursor.style.borderBottomColor = '#00d4ff';
-                cursor.style.filter = 'drop-shadow(0 0 10px #00d4ff)';
-            }
         });
 
         // Hide default cursor on canvas hover
-        this.canvas.style.cursor = 'none';
+        // System cursor restored
+        this.canvas.style.cursor = 'default';
 
         // Raycasting for planet selection (engage autopilot)
         const raycaster = new THREE.Raycaster();
@@ -253,12 +218,8 @@ class App {
 
         if (this.spacecraft.viewMode === 'COCKPIT') {
             if (overlay) overlay.classList.add('visible');
-            // Hide standard flight cursor initially in cockpit
-            if (cursor) cursor.style.display = 'none';
         } else {
             if (overlay) overlay.classList.remove('visible');
-            // Show standard flight cursor in chase
-            if (cursor) cursor.style.display = 'block';
         }
     }
 
@@ -290,6 +251,10 @@ class App {
         // Create dynamic star field that follows camera
         this.dynamicStarField = new DynamicStarField(20000, 2000);
         this.sceneManager.add(this.dynamicStarField.mesh);
+
+        // Warp Tunnel Effect
+        this.warpTunnel = new WarpTunnel();
+        this.sceneManager.add(this.warpTunnel.group);
 
         // SpaceDust removed - cleaner view
         console.log('  ✓ Environment created');
@@ -526,8 +491,12 @@ class App {
             // Steer spacecraft with keyboard and mouse
             this.spacecraft.steer(this.keys, deltaTime, this.mouse);
 
-            // Update spacecraft animation
-            this.spacecraft.update(deltaTime);
+            // Collect potential obstacles/planets for proximity check
+            // Filter scene children for objects that look like planets (have planetData)
+            const nearbyObjects = this.sceneManager.scene.children.filter(obj => obj.userData && obj.userData.planetData);
+
+            // Update spacecraft animation with proximity check
+            this.spacecraft.update(deltaTime, nearbyObjects);
 
             // Update camera to follow spacecraft
             this.spacecraft.updateCamera(this.cameraManager.camera);
@@ -539,6 +508,16 @@ class App {
         // Update planet hover info
         if (this.planetHoverInfo) {
             this.planetHoverInfo.update();
+        }
+
+        // Update Warp Tunnel
+        if (this.warpTunnel && this.spacecraft) {
+            this.warpTunnel.update(
+                deltaTime,
+                this.spacecraft.getSpeed(),
+                this.cameraManager.camera.position,
+                this.cameraManager.camera.quaternion
+            );
         }
 
         // Render the scene
@@ -596,7 +575,7 @@ class App {
 
         // Calculate approach position - cerca del planeta pero no dentro
         const planetRadius = (planet.pl_rade || 1.0) * 0.5 * globalScale; // Radio del planeta escalado
-        const offset = planetRadius * 3; // 3x el radio del planeta (suficiente para verlo completo)
+        const offset = planetRadius * 1.5; // 1.5x el radio -> Closer arrival per user request
         const direction = targetPosition.clone().normalize();
         const approachPosition = targetPosition.clone().sub(direction.multiplyScalar(offset));
 
@@ -605,9 +584,11 @@ class App {
             // Move spacecraft
             this.spacecraft.group.position.copy(approachPosition);
 
-            // Reset velocity
+            // Reset velocity and set safe arrival speed
             if (this.spacecraft.velocity) {
                 this.spacecraft.velocity.set(0, 0, 0);
+                // Keep some forward momentum but slow
+                this.spacecraft.forwardSpeed = 100.0;
             }
 
             // Point spacecraft towards planet
