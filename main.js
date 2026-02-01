@@ -31,6 +31,10 @@ class App {
         this.controlsEnabled = true; // Flag to enable/disable keyboard navigation
         this.multiplayerManager = null;
         this.multiplayerEnabled = false;
+        
+        // Multiplayer server URL (configurable)
+        this.multiplayerServerUrl = localStorage.getItem('multiplayerServerUrl') || 'http://localhost:3000';
+        
         this.init();
     }
 
@@ -76,6 +80,9 @@ class App {
             // Sync View UI
             if (this.spacecraft) this.updateViewUI();
 
+            // Initialize multiplayer URL input
+            this.initializeMultiplayerSettings();
+
             // Check multiplayer server availability and update status
             this.checkMultiplayerAvailability();
 
@@ -85,9 +92,39 @@ class App {
         }
     }
 
+    initializeMultiplayerSettings() {
+        const urlInput = document.getElementById('multiplayer-url');
+        if (urlInput) {
+            // Set initial value from localStorage or default
+            urlInput.value = this.multiplayerServerUrl;
+            
+            // Save URL when user changes it
+            urlInput.addEventListener('change', (e) => {
+                const newUrl = e.target.value.trim() || 'http://localhost:3000';
+                this.multiplayerServerUrl = newUrl;
+                localStorage.setItem('multiplayerServerUrl', newUrl);
+                console.log('🔧 Multiplayer server URL updated:', newUrl);
+                
+                // Re-check server availability with new URL
+                this.checkMultiplayerAvailability();
+            });
+            
+            // Also check on blur
+            urlInput.addEventListener('blur', (e) => {
+                const newUrl = e.target.value.trim() || 'http://localhost:3000';
+                if (newUrl !== this.multiplayerServerUrl) {
+                    this.multiplayerServerUrl = newUrl;
+                    localStorage.setItem('multiplayerServerUrl', newUrl);
+                    console.log('🔧 Multiplayer server URL updated:', newUrl);
+                    this.checkMultiplayerAvailability();
+                }
+            });
+        }
+    }
+
     async checkMultiplayerAvailability() {
-        console.log('🔍 Checking multiplayer server...');
-        const serverAvailable = await MultiplayerManager.checkServerAvailability('http://localhost:3000');
+        console.log('🔍 Checking multiplayer server:', this.multiplayerServerUrl);
+        const serverAvailable = await MultiplayerManager.checkServerAvailability(this.multiplayerServerUrl);
         
         const statusEl = document.getElementById('multiplayer-status-inline');
         const btnEl = document.getElementById('multiplayer-btn');
@@ -123,7 +160,7 @@ class App {
             try {
                 console.log('🔌 Enabling multiplayer...');
                 this.multiplayerManager = new MultiplayerManager(this.sceneManager, this.spacecraft);
-                await this.multiplayerManager.connect('http://localhost:3000');
+                await this.multiplayerManager.connect(this.multiplayerServerUrl);
                 this.multiplayerEnabled = true;
                 this.updateMultiplayerUI(true);
                 console.log('✓ Multiplayer enabled');
@@ -131,7 +168,7 @@ class App {
                 console.error('Failed to connect to multiplayer:', error);
                 this.multiplayerManager = null;
                 this.multiplayerEnabled = false;
-                alert('Could not connect to multiplayer server. Make sure the server is running.');
+                alert(`Could not connect to multiplayer server at ${this.multiplayerServerUrl}\nMake sure the server is running.`);
             }
         }
     }

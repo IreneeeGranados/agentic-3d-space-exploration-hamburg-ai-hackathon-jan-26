@@ -860,3 +860,25 @@
         min-width: 200px;
     }
 }
+
+/* Multiplayer URL Input */
+#multiplayer-url {
+    font-family: 'Courier New', monospace;
+    transition: all 0.3s ease;
+}
+
+#multiplayer-url:focus {
+    outline: none;
+    border-color: #00FF88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    background: rgba(0, 255, 136, 0.05);
+}
+
+#multiplayer-url:hover {
+    border-color: #00FF88;
+}
+
+#multiplayer-url::placeholder {
+    color: #555;
+    font-style: italic;
+}
