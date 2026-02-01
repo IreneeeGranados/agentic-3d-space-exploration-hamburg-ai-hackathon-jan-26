@@ -545,7 +545,7 @@ class App {
 
     /**
      * Teleport spacecraft to planet location with visual effect
-     * Uses the same coordinate scaling as ExoplanetField for consistency
+     * Adjusted for x10000 scaled system
      */
     teleportToPlanet(planet) {
         if (!planet) return;
@@ -553,23 +553,26 @@ class App {
         console.log(`🚀 Teleporting to ${planet.pl_name}`);
 
         let targetPosition;
+        
+        // IMPORTANTE: Los planetas ahora están escalados x10000
+        const globalScale = 10000;
 
-        // Solar system planets use position field scaled by 200 (same as ExoplanetField line 177)
+        // Solar system planets use position field
         const isSolarPlanet = planet.hostname === 'Sun';
         if (isSolarPlanet && planet.position) {
             targetPosition = new THREE.Vector3(
-                planet.position.x * 200,
-                planet.position.y * 200,
-                planet.position.z * 200
+                planet.position.x * 10 * globalScale, // sceneScale * globalScale
+                planet.position.y * 10 * globalScale,
+                planet.position.z * 10 * globalScale
             );
         }
-        // Exoplanets use coordinates_3d scaled by 10 (same as ExoplanetField line 184)
+        // Exoplanets use coordinates_3d
         else if (planet.characteristics?.coordinates_3d) {
             const coords = planet.characteristics.coordinates_3d;
             targetPosition = new THREE.Vector3(
-                coords.x_light_years * 10,
-                coords.y_light_years * 10,
-                coords.z_light_years * 10
+                coords.x_light_years * 10 * globalScale, // sceneScale * globalScale
+                coords.y_light_years * 10 * globalScale,
+                coords.z_light_years * 10 * globalScale
             );
         }
 
@@ -581,8 +584,9 @@ class App {
         // Create flash effect overlay
         this.createTeleportFlash();
 
-        // Calculate approach position
-        const offset = 100;
+        // Calculate approach position - offset escalado también
+        const planetRadius = (planet.pl_rade || 1.0) * 0.5 * globalScale; // Radio del planeta escalado
+        const offset = planetRadius * 50; // 50x el radio del planeta para verlo completo
         const direction = targetPosition.clone().normalize();
         const approachPosition = targetPosition.clone().sub(direction.multiplyScalar(offset));
 
@@ -599,7 +603,7 @@ class App {
             // Point spacecraft towards planet
             this.spacecraft.group.lookAt(targetPosition);
 
-            console.log(`✓ Teleported to ${planet.pl_name} at`, approachPosition);
+            console.log(`✓ Teleported to ${planet.pl_name} at distance ${offset.toFixed(0)} units`);
         }, 200);
     }
 
