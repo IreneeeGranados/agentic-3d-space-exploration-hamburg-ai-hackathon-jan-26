@@ -2,6 +2,10 @@
 
 An interactive 3D space exploration application built with Three.js, featuring modular architecture and AI-powered planet exploration.
 
+## 🌐 Live Demo
+
+**[🚀 Launch Space Odyssey](https://space-odyssey-8ga.pages.dev)**
+
 ## 🚀 Features
 
 - **Interactive 3D Space**: Explore 39,000+ exoplanets with realistic visualization
