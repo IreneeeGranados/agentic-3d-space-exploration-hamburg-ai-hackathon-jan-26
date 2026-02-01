@@ -5,7 +5,6 @@
  */
 
 import { planetService } from './services/FrontendPlanetService.js';
-import { PLANETS_DATA } from './config/planets.js';
 
 // ============================================================================
 // INITIALIZATION
@@ -20,8 +19,8 @@ export async function initializePlanetService() {
     // 1. Initialize with API key from environment
     planetService.init(import.meta.env.VITE_OPENAI_API_KEY);
     
-    // 2. Load planet data
-    planetService.loadPlanets(PLANETS_DATA);
+    // 2. Load planet data from NASA clusters
+    await planetService.loadNasaData();
     
     // 3. Optional: Configure behavior
     planetService.configure({
