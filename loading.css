@@ -1,5 +1,5 @@
 /* ============================================
-   LOADING SCREEN - SPACE VIBES
+   LOADING SCREEN - SPACE VIBES WITH 3D PARTY
    ============================================ */
 
 .loading-screen {
@@ -8,7 +8,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background: linear-gradient(135deg, rgba(15, 12, 41, 0.8) 0%, rgba(48, 43, 99, 0.8) 50%, rgba(36, 36, 62, 0.8) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -55,12 +55,17 @@
     z-index: 10;
     max-width: 600px;
     padding: 40px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(57, 255, 20, 0.3);
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.2);
 }
 
 /* Title with glow effect */
 .loading-title {
     font-family: 'Courier New', monospace;
-    font-size: 4em;
+    font-size: 3em;
     font-weight: bold;
     color: #fff;
     margin: 0 0 10px 0;
@@ -99,13 +104,14 @@
     text-transform: uppercase;
 }
 
-/* Rocket animation container */
+/* Rocket animation container - HIDDEN, using 3D rockets now */
 .loading-rocket-container {
     position: relative;
     width: 100%;
     height: 80px;
     margin: 40px 0;
     overflow: hidden;
+    display: none; /* Hide 2D rocket, using 3D ones */
 }
 
 .loading-rocket {
@@ -206,7 +212,7 @@
     opacity: 0.8;
 }
 
-/* Cosmic particles effect */
+/* Cosmic particles effect - REDUCED for 3D scene visibility */
 .loading-screen::before {
     content: '';
     position: absolute;
@@ -215,9 +221,9 @@
     width: 100%;
     height: 100%;
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 90% 80%, rgba(57, 255, 20, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 10% 20%, rgba(255, 0, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(57, 255, 20, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 50%);
     animation: cosmic-glow 10s ease-in-out infinite;
     pointer-events: none;
 }
@@ -227,7 +233,7 @@
     50% { opacity: 0.7; }
 }
 
-/* Nebula effect */
+/* Nebula effect - REDUCED for 3D scene visibility */
 .loading-screen::after {
     content: '';
     position: absolute;
@@ -237,8 +243,8 @@
     height: 800px;
     background: radial-gradient(
         circle,
-        rgba(138, 43, 226, 0.15) 0%,
-        rgba(75, 0, 130, 0.1) 25%,
+        rgba(138, 43, 226, 0.08) 0%,
+        rgba(75, 0, 130, 0.05) 25%,
         transparent 70%
     );
     transform: translate(-50%, -50%);

@@ -116,13 +116,18 @@ class ElevenLabsService {
 
       const audioData = await response.arrayBuffer();
       
-      // Cache the result
-      this.cache.set(cacheKey, audioData);
+      // Convert ArrayBuffer to Blob for easier handling
+      const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
       
-      return audioData;
+      // Cache the result as Blob
+      this.cache.set(cacheKey, audioBlob);
+      
+      console.log(`✅ ElevenLabs TTS generated: ${audioBlob.size} bytes`);
+      
+      return audioBlob;
       
     } catch (error) {
-      console.error('Error generating speech:', error);
+      console.error('❌ ElevenLabs TTS error:', error);
       
       // Handle specific error types
       if (error.message.includes('401')) {
