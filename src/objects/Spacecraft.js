@@ -14,12 +14,18 @@ export class Spacecraft {
         // Start in space
         this.group.position.set(0, 0, 0);
 
-        // Constant forward speed
-        this.forwardSpeed = 10.0;
-        this.defaultSpeed = 10.0;
-        this.boostSpeed = 50;
-        this.brakeSpeed = 0;
-        this.autopilotSpeed = 80;
+        // Speed controls (NO SPEED LIMIT!)
+        this.forwardSpeed = 50.0;        // Current speed
+        this.defaultSpeed = 50.0;        // Normal speed
+        this.boostSpeed = 200.0;         // Boost speed (Shift)
+        this.minSpeed = 0.0;             // Minimum speed (can't go backwards)
+        this.maxSpeed = Infinity;        // NO LIMIT! Go as fast as you want!
+        this.brakeSpeed = 0.0;           // Full stop
+        this.autopilotSpeed = 150.0;     // Autopilot speed
+        
+        // Speed adjustment
+        this.speedIncrement = 150.0;     // Speed change per second when adjusting (increased!)
+        this.boostAcceleration = 500.0;  // How fast boost kicks in
 
         // Steering
         this.steeringForce = 8;
@@ -172,12 +178,43 @@ export class Spacecraft {
     }
 
     updateManualControl(keys, deltaTime, mouseInput) {
-        if (keys.speedUp) this.forwardSpeed += 20.0 * deltaTime;
-        if (keys.speedDown) this.forwardSpeed -= 20.0 * deltaTime;
-        if (keys.brake) this.forwardSpeed = 0;
+        // Debug: Log keys state every few frames
+        if (Math.random() < 0.01) { // 1% chance per frame to avoid spam
+            console.log('🔍 Keys state:', { 
+                speedUp: keys.speedUp, 
+                speedDown: keys.speedDown, 
+                boost: keys.boost, 
+                brake: keys.brake 
+            });
+        }
+        
+        // Speed adjustment with +/- keys
+        if (keys.speedUp) {
+            this.forwardSpeed += this.speedIncrement * deltaTime;
+            console.log(`⚡ Speed UP: ${this.forwardSpeed.toFixed(0)} units/sec`);
+        }
+        if (keys.speedDown) {
+            this.forwardSpeed -= this.speedIncrement * deltaTime;
+            console.log(`🔻 Speed DOWN: ${this.forwardSpeed.toFixed(0)} units/sec`);
+        }
+        
+        // Boost with Shift - smoothly accelerate to boost speed
+        if (keys.boost) {
+            const targetSpeed = this.boostSpeed;
+            this.forwardSpeed = THREE.MathUtils.lerp(this.forwardSpeed, targetSpeed, deltaTime * 3.0);
+        }
+        // NO AUTO-SLOW! Speed persists until manually changed with +/- or brake
+        
+        // Brake with Space - immediate stop
+        if (keys.brake) {
+            this.forwardSpeed = THREE.MathUtils.lerp(this.forwardSpeed, this.brakeSpeed, deltaTime * 5.0);
+        }
 
-        this.forwardSpeed = THREE.MathUtils.clamp(this.forwardSpeed, 0, 200);
+        // Only clamp to minimum (can't go backwards), NO MAXIMUM!
+        this.forwardSpeed = Math.max(this.forwardSpeed, this.minSpeed);
+        // NO SPEED LIMIT - removed maxSpeed clamp!
 
+        // Steering controls
         let steerX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
         let steerY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
 
@@ -185,6 +222,7 @@ export class Spacecraft {
         if (Math.abs(steerY) > 0.01) this.group.rotateZ(steerY * rotSpeed);
         if (Math.abs(steerX) > 0.01) this.group.rotateY(-steerX * rotSpeed);
 
+        // Banking effect when turning
         const targetBank = -steerX * 0.5;
         this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, targetBank, deltaTime * 2);
     }

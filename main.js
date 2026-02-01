@@ -15,7 +15,6 @@ import { PlanetExplorationDialog } from './src/ui/PlanetExplorationDialog.js';
 import OpenAIService from './src/ai/OpenAIService.js';
 import ElevenLabsService from './src/ai/ElevenLabsService.js';
 import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
-import { SpaceDust } from './src/objects/SpaceDust.js';
 
 class App {
     constructor() {
@@ -41,7 +40,10 @@ class App {
 
             // Step 2: Setup controls
             this.loadingManager.updateStatus('Configuring Controls', 'Mapping keyboard and mouse...');
-            this.keys = { forward: false, backward: false, left: false, right: false, up: false, down: false };
+            this.keys = {
+                forward: false, backward: false, left: false, right: false, up: false, down: false,
+                boost: false, brake: false, speedUp: false, speedDown: false
+            };
             this.setupControls();
             this.mouse = { x: 0, y: 0 };
             this.setupMouse();
@@ -82,6 +84,16 @@ class App {
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = true;
             if (e.code === 'Space') this.keys.brake = true;
 
+            // Speed controls - multiple ways to trigger
+            if (e.code === 'Equal' || e.code === 'NumpadAdd' || e.key === '+' || e.key === '=') {
+                this.keys.speedUp = true;
+                console.log('🚀 Speed UP key pressed!', e.code, e.key);
+            }
+            if (e.code === 'Minus' || e.code === 'NumpadSubtract' || e.key === '-' || e.key === '_') {
+                this.keys.speedDown = true;
+                console.log('🔻 Speed DOWN key pressed!', e.code, e.key);
+            }
+
             // Navigation shortcuts
             if (e.code === 'KeyT') this.togglePlanetNavigator();
             if (e.code === 'KeyE') this.toggleExoplanets();
@@ -97,6 +109,16 @@ class App {
             if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = false;
             if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = false;
             if (e.code === 'Space') this.keys.brake = false;
+
+            // Speed controls
+            if (e.code === 'Equal' || e.code === 'NumpadAdd' || e.key === '+' || e.key === '=') {
+                this.keys.speedUp = false;
+                console.log('🚀 Speed UP key released!');
+            }
+            if (e.code === 'Minus' || e.code === 'NumpadSubtract' || e.key === '-' || e.key === '_') {
+                this.keys.speedDown = false;
+                console.log('🔻 Speed DOWN key released!');
+            }
         });
     }
 
@@ -293,9 +315,7 @@ class App {
         this.dynamicStarField = new DynamicStarField(20000, 2000);
         this.sceneManager.add(this.dynamicStarField.mesh);
 
-        // Create Space Dust for motion sensation
-        this.spaceDust = new SpaceDust(2000, 400);
-        this.sceneManager.add(this.spaceDust.mesh);
+        // SpaceDust removed - cleaner view
         console.log('  ✓ Environment created');
     }
 
@@ -464,11 +484,12 @@ class App {
         const position = this.spacecraft.group.position;
         const rotation = this.spacecraft.group.rotation;
 
-        // Update velocity
+        // Update velocity (use actual forwardSpeed, not velocity.length())
         const velElem = document.getElementById('hud-velocity');
         const cockpitSpd = document.getElementById('cockpit-speed');
-        if (velElem) velElem.textContent = `${velocity.toFixed(2)} u/s`;
-        if (cockpitSpd) cockpitSpd.textContent = `SPD: ${velocity.toFixed(2)}`;
+        const actualSpeed = this.spacecraft.getSpeed(); // Get actual forwardSpeed
+        if (velElem) velElem.textContent = `${actualSpeed.toFixed(2)} u/s`;
+        if (cockpitSpd) cockpitSpd.textContent = `SPD: ${actualSpeed.toFixed(2)}`;
 
         // Update position (convert to light years)
         const posX = document.getElementById('hud-pos-x');
@@ -483,6 +504,12 @@ class App {
         if (heading) {
             const degrees = ((rotation.y * 180 / Math.PI) % 360 + 360) % 360;
             heading.textContent = `${degrees.toFixed(1)}°`;
+        }
+        
+        // Debug: Show key states in HUD (temporary for debugging)
+        const debugElem = document.getElementById('debug-keys');
+        if (debugElem) {
+            debugElem.textContent = `Keys: +${this.keys.speedUp} -${this.keys.speedDown} Shift:${this.keys.boost} Space:${this.keys.brake}`;
         }
     }
 
@@ -519,11 +546,6 @@ class App {
 
             // Update HUD display
             this.updateHUD();
-
-            // Update Space Dust
-            if (this.spaceDust) {
-                this.spaceDust.update(this.spacecraft.group.position);
-            }
         }
 
         // Update planet hover info
@@ -545,7 +567,7 @@ class App {
 
     /**
      * Teleport spacecraft to planet location with visual effect
-     * Uses the same coordinate scaling as ExoplanetField for consistency
+     * Adjusted for x10000 scaled system
      */
     teleportToPlanet(planet) {
         if (!planet) return;
@@ -554,22 +576,25 @@ class App {
 
         let targetPosition;
 
-        // Solar system planets use position field scaled by 200 (same as ExoplanetField line 177)
+        // IMPORTANTE: Los planetas ahora están escalados x10000
+        const globalScale = 10000;
+
+        // Solar system planets use position field
         const isSolarPlanet = planet.hostname === 'Sun';
         if (isSolarPlanet && planet.position) {
             targetPosition = new THREE.Vector3(
-                planet.position.x * 200,
-                planet.position.y * 200,
-                planet.position.z * 200
+                planet.position.x * 10 * globalScale, // sceneScale * globalScale
+                planet.position.y * 10 * globalScale,
+                planet.position.z * 10 * globalScale
             );
         }
-        // Exoplanets use coordinates_3d scaled by 10 (same as ExoplanetField line 184)
+        // Exoplanets use coordinates_3d
         else if (planet.characteristics?.coordinates_3d) {
             const coords = planet.characteristics.coordinates_3d;
             targetPosition = new THREE.Vector3(
-                coords.x_light_years * 10,
-                coords.y_light_years * 10,
-                coords.z_light_years * 10
+                coords.x_light_years * 10 * globalScale, // sceneScale * globalScale
+                coords.y_light_years * 10 * globalScale,
+                coords.z_light_years * 10 * globalScale
             );
         }
 
@@ -581,8 +606,9 @@ class App {
         // Create flash effect overlay
         this.createTeleportFlash();
 
-        // Calculate approach position
-        const offset = 100;
+        // Calculate approach position - cerca del planeta pero no dentro
+        const planetRadius = (planet.pl_rade || 1.0) * 0.5 * globalScale; // Radio del planeta escalado
+        const offset = planetRadius * 3; // 3x el radio del planeta (suficiente para verlo completo)
         const direction = targetPosition.clone().normalize();
         const approachPosition = targetPosition.clone().sub(direction.multiplyScalar(offset));
 
@@ -599,7 +625,7 @@ class App {
             // Point spacecraft towards planet
             this.spacecraft.group.lookAt(targetPosition);
 
-            console.log(`✓ Teleported to ${planet.pl_name} at`, approachPosition);
+            console.log(`✓ Teleported to ${planet.pl_name} at distance ${offset.toFixed(0)} units`);
         }, 200);
     }
 
