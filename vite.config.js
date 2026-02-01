@@ -3,6 +3,11 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
     base: '/agentic-3d-space-exploration-hamburg-ai-hackathon-jan-26/',
+    define: {
+        // Provide fallback values for environment variables
+        'import.meta.env.VITE_OPENAI_API_KEY': JSON.stringify(process.env.VITE_OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE'),
+        'import.meta.env.VITE_ELEVENLABS_API_KEY': JSON.stringify(process.env.VITE_ELEVENLABS_API_KEY || 'YOUR_ELEVENLABS_API_KEY_HERE'),
+    },
     plugins: [
         viteStaticCopy({
             targets: [
