@@ -763,7 +763,7 @@ class App {
 
         // Update all solar system planets
         if (this.planets) {
-            this.planets.forEach(planet => planet.update());
+            this.planets.forEach(planet => planet.update(deltaTime));
         }
 
         // Update exoplanet field
