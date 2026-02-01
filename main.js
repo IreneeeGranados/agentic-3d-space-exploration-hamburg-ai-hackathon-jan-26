@@ -87,7 +87,7 @@ class App {
             if (e.code === 'KeyV' || e.key === 'v' || e.key === 'V') this.handleViewToggle();
             if (e.code === 'KeyT') this.togglePlanetNavigator();
             if (e.code === 'KeyH') this.toggleUI();
-            if (e.code === 'KeyI') this.showLastClickedPlanetInfo(); // 'I' for Info
+
             if (e.code === 'Escape') this.closePlanetNavigator();
         });
 
