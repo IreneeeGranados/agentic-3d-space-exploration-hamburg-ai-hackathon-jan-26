@@ -43,7 +43,7 @@
     font-family: var(--font-main);
     color: var(--text-primary);
     padding: var(--spacing-md);
-    z-index: 100;
+    z-index: 1000; /* High z-index for all UI panels */
     transition: all 0.3s ease;
 }
 

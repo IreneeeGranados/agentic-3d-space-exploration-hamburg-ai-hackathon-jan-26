@@ -26,6 +26,7 @@ import {
     generateUranusTexture,
     generateVenusTexture
 } from '../utils/PlanetTextureGenerator.js';
+import { createAtmosphere, createCloudLayer, updateAtmosphere } from '../shaders/AtmosphereShader.js';
 
 export class Planet {
     constructor(config) {
@@ -64,15 +65,16 @@ export class Planet {
         this.angle = Math.random() * Math.PI * 2; // Random starting position in orbit
         this.group = new THREE.Group();
         this.textureLoader = new THREE.TextureLoader();
+        this.atmosphereLayers = [];
         this.createPlanet();
     }
 
     createPlanet() {
-        // Create planet geometry
+        // Create planet geometry - optimized
         const geometry = new THREE.SphereGeometry(
             this.config.radius,
-            64,
-            64
+            32, // Reduced from 64 for performance
+            32
         );
 
         // Get colors from composition
@@ -104,31 +106,38 @@ export class Planet {
                     emissiveMap.colorSpace = THREE.SRGBColorSpace;
                     break;
                 case 'Mars':
-                    texture = generateMarsTexture(2048);
+                    texture = this.textureLoader.load('/textures/planets/mars/2k_mars.jpg');
+                    texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(1024, 2.5);
                     break;
                 case 'Jupiter':
-                    texture = generateJupiterTexture(2048);
+                    texture = this.textureLoader.load('/textures/planets/jupiter/2k_jupiter.jpg');
+                    texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.5);
                     break;
                 case 'Saturn':
-                    texture = generateSaturnTexture(2048);
+                    texture = this.textureLoader.load('/textures/planets/saturn/2k_saturn.jpg');
+                    texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.3);
                     break;
                 case 'Neptune':
-                    texture = generateNeptuneTexture(1024);
+                    texture = this.textureLoader.load('/textures/planets/neptune/2k_neptune.jpg');
+                    texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.4);
                     break;
                 case 'Uranus':
-                    texture = generateUranusTexture(1024);
+                    texture = this.textureLoader.load('/textures/planets/uranus/2k_uranus.jpg');
+                    texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.2);
                     break;
                 case 'Venus':
-                    texture = generateVenusTexture(1024);
+                    texture = this.textureLoader.load('/textures/planets/venus/2k_venus_atmosphere.jpg');
+                    texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(512, 0.1);
                     break;
                 case 'Mercury':
-                    texture = generateCratersTexture(baseColor, detailColor, 1024);
+                    texture = this.textureLoader.load('/textures/planets/mercury/2k_mercury.jpg');
+                    texture.colorSpace = THREE.SRGBColorSpace;
                     normalMap = generateNormalMap(1024, 3.0);
                     break;
                 default:
@@ -169,16 +178,21 @@ export class Planet {
             }
         }
 
-        // Create material with realistic lighting
-        // isEarth is already defined above
-
+        // Create material with realistic lighting - NEVER TRANSPARENT
         const materialOptions = {
             map: texture,
             normalMap: normalMap,
+            color: new THREE.Color(0xffffff), // White to not tint textures
             roughness: isEarth ? 0.8 : (this.config.planetType === 'iceGiant' ? 0.4 : 0.9),
             metalness: isEarth ? 0.0 : 0.1,
             emissive: emissiveMap ? new THREE.Color(0xffffff) : new THREE.Color(baseColor),
-            emissiveIntensity: (this.config.isSolar || isEarth) ? 0.3 : (emissiveMap ? 1.0 : (parseFloat(this.config.temperature) > 1000 ? 0.1 : 0.0))
+            emissiveIntensity: (this.config.isSolar || isEarth) ? 0.3 : (emissiveMap ? 1.0 : (parseFloat(this.config.temperature) > 1000 ? 0.1 : 0.0)),
+            transparent: false,
+            opacity: 1.0,
+            alphaTest: 0,
+            depthWrite: true,
+            depthTest: true,
+            side: THREE.FrontSide
         };
 
         // Add emissive map if exists
@@ -188,16 +202,8 @@ export class Planet {
 
         // Add surface map for Earth
         if (specularMap && isEarth) {
-            // earth_specular has Water = White (shiny), Land = Black (rough)
-            // In Three.js StandardMaterial, we can use this as a metalnessMap 
-            // to make water reflective like a metal (specular), 
-            // and keep land non-reflective.
             materialOptions.metalnessMap = specularMap;
             materialOptions.metalness = 1.0;
-
-            // For roughness, we'd want water to be 0 and land 1.
-            // Since the map is inverted (Water=1, Land=0), we don't use it as roughnessMap directly
-            // unless we want matte water. We'll stick to a high base roughness for land.
             materialOptions.roughness = 0.7;
         } else if (specularMap) {
             materialOptions.metalnessMap = specularMap;
@@ -209,6 +215,7 @@ export class Planet {
         const material = new THREE.MeshStandardMaterial(materialOptions);
 
         this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.renderOrder = 10; // Render planets AFTER stars
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.mesh.rotation.z = this.config.tilt;
@@ -243,7 +250,6 @@ export class Planet {
         if (this.config.flattening) {
             this.mesh.scale.y = 1.0 - this.config.flattening;
 
-            // Atmospheric shells must also be oblate to match
             if (this.atmosphereMesh) {
                 this.atmosphereMesh.scale.y = 1.0 - this.config.flattening;
             }
@@ -269,66 +275,37 @@ export class Planet {
 
     createAtmosphere() {
         const atmosphereConfig = this.config.atmosphere;
-        const radius = this.config.radius * 1.05; // Slightly larger than planet
-
-        const geometry = new THREE.SphereGeometry(radius, 64, 64);
-
-        // Fresnel-like Shader Material for atmospheric glow
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                atmosphereColor: { value: new THREE.Color(atmosphereConfig.color || 0x4a90e2) },
-                coefficient: { value: 0.1 },
-                power: { value: 4.0 }
-            },
-            vertexShader: `
-                varying vec3 vNormal;
-                varying vec3 vPosition;
-                void main() {
-                    vNormal = normalize(normalMatrix * normal);
-                    vPosition = vec3(modelViewMatrix * vec4(position, 1.0));
-                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-                }
-            `,
-            fragmentShader: `
-                uniform vec3 atmosphereColor;
-                uniform float coefficient;
-                uniform float power;
-                varying vec3 vNormal;
-                varying vec3 vPosition;
-                void main() {
-                    vec3 viewDirection = normalize(-vPosition);
-                    float intensity = pow(coefficient + dot(vNormal, viewDirection), power);
-                    gl_FragColor = vec4(atmosphereColor, intensity);
-                }
-            `,
-            side: THREE.BackSide,
-            transparent: true,
-            blending: THREE.AdditiveBlending
+        
+        // Use multi-layer atmosphere shader
+        this.atmosphereLayers = createAtmosphere(this.config.radius, atmosphereConfig);
+        
+        // Add all layers to the group
+        this.atmosphereLayers.forEach(layer => {
+            this.group.add(layer);
         });
-
-        this.atmosphereMesh = new THREE.Mesh(geometry, material);
-        this.group.add(this.atmosphereMesh);
+        
+        // Store reference to first layer for compatibility
+        this.atmosphereMesh = this.atmosphereLayers[0];
     }
 
     createClouds() {
-        const radius = this.config.radius * 1.02;
-        const geometry = new THREE.SphereGeometry(radius, 64, 64);
-
         let texture;
         if (this.config.isSolar && (this.config.name === 'Earth' || this.config.pl_name === 'Earth')) {
             texture = this.textureLoader.load('/textures/planets/earth/earth_clouds_2048.png');
-        } else {
-            texture = generateCloudTexture(512);
         }
-
-        const material = new THREE.MeshStandardMaterial({
-            map: texture,
-            transparent: true,
-            opacity: (this.config.name === 'Earth' || this.config.pl_name === 'Earth') ? 0.4 : 0.8,
-            depthWrite: false
-        });
-
-        this.cloudMesh = new THREE.Mesh(geometry, material);
+        
+        // Use new cloud shader for realistic clouds
+        this.cloudMesh = createCloudLayer(this.config.radius, texture);
+        
+        // Adjust cloud properties
+        if (this.config.name === 'Earth' || this.config.pl_name === 'Earth') {
+            this.cloudMesh.material.uniforms.cloudOpacity.value = 0.5;
+            this.cloudMesh.material.uniforms.cloudCoverage.value = 0.5;
+        } else {
+            this.cloudMesh.material.uniforms.cloudOpacity.value = 0.6;
+            this.cloudMesh.material.uniforms.cloudCoverage.value = 0.6;
+        }
+        
         this.group.add(this.cloudMesh);
     }
 
@@ -339,11 +316,13 @@ export class Planet {
 
         const geometry = new THREE.RingGeometry(innerRadius, outerRadius, 128);
 
-        // Use enhanced Saturn ring texture if this is Saturn
-        let texture;
+        // Use real Saturn ring texture if this is Saturn
+        let texture, alphaMap;
         const isSaturn = this.config.isSolar && (this.config.name === 'Saturn' || this.config.pl_name === 'Saturn');
         if (isSaturn) {
-            texture = generateSaturnRingTexture(2048);
+            texture = this.textureLoader.load('/textures/planets/saturn/2k_saturn.jpg');
+            alphaMap = this.textureLoader.load('/textures/planets/saturn/2k_saturn_ring_alpha.png');
+            texture.colorSpace = THREE.SRGBColorSpace;
         } else {
             texture = generateRingTexture(512, ringConfig.color1, ringConfig.color2);
         }
@@ -356,7 +335,7 @@ export class Planet {
             geometry.attributes.uv.setXY(i, (v3.length() - innerRadius) / (outerRadius - innerRadius), 0);
         }
 
-        const material = new THREE.MeshStandardMaterial({
+        const materialOptions = {
             map: texture,
             side: THREE.DoubleSide,
             transparent: true,
@@ -365,7 +344,13 @@ export class Planet {
             metalness: 0,
             depthWrite: false,
             alphaTest: 0.01
-        });
+        };
+        
+        if (alphaMap) {
+            materialOptions.alphaMap = alphaMap;
+        }
+
+        const material = new THREE.MeshStandardMaterial(materialOptions);
 
         this.ringMesh = new THREE.Mesh(geometry, material);
         this.ringMesh.rotation.x = Math.PI / 2;
@@ -375,14 +360,13 @@ export class Planet {
     }
 
 
-    update() {
+    update(deltaTime = 0.016) {
         // Rotate planet on its axis
         this.mesh.rotation.y += this.config.rotationSpeed;
 
-        // Rotate clouds at a different speed
-        if (this.cloudMesh) {
-            this.cloudMesh.rotation.y += this.config.rotationSpeed * 1.2;
-            this.cloudMesh.rotation.x += 0.0001;
+        // Update atmosphere and cloud animations
+        if (this.atmosphereLayers.length > 0 || this.cloudMesh) {
+            updateAtmosphere(this.atmosphereLayers, this.cloudMesh, deltaTime);
         }
 
         // Update orbital position if applicable
@@ -391,10 +375,10 @@ export class Planet {
             this.mesh.position.x = Math.cos(this.angle) * this.config.orbitRadius;
             this.mesh.position.z = Math.sin(this.angle) * this.config.orbitRadius;
 
-            // Move atmospheric layer and clouds with planet
-            if (this.atmosphereMesh) {
-                this.atmosphereMesh.position.copy(this.mesh.position);
-            }
+            // Move atmosphere layers and clouds with planet
+            this.atmosphereLayers.forEach(layer => {
+                layer.position.copy(this.mesh.position);
+            });
             if (this.cloudMesh) {
                 this.cloudMesh.position.copy(this.mesh.position);
             }

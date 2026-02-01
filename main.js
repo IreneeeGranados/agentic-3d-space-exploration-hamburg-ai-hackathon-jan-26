@@ -49,6 +49,10 @@ class App {
             this.cameraManager = new CameraManager(this.canvas);
             this.rendererManager = new RendererManager(this.canvas);
             this.clock = new THREE.Clock();
+            
+            // Add camera to scene so camera light works
+            this.sceneManager.add(this.cameraManager.camera);
+            
             this.loadingManager.completeStep('Engine');
 
             // Step 2: Setup controls
@@ -763,7 +767,7 @@ class App {
 
         // Update all solar system planets
         if (this.planets) {
-            this.planets.forEach(planet => planet.update());
+            this.planets.forEach(planet => planet.update(deltaTime));
         }
 
         // Update exoplanet field

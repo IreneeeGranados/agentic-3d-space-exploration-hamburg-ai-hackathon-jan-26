@@ -21,9 +21,48 @@
             <h1 class="loading-title">SPACE ODYSSEY</h1>
             <p class="loading-subtitle">Preparing your cosmic journey...</p>
 
-            <div class="loading-rocket-container">
-                <div class="loading-rocket">🚀</div>
-                <div class="loading-trail"></div>
+            <!-- Info Slides Container -->
+            <div class="loading-slides">
+                <!-- Slide 1: Welcome -->
+                <div class="loading-slide active" data-slide="0">
+                    <div class="slide-icon">🌌</div>
+                    <h2 class="slide-title">Welcome to Space Odyssey</h2>
+                    <p class="slide-text">An innovative 3D space exploration experience powered by real NASA exoplanet data, real-time AI generation, and immersive audio narration.</p>
+                </div>
+
+                <!-- Slide 2: Controls (All in One) -->
+                <div class="loading-slide" data-slide="1">
+                    <div class="slide-icon">🎮</div>
+                    <h2 class="slide-title">Controls</h2>
+                    <div class="slide-controls">
+                        <div class="control-row"><span class="key">Arrow Keys</span> Move Around</div>
+                        <div class="control-row"><span class="key">Click</span> Explore Planets</div>
+                        <div class="control-row"><span class="key">V</span> Change Camera</div>
+                        <div class="control-row"><span class="key">Right Panel</span> Use to Teleport</div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: NASA Data -->
+                <div class="loading-slide" data-slide="2">
+                    <div class="slide-icon">🛰️</div>
+                    <h2 class="slide-title">Real NASA Data</h2>
+                    <p class="slide-text">Explore 6,000 planets with real NASA data from the Exoplanet Archive featuring accurate coordinates, classifications, and scientific measurements.</p>
+                </div>
+
+                <!-- Slide 4: AI Features -->
+                <div class="loading-slide" data-slide="3">
+                    <div class="slide-icon">🤖</div>
+                    <h2 class="slide-title">AI-Powered Experience</h2>
+                    <p class="slide-text">Real-time OpenAI generation creates unique planet descriptions, while ElevenLabs text-to-speech brings the cosmos to life with immersive audio narration.</p>
+                </div>
+            </div>
+
+            <!-- Slide Indicators -->
+            <div class="slide-indicators">
+                <span class="indicator active" data-indicator="0"></span>
+                <span class="indicator" data-indicator="1"></span>
+                <span class="indicator" data-indicator="2"></span>
+                <span class="indicator" data-indicator="3"></span>
             </div>
 
             <div class="loading-progress">
@@ -32,6 +71,13 @@
 
             <p class="loading-status" id="loading-status">Initializing...</p>
             <p class="loading-detail" id="loading-detail">Loading cluster index...</p>
+
+            <!-- Start Button (hidden until loading complete) -->
+            <button id="start-exploring-btn" class="start-exploring-btn hidden">
+                <span class="btn-icon">🚀</span>
+                <span class="btn-text">Start Exploring</span>
+                <span class="btn-glow"></span>
+            </button>
         </div>
     </div>
 

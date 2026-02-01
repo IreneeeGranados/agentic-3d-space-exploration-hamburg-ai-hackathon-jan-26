@@ -59,10 +59,13 @@ export class DynamicStarField {
             transparent: true,
             opacity: 0.9,
             alphaTest: 0.05,
-            blending: THREE.AdditiveBlending
+            blending: THREE.NormalBlending,
+            depthWrite: false, // Stars don't write depth (so planets always occlude them)
+            depthTest: true     // Stars DO read depth buffer
         });
 
         this.mesh = new THREE.Points(this.geometry, material);
+        this.mesh.renderOrder = -999; // Render stars FIRST (background layer)
     }
 
     resetStar(index) {

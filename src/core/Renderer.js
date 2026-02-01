@@ -18,7 +18,8 @@ export class RendererManager {
             canvas: canvas,
             antialias: false, // FXAA/SMAA handled by composer usually, or disabled for performance
             alpha: false,
-            powerPreference: "high-performance"
+            powerPreference: "high-performance",
+            logarithmicDepthBuffer: true // Fix clipping at extreme distances
         });
 
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -33,6 +34,9 @@ export class RendererManager {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
+        
+        // Ensure proper depth sorting for stars vs planets
+        this.renderer.sortObjects = true;
     }
 
     /**

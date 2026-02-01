@@ -16,7 +16,7 @@
     border-radius: 8px;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
-    z-index: 300;
+    z-index: 10003; /* Above all other UI */
     display: none;
     flex-direction: column;
     opacity: 0;

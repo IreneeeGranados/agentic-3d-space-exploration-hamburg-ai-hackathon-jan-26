@@ -14,8 +14,8 @@ export class CameraManager {
     createCamera(canvas) {
         const aspect = canvas.clientWidth / canvas.clientHeight;
         const fov = 75;
-        const near = 1; // Ajustado para escala x10000
-        const far = 100000000; // 100 millones de unidades para escala x10000
+        const near = 1;
+        const far = 1000000000; // 1 billion units - prevents distant planet clipping
 
         return new THREE.PerspectiveCamera(fov, aspect, near, far);
     }
@@ -24,6 +24,11 @@ export class CameraManager {
         // Position camera for good initial view
         this.camera.position.set(0, 50, 150);
         this.camera.lookAt(0, 0, 0);
+        
+        // Add light that follows camera for better visibility
+        this.cameraLight = new THREE.PointLight(0xffffff, 2.5, 2000);
+        this.cameraLight.position.set(0, 0, 0); // Will follow camera
+        this.camera.add(this.cameraLight);
     }
 
     updateAspect(canvas) {
