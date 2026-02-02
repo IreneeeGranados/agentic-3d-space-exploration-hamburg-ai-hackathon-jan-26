@@ -65,6 +65,21 @@ export class Spacecraft {
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
         loader.setDRACOLoader(dracoLoader);
 
+        // Load spacecraft textures
+        const textureLoader = new THREE.TextureLoader();
+        const diffuseTexture = textureLoader.load('textures/spacecraft/hull_diffuse.png');
+        const normalTexture = textureLoader.load('textures/spacecraft/hull_normal.png');
+
+        // Configure textures
+        diffuseTexture.colorSpace = THREE.SRGBColorSpace;
+        diffuseTexture.wrapS = THREE.RepeatWrapping;
+        diffuseTexture.wrapT = THREE.RepeatWrapping;
+        diffuseTexture.repeat.set(2, 2);
+
+        normalTexture.wrapS = THREE.RepeatWrapping;
+        normalTexture.wrapT = THREE.RepeatWrapping;
+        normalTexture.repeat.set(2, 2);
+
         loader.load('assets/space_shuttle.glb', (gltf) => {
             console.log('Spacecraft Model Loaded');
             const model = gltf.scene;
@@ -74,12 +89,18 @@ export class Spacecraft {
             model.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.castShadow = true;
                     child.receiveShadow = false; // Disable self-shadowing to prevent "square" artifacts
-                    if (child.material) {
-                        child.material.metalness = 0.6;
-                        child.material.roughness = 0.4;
-                    }
+
+                    // Apply custom spacecraft material with textures
+                    child.material = new THREE.MeshStandardMaterial({
+                        map: diffuseTexture,
+                        normalMap: normalTexture,
+                        normalScale: new THREE.Vector2(0.8, 0.8),
+                        metalness: 0.7,
+                        roughness: 0.35,
+                        envMapIntensity: 1.2,
+                        color: new THREE.Color(0xe8e8e8) // Slight tint for spacecraft white
+                    });
                 }
             });
 
@@ -227,7 +248,7 @@ export class Spacecraft {
 
         offset.applyQuaternion(this.group.quaternion).add(this.group.position);
 
-        // Dynamic camera catch-up
+        // Dynamic camera catch-up based on speed AND distance
         const distance = camera.position.distanceTo(offset);
         let lerpFactor = 0.1;
 
@@ -235,13 +256,30 @@ export class Spacecraft {
             // FIX: Hard lock for cockpit to prevent jitter/float
             lerpFactor = 1.0;
         } else {
-            // Chase Mode Logic
-            // If we are moving very fast and the camera falls behind, snap it quicker
-            if (distance > 500) {
-                lerpFactor = 0.5;
+            // Speed-based camera follow: faster ship = snappier camera
+            // This prevents camera lag and clipping at high speeds
+            const speedRatio = Math.min(this.forwardSpeed / 1000, 1.0); // Normalize to 0-1 for speeds up to 1000
+            const baseMinLerp = 0.1;
+            const baseMaxLerp = 0.8;
+
+            // Higher speed = higher base lerp factor
+            lerpFactor = THREE.MathUtils.lerp(baseMinLerp, baseMaxLerp, speedRatio);
+
+            // Distance-based adjustments (tighter thresholds for responsiveness)
+            const speedAdjustedThreshold = Math.max(50, 200 - speedRatio * 150);
+
+            if (distance > speedAdjustedThreshold) {
+                // Camera falling behind - increase lerp
+                lerpFactor = Math.min(lerpFactor + 0.3, 0.95);
             }
-            if (distance > 2000) {
-                // Hard teleport if way too far (warp speed)
+
+            if (distance > speedAdjustedThreshold * 3) {
+                // Camera way behind - snap harder
+                lerpFactor = 0.98;
+            }
+
+            if (distance > speedAdjustedThreshold * 10 || this.forwardSpeed > 50000) {
+                // Warp speed or extreme lag - hard teleport to prevent clipping
                 camera.position.copy(offset);
                 lerpFactor = 1.0;
             }

@@ -31,6 +31,18 @@ export class ExoplanetField {
 
         // NEW: Texture loader for real photographic textures (Earth/Solar)
         this.textureLoader = new THREE.TextureLoader();
+
+        // LOD System - Distance-based texture loading
+        // Distance values are in world units (after x10000 scale)
+        this.lodConfig = {
+            highDetailDistance: 100000,   // Load high-res textures within this distance
+            mediumDetailDistance: 300000, // Unload high-res beyond this distance  
+            updateInterval: 500,          // Check every 500ms for responsiveness
+            maxUpdatesPerFrame: 5         // Allow more updates per frame for faster loading
+        };
+        this.lastLodUpdate = 0;
+        this.planetMeshMap = new Map(); // Map planet name -> mesh for quick lookup
+        this.loadedHighResTextures = new Set(); // Track which planets have high-res textures loaded
     }
 
     /**
@@ -444,6 +456,7 @@ export class ExoplanetField {
                 }
 
                 this.meshGroup.add(mesh);
+                this.planetMeshMap.set(planet.pl_name, mesh); // Track for LOD updates
                 this.renderedPlanets.add(planet.pl_name);
             }
 
@@ -478,9 +491,11 @@ export class ExoplanetField {
     }
 
     /**
-     * Update animation
+     * Update animation and LOD system
+     * @param {number} deltaTime - Time since last frame
+     * @param {THREE.Vector3} spacecraftPosition - Current spacecraft world position (optional)
      */
-    update(deltaTime) {
+    update(deltaTime, spacecraftPosition = null) {
         // High-fidelity animation for Earth
         const earthMesh = this.meshGroup.getObjectByName('Earth');
         if (earthMesh) {
@@ -493,6 +508,159 @@ export class ExoplanetField {
                 clouds.rotation.y += deltaTime * 0.03;
             }
         }
+
+        // LOD System: Update planet textures based on distance from spacecraft
+        if (spacecraftPosition) {
+            this.updateLOD(spacecraftPosition);
+        }
+    }
+
+    /**
+     * Force immediate LOD refresh - call after teleportation
+     * This immediately updates ALL planets without the frame limit
+     */
+    forceRefreshLOD(spacecraftPosition) {
+        if (!spacecraftPosition) return;
+
+        console.log('🔄 Force refreshing LOD for all planets...');
+
+        // First, downgrade all currently loaded high-res textures
+        for (const planetName of this.loadedHighResTextures) {
+            const mesh = this.planetMeshMap.get(planetName);
+            if (mesh) {
+                const planetData = mesh.userData.planetData || mesh.userData.planet;
+                if (planetData && !planetData.isSolar && !mesh.userData.isSolar) {
+                    this.downgradeToLowResTexture(mesh, planetData);
+                }
+            }
+        }
+        this.loadedHighResTextures.clear();
+
+        // Now upgrade nearby planets immediately
+        let upgraded = 0;
+        for (const [planetName, mesh] of this.planetMeshMap) {
+            const planetWorldPos = new THREE.Vector3();
+            mesh.getWorldPosition(planetWorldPos);
+            const distance = spacecraftPosition.distanceTo(planetWorldPos);
+
+            const planetData = mesh.userData.planetData || mesh.userData.planet;
+            if (planetData?.isSolar || mesh.userData.isSolar) continue;
+
+            if (distance < this.lodConfig.highDetailDistance) {
+                this.upgradeToHighResTexture(mesh, planetData);
+                this.loadedHighResTextures.add(planetName);
+                upgraded++;
+            }
+        }
+
+        console.log(`✅ LOD refresh complete: ${upgraded} planets upgraded to high-res`);
+    }
+
+    /**
+     * LOD Update - Upgrade/downgrade planet textures based on distance from spacecraft
+     */
+    updateLOD(spacecraftPosition) {
+        const now = performance.now();
+        if (now - this.lastLodUpdate < this.lodConfig.updateInterval) return;
+        this.lastLodUpdate = now;
+
+        let updatesThisFrame = 0;
+
+        for (const [planetName, mesh] of this.planetMeshMap) {
+            if (updatesThisFrame >= this.lodConfig.maxUpdatesPerFrame) break;
+
+            // Get world position of planet mesh
+            const planetWorldPos = new THREE.Vector3();
+            mesh.getWorldPosition(planetWorldPos);
+
+            // Calculate distance from spacecraft
+            const distance = spacecraftPosition.distanceTo(planetWorldPos);
+
+            // Determine desired LOD level
+            const needsHighRes = distance < this.lodConfig.highDetailDistance;
+            const hasHighRes = this.loadedHighResTextures.has(planetName);
+
+            // Skip solar system planets (they always have high-res textures)
+            const planetData = mesh.userData.planetData || mesh.userData.planet;
+            if (planetData?.isSolar || mesh.userData.isSolar) continue;
+
+            // Upgrade texture if close and not already high-res
+            if (needsHighRes && !hasHighRes) {
+                this.upgradeToHighResTexture(mesh, planetData);
+                this.loadedHighResTextures.add(planetName);
+                updatesThisFrame++;
+            }
+            // Downgrade texture if far and currently high-res (save memory)
+            else if (!needsHighRes && hasHighRes && distance > this.lodConfig.mediumDetailDistance) {
+                this.downgradeToLowResTexture(mesh, planetData);
+                this.loadedHighResTextures.delete(planetName);
+                updatesThisFrame++;
+            }
+        }
+    }
+
+    /**
+     * Upgrade a planet's material to high-resolution procedural textures
+     */
+    upgradeToHighResTexture(mesh, planetData) {
+        if (!mesh || !planetData) return;
+
+        const planetType = planetData.planetType || 'rocky';
+        const temperature = planetData.pl_eqt || 300;
+        const colors = getColorByComposition(
+            planetData.characteristics?.principal_material || planetType,
+            temperature
+        );
+
+        let texture, normalMap;
+
+        // Generate high-quality procedural textures (512px)
+        if (planetType === 'gasGiant') {
+            const bandColors = [colors.base, colors.detail, colors.base];
+            texture = generateGasGiantTexture(bandColors, 512);
+            normalMap = generateNormalMap(512, 0.5);
+        } else if (planetType === 'iceGiant') {
+            texture = generateIceGiantTexture(colors.base, 512);
+            normalMap = generateNormalMap(512, 0.3);
+        } else {
+            texture = generateRockyTexture(colors.base, colors.detail, 512);
+            normalMap = generateNormalMap(512, 2.0);
+        }
+
+        // Update material
+        if (mesh.material) {
+            mesh.material.map = texture;
+            mesh.material.normalMap = normalMap;
+            mesh.material.needsUpdate = true;
+        }
+
+        console.log(`🔍 LOD: Upgraded ${planetData.pl_name} to high-res textures`);
+    }
+
+    /**
+     * Downgrade a planet's material to low-resolution for distant viewing
+     */
+    downgradeToLowResTexture(mesh, planetData) {
+        if (!mesh || !planetData) return;
+
+        const planetType = planetData.planetType || 'rocky';
+        const temperature = planetData.pl_eqt || 300;
+        const colors = getColorByComposition(
+            planetData.characteristics?.principal_material || planetType,
+            temperature
+        );
+
+        // Use simple color material (no textures)
+        if (mesh.material) {
+            if (mesh.material.map) mesh.material.map.dispose();
+            if (mesh.material.normalMap) mesh.material.normalMap.dispose();
+            mesh.material.map = null;
+            mesh.material.normalMap = null;
+            mesh.material.color.setHex(colors.base);
+            mesh.material.needsUpdate = true;
+        }
+
+        console.log(`📉 LOD: Downgraded ${planetData.pl_name} to simple material`);
     }
 
     /**
