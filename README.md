@@ -2,7 +2,7 @@
 
 > **Explore 6,000+ Real NASA Exoplanets in 3D**
 
-[![Live Demo](https://img.shields.io/badge/🌌_LIVE_DEMO-Launch_Space_Odyssey-blueviolet?style=for-the-badge)](https://space-odyssey-8ga.pages.dev)
+[![Live Demo](https://img.shields.io/badge/🌌_LIVE_DEMO-Launch_Space_Odyssey-blueviolet?style=for-the-badge)](https://space-odyssey-8ga-87l.pages.dev)
 
 [![GitHub Pages](https://img.shields.io/badge/🔬_ALTERNATIVE-GitHub_Pages_(Beta)-gray?style=for-the-badge)](https://zaexv.github.io/agentic-3d-space-exploration-hamburg-ai-hackathon-jan-26/)
 
