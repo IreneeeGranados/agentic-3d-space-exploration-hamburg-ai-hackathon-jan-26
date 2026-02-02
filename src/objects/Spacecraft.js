@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { generateThermalTileTexture, generateHeatShieldTexture } from '../utils/textureGenerator.js';
 
 export class Spacecraft {
     constructor() {
@@ -65,20 +66,10 @@ export class Spacecraft {
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
         loader.setDRACOLoader(dracoLoader);
 
-        // Load spacecraft textures
-        const textureLoader = new THREE.TextureLoader();
-        const diffuseTexture = textureLoader.load('textures/spacecraft/hull_diffuse.png');
-        const normalTexture = textureLoader.load('textures/spacecraft/hull_normal.png');
-
-        // Configure textures
-        diffuseTexture.colorSpace = THREE.SRGBColorSpace;
-        diffuseTexture.wrapS = THREE.RepeatWrapping;
-        diffuseTexture.wrapT = THREE.RepeatWrapping;
-        diffuseTexture.repeat.set(2, 2);
-
-        normalTexture.wrapS = THREE.RepeatWrapping;
-        normalTexture.wrapT = THREE.RepeatWrapping;
-        normalTexture.repeat.set(2, 2);
+        // Generate NASA Style Textures (Thermal Tiles & Heat Shield)
+        // We use procedural textures instead of loading external files to ensure they exist
+        const tileTexture = generateThermalTileTexture(512);
+        const heatShieldTexture = generateHeatShieldTexture(512);
 
         loader.load('assets/space_shuttle.glb', (gltf) => {
             console.log('Spacecraft Model Loaded');
@@ -92,30 +83,70 @@ export class Spacecraft {
                     child.receiveShadow = false; // Disable self-shadowing to prevent "square" artifacts
 
                     // Apply custom spacecraft material with textures
+                    // Use heat shield for bottom/nose? Since we don't have UV mapping guarantee for specific parts,
+                    // we'll try to apply based on geometry or just use the tile texture which looks cool overall.
+                    // Ideally, we'd mix them based on world position (bottom black, top white), but textures are applied in local UVs.
+                    // For now, let's use the Thermal Tiles as the main hull texture.
+
                     child.material = new THREE.MeshStandardMaterial({
-                        map: diffuseTexture,
-                        normalMap: normalTexture,
-                        normalScale: new THREE.Vector2(0.8, 0.8),
-                        metalness: 0.7,
-                        roughness: 0.35,
-                        envMapIntensity: 1.2,
-                        color: new THREE.Color(0xe8e8e8) // Slight tint for spacecraft white
+                        map: tileTexture,
+                        // normalMap: normalTexture, // Dropping normal map if we don't have a matching one
+                        metalness: 0.2, // Ceramic tiles are not metallic
+                        roughness: 0.8, // Rough ceramic surface
+                        envMapIntensity: 0.5,
+                        color: 0xffffff
                     });
+
+                    // Enhancement: If we can identify parts by name in the GLB, we could assign heat shield.
+                    // Since we don't know the GLB structure, we stick to the white tiles for a unified "NASA" look.
                 }
             });
 
             this.mesh.add(model);
-            // Re-orient model: GLB standard is usually -Z forward. 
-            // We want nose to point towards +X (Forward).
-            // Rotating +90 deg (Math.PI/2) on Y makes -Z point to +X? 
-            // -Z -> +X is a 270 deg (or -90) rotation if we look from top.
-            // Let's use Math.PI (180 deg) to flip it if it was flying backwards.
-            // The user said it was flying backwards when it was at Math.PI/2. 
-            // So we flip it to -Math.PI/2.
+            // Re-orient Space Shuttle model
+            // If it flies backwards at Math.PI/2, we flip it.
             this.mesh.rotation.y = -Math.PI / 2;
         }, undefined, (error) => {
             console.error('An error occurred loading the spacecraft:', error);
+            // Fallback geometry if model fails
+            this.createFallbackSpacecraft();
         });
+    }
+
+    createFallbackSpacecraft() {
+        // Simple Shuttle-like shape
+        const group = new THREE.Group();
+
+        const tileTexture = generateThermalTileTexture(256);
+        const heatShieldTexture = generateHeatShieldTexture(256);
+
+        const matWhite = new THREE.MeshStandardMaterial({ map: tileTexture, roughness: 0.8, metalness: 0.2 });
+        const matBlack = new THREE.MeshStandardMaterial({ map: heatShieldTexture, roughness: 0.9, metalness: 0.1 });
+
+        // Fuselage
+        const fuselage = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.5, 15, 16), matWhite);
+        fuselage.rotation.z = Math.PI / 2;
+        group.add(fuselage);
+
+        // Nose
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(2, 4, 32), matBlack);
+        nose.rotation.z = -Math.PI / 2;
+        nose.position.x = 9.5;
+        group.add(nose);
+
+        // Wings
+        const wingGeom = new THREE.BoxGeometry(10, 0.5, 12);
+        // Taper wings? simplified to box for now
+        const wings = new THREE.Mesh(wingGeom, matWhite);
+        wings.position.set(-2, -0.5, 0);
+        group.add(wings);
+
+        // Vertical Stabilizer
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.5), matWhite);
+        tail.position.set(-6, 3, 0);
+        group.add(tail);
+
+        this.mesh.add(group);
     }
 
 

@@ -270,7 +270,12 @@ export class Planet {
             this.createRings();
         }
 
-        this.mesh.userData = { type: 'planet', name: this.config.name, data: this.config };
+        // FIX: Ensure planetData is preserved and available on the group
+        // This allows raycasting to hit atmosphere/clouds/rings and still identify the planet via bubbling to group
+        this.group.userData.planetData = this.mesh.userData.planetData;
+
+        // Merge with existing userData if needed, but do NOT overwrite planetData
+        Object.assign(this.mesh.userData, { type: 'planet', name: this.config.name });
     }
 
     createAtmosphere() {
@@ -319,13 +324,9 @@ export class Planet {
         // Use real Saturn ring texture if this is Saturn
         let texture, alphaMap;
         const isSaturn = this.config.isSolar && (this.config.name === 'Saturn' || this.config.pl_name === 'Saturn');
-        if (isSaturn) {
-            texture = this.textureLoader.load('textures/planets/saturn/2k_saturn.jpg');
-            alphaMap = this.textureLoader.load('textures/planets/saturn/2k_saturn_ring_alpha.png');
-            texture.colorSpace = THREE.SRGBColorSpace;
-        } else {
-            texture = generateRingTexture(512, ringConfig.color1, ringConfig.color2);
-        }
+
+        // Fallback to procedural for everyone since we confirmed textures are missing
+        texture = generateRingTexture(512, ringConfig.color1, ringConfig.color2);
 
         // Proper UV mapping for rings
         const pos = geometry.attributes.position;

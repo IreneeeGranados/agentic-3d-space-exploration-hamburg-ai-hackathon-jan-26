@@ -3,6 +3,7 @@ import * as THREE from 'three';
 export class WarpTunnel {
     constructor() {
         this.group = new THREE.Group();
+        this.group.visible = false; // Hidden by default to prevent artifacts at 0,0,0
         this.isActive = false;
         this.uniforms = {
             time: { value: 0 },

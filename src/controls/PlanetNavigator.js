@@ -25,7 +25,6 @@ export class PlanetNavigator {
             <div class="nav-header">
                 <div>
                     <h2>🌍 PLANET NAVIGATOR</h2>
-                    <p class="nav-subtitle">Click any planet to travel instantly</p>
                 </div>
             </div>
             
@@ -44,15 +43,6 @@ export class PlanetNavigator {
                 <button class="filter-btn" data-filter="nearby">Nearby</button>
             </div>
 
-            <div class="nav-filters-secondary">
-                <select id="nav-type-filter" class="nav-select">
-                    <option value="all">All Types</option>
-                    <option value="Rocky">Rocky / Terrestrial</option>
-                    <option value="Super Earth">Super Earth</option>
-                    <option value="Gas Giant">Gas Giant</option>
-                    <option value="Neptune-like">Neptune-like</option>
-                </select>
-            </div>
             
             <div id="nav-planet-list" class="nav-planet-list">
                 <div class="nav-loading">Loading planets...</div>
