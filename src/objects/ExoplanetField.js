@@ -34,11 +34,12 @@ export class ExoplanetField {
 
         // LOD System - Distance-based texture loading
         // Distance values are in world units (after x10000 scale)
+        // The world uses a x10000 scale, so distances are HUGE
         this.lodConfig = {
-            highDetailDistance: 100000,   // Load high-res textures within this distance
-            mediumDetailDistance: 300000, // Unload high-res beyond this distance  
-            updateInterval: 500,          // Check every 500ms for responsiveness
-            maxUpdatesPerFrame: 5         // Allow more updates per frame for faster loading
+            highDetailDistance: 5000000,    // 5 million units - load high-res within this range
+            mediumDetailDistance: 15000000, // 15 million units - unload beyond this
+            updateInterval: 500,            // Check every 500ms for responsiveness
+            maxUpdatesPerFrame: 10          // Allow more updates per frame for faster loading
         };
         this.lastLodUpdate = 0;
         this.planetMeshMap = new Map(); // Map planet name -> mesh for quick lookup
@@ -523,6 +524,8 @@ export class ExoplanetField {
         if (!spacecraftPosition) return;
 
         console.log('🔄 Force refreshing LOD for all planets...');
+        console.log(`📍 Spacecraft position: ${spacecraftPosition.x.toFixed(0)}, ${spacecraftPosition.y.toFixed(0)}, ${spacecraftPosition.z.toFixed(0)}`);
+        console.log(`📊 Total planets in map: ${this.planetMeshMap.size}`);
 
         // First, downgrade all currently loaded high-res textures
         for (const planetName of this.loadedHighResTextures) {
@@ -538,14 +541,24 @@ export class ExoplanetField {
 
         // Now upgrade nearby planets immediately
         let upgraded = 0;
+        let closestDistance = Infinity;
+        let closestPlanet = null;
+
         for (const [planetName, mesh] of this.planetMeshMap) {
             const planetWorldPos = new THREE.Vector3();
             mesh.getWorldPosition(planetWorldPos);
             const distance = spacecraftPosition.distanceTo(planetWorldPos);
 
+            // Track closest for debugging
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestPlanet = planetName;
+            }
+
             const planetData = mesh.userData.planetData || mesh.userData.planet;
             if (planetData?.isSolar || mesh.userData.isSolar) continue;
 
+            // Use larger threshold due to x10000 scale
             if (distance < this.lodConfig.highDetailDistance) {
                 this.upgradeToHighResTexture(mesh, planetData);
                 this.loadedHighResTextures.add(planetName);
@@ -553,6 +566,8 @@ export class ExoplanetField {
             }
         }
 
+        console.log(`📏 Closest planet: ${closestPlanet} at distance ${closestDistance.toFixed(0)}`);
+        console.log(`🎯 LOD threshold: ${this.lodConfig.highDetailDistance}`);
         console.log(`✅ LOD refresh complete: ${upgraded} planets upgraded to high-res`);
     }
 
