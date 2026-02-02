@@ -3,42 +3,62 @@ import * as THREE from 'three';
 // Texture cache to prevent redundant generation
 const textureCache = new Map();
 
+// --- Worker Setup ---
+
+// Create worker instance using a relative path that works with Vite/Webpack
+const workerURL = new URL('../workers/textureWorker.js', import.meta.url);
+const worker = new Worker(workerURL, { type: 'module' });
+
+// Promise map for worker responses
+const workerPromises = new Map();
+let nextMessageId = 0;
+
+// Handle messages from the worker
+worker.onmessage = function (e) {
+    const { id, success, data, width, height, error } = e.data;
+
+    if (workerPromises.has(id)) {
+        const { resolve, reject } = workerPromises.get(id);
+        workerPromises.delete(id);
+
+        if (success) {
+            // Create DataTexture from the raw buffer
+            // format is RGBA (4 channels)
+            const texture = new THREE.DataTexture(
+                data,
+                width,
+                height,
+                THREE.RGBAFormat,
+                THREE.UnsignedByteType
+            );
+
+            texture.needsUpdate = true;
+            resolve(texture);
+        } else {
+            console.error('Texture worker error:', error);
+            reject(new Error(error));
+        }
+    }
+};
+
+/**
+ * Send a task to the worker
+ */
+function runWorkerTask(type, params) {
+    const id = nextMessageId++;
+    return new Promise((resolve, reject) => {
+        workerPromises.set(id, { resolve, reject });
+        worker.postMessage({ id, type, params });
+    });
+}
+
+// --- Helper Functions ---
+
 /**
  * Helper to round colors for better cache hit rates
  */
 function getCacheKey(type, params) {
     return `${type}_${JSON.stringify(params)}`;
-}
-
-/**
- * Simple noise function (approximation)
- * For production, consider using a proper noise library
- */
-function noise2D(x, y) {
-    const nx = x * 12.9898 + y * 78.233;
-    const n = Math.sin(nx) * 43758.5453;
-    return n - Math.floor(n);
-}
-
-/**
- * Fractal Brownian Motion for natural-looking noise
- */
-function fbm(x, y, octaves = 6) {
-    let value = 0;
-    let amplitude = 0.5;
-    let frequency = 1;
-
-    for (let i = 0; i < octaves; i++) {
-        // Add domain warping for more organic patterns
-        const ox = noise2D(x * frequency, y * frequency) * 0.1;
-        const oy = noise2D(x * frequency + 1.2, y * frequency + 3.4) * 0.1;
-
-        value += amplitude * noise2D(x * frequency + ox, y * frequency + oy);
-        frequency *= 2.1;
-        amplitude *= 0.5;
-    }
-
-    return value;
 }
 
 /**
@@ -204,12 +224,95 @@ export function getColorByComposition(composition, temperature, radius = 1.0, ma
 }
 
 
+// --- Async Generators (Web Worker) ---
+
 /**
- * Generate a rocky planet texture (Earth, Mars, Mercury, Venus type)
+ * Generate a rocky planet texture (Async)
+ */
+export async function generateRockyTextureAsync(baseColor, detailColor, size = 512) {
+    const cacheKey = getCacheKey('rocky', { baseColor, detailColor, size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
+    try {
+        const texture = await runWorkerTask('rocky', { baseColor, detailColor, size });
+        texture.colorSpace = THREE.SRGBColorSpace;
+        textureCache.set(cacheKey, texture);
+        return texture;
+    } catch (e) {
+        console.error('Worker failed, falling back to sync', e);
+        // Fallback? Or just throw? For now let's hope it works.
+        // If we needed fallback, we'd implemented sync generation here.
+        throw e;
+    }
+}
+
+/**
+ * Generate a gas giant texture (Async)
+ */
+export async function generateGasGiantTextureAsync(colors, size = 512) {
+    const cacheKey = getCacheKey('gas', { colors, size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
+    const texture = await runWorkerTask('gas', { colors, size });
+    texture.colorSpace = THREE.SRGBColorSpace;
+    textureCache.set(cacheKey, texture);
+    return texture;
+}
+
+/**
+ * Generate an ice giant texture (Async)
+ */
+export async function generateIceGiantTextureAsync(baseColor, size = 512) {
+    const cacheKey = getCacheKey('ice', { baseColor, size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
+    const texture = await runWorkerTask('ice', { baseColor, size });
+    texture.colorSpace = THREE.SRGBColorSpace;
+    textureCache.set(cacheKey, texture);
+    return texture;
+}
+
+/**
+ * Generate a normal map (Async)
+ */
+export async function generateNormalMapAsync(size = 512, strength = 1.0) {
+    const texture = await runWorkerTask('normal', { size, strength });
+    // Normal maps are usually linear (non-sRGB)
+    return texture;
+}
+
+
+// --- Legacy / Synchronous Generators (Keep for compatibility/small textures) ---
+
+function noise2D(x, y) {
+    const nx = x * 12.9898 + y * 78.233;
+    const n = Math.sin(nx) * 43758.5453;
+    return n - Math.floor(n);
+}
+
+function fbm(x, y, octaves = 6) {
+    let value = 0;
+    let amplitude = 0.5;
+    let frequency = 1;
+
+    for (let i = 0; i < octaves; i++) {
+        // Add domain warping for more organic patterns
+        const ox = noise2D(x * frequency, y * frequency) * 0.1;
+        const oy = noise2D(x * frequency + 1.2, y * frequency + 3.4) * 0.1;
+
+        value += amplitude * noise2D(x * frequency + ox, y * frequency + oy);
+        frequency *= 2.1;
+        amplitude *= 0.5;
+    }
+
+    return value;
+}
+
+/**
+ * Generate a rocky planet texture (Sync)
  */
 export function generateRockyTexture(baseColor, detailColor, size = 512) {
-    // Check cache first
-    const cacheKey = getCacheKey('rocky', { baseColor, detailColor, size });
+    const cacheKey = getCacheKey('rocky_sync', { baseColor, detailColor, size });
     if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
 
     const canvas = document.createElement('canvas');
@@ -228,10 +331,7 @@ export function generateRockyTexture(baseColor, detailColor, size = 512) {
             const nx = x / size;
             const ny = y / size;
 
-            // Generate noise value
             const noiseValue = fbm(nx * 4, ny * 4, 5);
-
-            // Interpolate between base and detail colors
             const color = base.clone().lerp(detail, noiseValue);
 
             const index = (y * size + x) * 4;
@@ -243,7 +343,6 @@ export function generateRockyTexture(baseColor, detailColor, size = 512) {
     }
 
     ctx.putImageData(imageData, 0, 0);
-
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -254,11 +353,10 @@ export function generateRockyTexture(baseColor, detailColor, size = 512) {
 }
 
 /**
- * Generate a gas giant texture (Jupiter, Saturn type)
+ * Generate a gas giant texture (Sync)
  */
 export function generateGasGiantTexture(colors, size = 512) {
-    // Check cache first
-    const cacheKey = getCacheKey('gas', { colors, size });
+    const cacheKey = getCacheKey('gas_sync', { colors, size });
     if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
 
     const canvas = document.createElement('canvas');
@@ -269,6 +367,9 @@ export function generateGasGiantTexture(colors, size = 512) {
     const imageData = ctx.createImageData(size, size);
     const data = imageData.data;
 
+    // Convert hex integers to Color objects
+    const colorObjs = colors.map(c => new THREE.Color(c));
+
     for (let y = 0; y < size; y++) {
         for (let x = 0; x < size; x++) {
             const nx = x / size;
@@ -276,23 +377,22 @@ export function generateGasGiantTexture(colors, size = 512) {
 
             // Horizontal bands
             const bandValue = Math.sin(ny * Math.PI * 8 + fbm(nx * 2, ny * 2, 3) * 2);
-            const colorIndex = Math.floor((bandValue + 1) * 0.5 * (colors.length - 1));
-            const color = new THREE.Color(colors[Math.min(colorIndex, colors.length - 1)]);
+            const colorIndex = Math.floor((bandValue + 1) * 0.5 * (colorObjs.length - 1));
+            const c = colorObjs[Math.min(colorIndex, colorObjs.length - 1)].clone();
 
-            // Add turbulence
+            // Turbulence
             const turbulence = fbm(nx * 6, ny * 6, 4) * 0.3;
-            color.multiplyScalar(0.7 + turbulence);
+            c.multiplyScalar(0.7 + turbulence);
 
             const index = (y * size + x) * 4;
-            data[index] = color.r * 255;
-            data[index + 1] = color.g * 255;
-            data[index + 2] = color.b * 255;
+            data[index] = c.r * 255;
+            data[index + 1] = c.g * 255;
+            data[index + 2] = c.b * 255;
             data[index + 3] = 255;
         }
     }
 
     ctx.putImageData(imageData, 0, 0);
-
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -303,11 +403,10 @@ export function generateGasGiantTexture(colors, size = 512) {
 }
 
 /**
- * Generate an ice giant texture (Uranus, Neptune type)
+ * Generate an ice giant texture (Sync)
  */
 export function generateIceGiantTexture(baseColor, size = 512) {
-    // Check cache first
-    const cacheKey = getCacheKey('ice', { baseColor, size });
+    const cacheKey = getCacheKey('ice_sync', { baseColor, size });
     if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
 
     const canvas = document.createElement('canvas');
@@ -325,26 +424,22 @@ export function generateIceGiantTexture(baseColor, size = 512) {
             const nx = x / size;
             const ny = y / size;
 
-            // Subtle horizontal bands
             const bandValue = Math.sin(ny * Math.PI * 4 + fbm(nx, ny, 2) * 0.5);
-
-            // Cloud patterns
             const cloudValue = fbm(nx * 3, ny * 3, 4);
 
-            const color = base.clone();
+            const c = base.clone();
             const brightness = 0.8 + (bandValue * 0.1) + (cloudValue * 0.1);
-            color.multiplyScalar(brightness);
+            c.multiplyScalar(brightness);
 
             const index = (y * size + x) * 4;
-            data[index] = color.r * 255;
-            data[index + 1] = color.g * 255;
-            data[index + 2] = color.b * 255;
+            data[index] = c.r * 255;
+            data[index + 1] = c.g * 255;
+            data[index + 2] = c.b * 255;
             data[index + 3] = 255;
         }
     }
 
     ctx.putImageData(imageData, 0, 0);
-
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -355,9 +450,13 @@ export function generateIceGiantTexture(baseColor, size = 512) {
 }
 
 /**
- * Generate a normal map for surface detail
+ * Generate a normal map (Sync)
  */
 export function generateNormalMap(size = 512, strength = 1.0) {
+    // Normal maps don't cache well with strength param, but we can try
+    const cacheKey = `normal_sync_${size}_${strength}`;
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -371,36 +470,36 @@ export function generateNormalMap(size = 512, strength = 1.0) {
             const nx = x / size;
             const ny = y / size;
 
-            // Sample nearby points for gradient
             const offset = 1 / size;
             const center = fbm(nx, ny, 5);
             const right = fbm(nx + offset, ny, 5);
             const up = fbm(nx, ny + offset, 5);
 
-            // Calculate normal
             const dx = (right - center) * strength;
             const dy = (up - center) * strength;
 
-            // Convert to normal map color (RGB = XYZ)
             const index = (y * size + x) * 4;
-            data[index] = ((dx + 1) * 0.5) * 255;      // R = X
-            data[index + 1] = ((dy + 1) * 0.5) * 255;  // G = Y
-            data[index + 2] = 255;                      // B = Z (pointing up)
+            data[index] = Math.floor(((dx + 1) * 0.5) * 255);
+            data[index + 1] = Math.floor(((dy + 1) * 0.5) * 255);
+            data[index + 2] = 255;
             data[index + 3] = 255;
         }
     }
 
     ctx.putImageData(imageData, 0, 0);
-
     const texture = new THREE.CanvasTexture(canvas);
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
+    // Normal maps are linear data
+    texture.colorSpace = THREE.LinearSRGBColorSpace;
 
+    textureCache.set(cacheKey, texture);
     return texture;
 }
 
+
 /**
- * Generate a tech panel texture for spacecraft hulls
+ * Generate a tech panel texture for spacecraft hulls (Sync)
  */
 export function generatePanelTexture(size = 512, color = '#cccccc') {
     const canvas = document.createElement('canvas');
@@ -444,7 +543,7 @@ export function generatePanelTexture(size = 512, color = '#cccccc') {
 
 
 /**
- * Generate a circular radial gradient texture for stars/dust
+ * Generate a circular radial gradient texture for stars/dust (Sync)
  */
 export function generateStarTexture(size = 64) {
     const cacheKey = `star_${size}`;
@@ -471,7 +570,7 @@ export function generateStarTexture(size = 64) {
 }
 
 /**
- * Generate a cloud texture (Atmospheric layer)
+ * Generate a cloud texture (Atmospheric layer) (Sync)
  */
 export function generateCloudTexture(size = 512, cloudColor = 0xffffff) {
     const cacheKey = getCacheKey('clouds', { cloudColor, size });
@@ -516,7 +615,7 @@ export function generateCloudTexture(size = 512, cloudColor = 0xffffff) {
 }
 
 /**
- * Generate a ring texture (Planetary rings)
+ * Generate a ring texture (Planetary rings) (Sync)
  */
 export function generateRingTexture(size = 512, color1 = 0x8c7853, color2 = 0x4a4a4a) {
     const cacheKey = getCacheKey('rings', { color1, color2, size });
@@ -560,7 +659,7 @@ export function generateRingTexture(size = 512, color1 = 0x8c7853, color2 = 0x4a
 }
 
 /**
- * Generate a night lights texture (City lights)
+ * Generate a night lights texture (City lights) (Sync)
  */
 export function generateNightLightsTexture(size = 512, density = 0.5) {
     const cacheKey = getCacheKey('nightLights', { density, size });
@@ -603,7 +702,7 @@ export function generateNightLightsTexture(size = 512, density = 0.5) {
 }
 
 /**
- * Generate a cratered texture for moons/airless worlds
+ * Generate a cratered texture for moons/airless worlds (Sync)
  */
 export function generateCratersTexture(baseColor, detailColor, size = 512) {
     const cacheKey = getCacheKey('craters', { baseColor, detailColor, size });

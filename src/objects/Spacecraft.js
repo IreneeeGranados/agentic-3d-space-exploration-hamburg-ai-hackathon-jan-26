@@ -252,6 +252,18 @@ export class Spacecraft {
         const distance = camera.position.distanceTo(offset);
         let lerpFactor = 0.1;
 
+        // Dynamic FOV Effect (Warp Speed Sensation)
+        // Base FOV is usually 60 or 75. We widen it as speed increases.
+        const baseFOV = 60;
+        const maxFOV = 100;
+        // Normalize speed for effect (0 to 1 range for speeds 0 to 5000)
+        const effectIntensity = Math.min(this.forwardSpeed / 5000, 1.0);
+
+        const targetFOV = THREE.MathUtils.lerp(baseFOV, maxFOV, effectIntensity);
+        // Smoothly interpolate current FOV to target
+        camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.05);
+        camera.updateProjectionMatrix();
+
         if (this.viewMode === 'COCKPIT') {
             // FIX: Hard lock for cockpit to prevent jitter/float
             lerpFactor = 1.0;
@@ -286,6 +298,14 @@ export class Spacecraft {
         }
 
         camera.position.lerp(offset, lerpFactor);
+
+        // Camera Shake Effect at high speeds
+        if (this.forwardSpeed > 500) {
+            const shakeIntensity = Math.min((this.forwardSpeed - 500) / 5000, 1.0) * 0.5;
+            camera.position.x += (Math.random() - 0.5) * shakeIntensity;
+            camera.position.y += (Math.random() - 0.5) * shakeIntensity;
+            camera.position.z += (Math.random() - 0.5) * shakeIntensity;
+        }
 
         lookAhead.applyQuaternion(this.group.quaternion).add(this.group.position);
         camera.lookAt(lookAhead);

@@ -4,7 +4,7 @@ import { CameraManager } from './src/core/Camera.js';
 import { RendererManager } from './src/core/Renderer.js';
 import { Planet } from './src/objects/Planet.js';
 import { Star } from './src/objects/Star.js';
-import { DynamicStarField } from './src/objects/DynamicStarField.js';
+import { StarField } from './src/objects/StarField.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { PlanetDataService } from './src/services/PlanetDataService.js';
 import { ExoplanetField } from './src/objects/ExoplanetField.js';
@@ -21,6 +21,8 @@ import ElevenLabsService from './src/ai/ElevenLabsService.js';
 import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
 import { WarpTunnel } from './src/objects/WarpTunnel.js';
 import { MultiplayerManager } from './src/multiplayer/MultiplayerManager.js';
+import { GalaxyField } from './src/objects/GalaxyField.js';
+import { SpaceDust } from './src/objects/SpaceDust.js';
 
 class App {
     constructor() {
@@ -480,15 +482,22 @@ class App {
 
     async createEnvironment() {
         console.log('  ✨ Creating star field...');
-        // Create dynamic star field that follows camera
-        this.dynamicStarField = new DynamicStarField(20000, 2000);
-        this.sceneManager.add(this.dynamicStarField.mesh);
+        // Create static massive star field (fixes "stars following camera" artifact)
+        this.starField = new StarField(15000, 2000000);
+        this.sceneManager.add(this.starField.mesh);
+
+        // Create Galaxy Field (background details)
+        this.galaxyField = new GalaxyField(5000000, 500);
+        this.sceneManager.add(this.galaxyField.group);
 
         // Warp Tunnel Effect
         this.warpTunnel = new WarpTunnel();
         this.sceneManager.add(this.warpTunnel.group);
 
-        // SpaceDust removed - cleaner view
+        // SpaceDust
+        this.spaceDust = new SpaceDust(2000, 400);
+        this.sceneManager.add(this.spaceDust.mesh);
+
         console.log('  ✓ Environment created');
     }
 
@@ -810,10 +819,7 @@ class App {
 
         const deltaTime = this.clock.getDelta();
 
-        // Update dynamic star field to follow camera
-        if (this.dynamicStarField && this.spacecraft) {
-            this.dynamicStarField.update(this.spacecraft.group.position);
-        }
+
 
         // Update all solar system planets
         if (this.planets) {
@@ -858,6 +864,15 @@ class App {
                 this.cameraManager.camera.position,
                 this.cameraManager.camera.quaternion
             );
+        }
+
+        // Update SpaceDust
+        if (this.spaceDust && this.spacecraft) {
+            const speed = this.spacecraft.getSpeed();
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyQuaternion(this.spacecraft.group.quaternion);
+
+            this.spaceDust.update(this.spacecraft.group.position, speed, direction);
         }
 
         // Update targeting square animation

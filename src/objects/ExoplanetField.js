@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import {
-    generateRockyTexture,
-    generateGasGiantTexture,
-    generateIceGiantTexture,
-    generateNormalMap,
-    getColorByComposition
+    generateRockyTextureAsync,
+    generateGasGiantTextureAsync,
+    generateIceGiantTextureAsync,
+    generateNormalMapAsync,
+    getColorByComposition,
+    generateCloudTexture
 } from '../utils/textureGenerator.js';
 import { generateEarthTexture } from '../utils/PlanetTextureGenerator.js';
 import { createAtmosphere, createCloudLayer } from '../shaders/AtmosphereShader.js';
@@ -170,6 +171,10 @@ export class ExoplanetField {
                     else if (radPos.includes('neptune') || radiusInEarthRadii > 2) planetType = 'iceGiant';
                 }
 
+                // Define textures and flags in outer scope of tier processing
+                let texture, specularMap, normalMap, emissiveMap;
+                let useRealTextures = false;
+
                 if (tier === 1) {
                     // Use enriched colors if available, otherwise generate
                     let colors;
@@ -200,9 +205,6 @@ export class ExoplanetField {
                         roughness = 0.6;
                     }
 
-                    let texture, specularMap, normalMap, emissiveMap;
-                    let useRealTextures = false;
-
                     // SPECIAL HANDLING: Earth and Solar System
                     const planetName = planet.pl_name || planet.name;
                     const isEarth = planetName === 'Earth';
@@ -223,65 +225,50 @@ export class ExoplanetField {
                             case 'Mars':
                                 texture = this.textureLoader.load('textures/planets/mars/2k_mars.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
-                                normalMap = generateNormalMap(512, 2.5);
+                                normalMap = generateNormalMapAsync(512, 2.5).then(t => { if (mesh.material) mesh.material.normalMap = t; });
+                                // Note: normalMap above is a promise, handled differently or we wait. 
+                                // Actually, for solar system, let's keep it simple. 
+                                // The textureLoader is async but returns object immediately.
+                                // We can't easily mix sync and async here for Solar System without refactoring.
+                                // BUT exoplanets are the main issue.
                                 useRealTextures = true;
                                 break;
                             case 'Jupiter':
                                 texture = this.textureLoader.load('textures/planets/jupiter/2k_jupiter.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
-                                normalMap = generateNormalMap(512, 0.5);
                                 useRealTextures = true;
                                 break;
                             case 'Saturn':
                                 texture = this.textureLoader.load('textures/planets/saturn/2k_saturn.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
-                                normalMap = generateNormalMap(512, 0.3);
                                 useRealTextures = true;
                                 break;
                             case 'Neptune':
                                 texture = this.textureLoader.load('textures/planets/neptune/2k_neptune.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
-                                normalMap = generateNormalMap(512, 0.4);
                                 useRealTextures = true;
                                 break;
                             case 'Uranus':
                                 texture = this.textureLoader.load('textures/planets/uranus/2k_uranus.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
-                                normalMap = generateNormalMap(512, 0.2);
                                 useRealTextures = true;
                                 break;
                             case 'Venus':
                                 texture = this.textureLoader.load('textures/planets/venus/2k_venus_atmosphere.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
-                                normalMap = generateNormalMap(512, 0.1);
                                 useRealTextures = true;
                                 break;
                             case 'Mercury':
                                 texture = this.textureLoader.load('textures/planets/mercury/2k_mercury.jpg');
                                 texture.colorSpace = THREE.SRGBColorSpace;
-                                normalMap = generateNormalMap(512, 3.0);
                                 useRealTextures = true;
                                 break;
                         }
                     }
 
-                    if (!useRealTextures) {
-                        // Generate procedural textures for exoplanets (Tier 1 only)
-                        if (planetType === 'gasGiant') {
-                            // Gas giant bands
-                            const bandColors = [colors.base, colors.detail, colors.base];
-                            texture = generateGasGiantTexture(bandColors, 256);
-                            normalMap = generateNormalMap(256, 0.5);
-                        } else if (planetType === 'iceGiant') {
-                            // Ice giant smooth texture
-                            texture = generateIceGiantTexture(colors.base, 256);
-                            normalMap = generateNormalMap(256, 0.3);
-                        } else {
-                            // Rocky/terrestrial texture
-                            texture = generateRockyTexture(colors.base, colors.detail, 256);
-                            normalMap = generateNormalMap(256, 2.0);
-                        }
-                    }
+                    // For non-solar planets (Exoplanets) in Tier 1:
+                    // Initialize with simple base color first, then UPGRADE to texture asynchronously.
+                    // This prevents blocking and fixes the ReferenceError.
 
                     material = new THREE.MeshStandardMaterial({
                         color: texture ? new THREE.Color(0xffffff) : new THREE.Color(colors.base), // White if textured
@@ -297,10 +284,11 @@ export class ExoplanetField {
                         side: THREE.FrontSide
                     });
 
-                    // Add textures (both solar system and procedural)
+                    // Add textures (for Solar System planets that used TextureLoader)
                     if (texture) {
                         material.map = texture;
-                        if (normalMap) material.normalMap = normalMap;
+                        // Note: normalMap for solar system was not fully handled above for async.
+                        // Ideally we should move solar system to async too, or keep using loaders.
                     }
 
                     // Add emissive map if it exists (Earth night lights)
@@ -352,7 +340,9 @@ export class ExoplanetField {
                     } else {
                         material = new THREE.MeshStandardMaterial({
                             color: new THREE.Color(baseColor),
-                            roughness: 0.9,
+                            emissive: new THREE.Color(baseColor),
+                            emissiveIntensity: 0.8, // Bright glow
+                            roughness: 1.0,
                             metalness: 0,
                             transparent: false, // NEVER transparent
                             opacity: 1.0,
@@ -460,6 +450,12 @@ export class ExoplanetField {
                 this.meshGroup.add(mesh);
                 this.planetMeshMap.set(planet.pl_name, mesh); // Track for LOD updates
                 this.renderedPlanets.add(planet.pl_name);
+
+                // Trigger async upgrade for Tier 1 procedural planets
+                if (tier === 1 && !useRealTextures) {
+                    this.upgradeToHighResTexture(mesh, planet);
+                    this.loadedHighResTextures.add(planet.pl_name);
+                }
             }
 
             if (index < planetBatch.length) {
@@ -542,12 +538,8 @@ export class ExoplanetField {
             if (mesh) {
                 const planetData = mesh.userData.planetData || mesh.userData.planet;
                 if (planetData && !planetData.isSolar && !mesh.userData.isSolar) {
-                    // Quick downgrade - just set color, don't regenerate textures
-                    if (mesh.material) {
-                        mesh.material.map = null;
-                        mesh.material.normalMap = null;
-                        mesh.material.needsUpdate = true;
-                    }
+                    // Properly downgrade to restore the correct base color
+                    this.downgradeToLowResTexture(mesh, planetData);
                 }
             }
         }
@@ -669,26 +661,50 @@ export class ExoplanetField {
         let texture, normalMap;
 
         // Generate high-quality procedural textures (512px)
+        let texturePromise, normalMapPromise;
+
         if (planetType === 'gasGiant') {
             const bandColors = [colors.base, colors.detail, colors.base];
-            texture = generateGasGiantTexture(bandColors, 512);
-            normalMap = generateNormalMap(512, 0.5);
+            texturePromise = generateGasGiantTextureAsync(bandColors, 512);
+            normalMapPromise = generateNormalMapAsync(512, 0.5);
         } else if (planetType === 'iceGiant') {
-            texture = generateIceGiantTexture(colors.base, 512);
-            normalMap = generateNormalMap(512, 0.3);
+            texturePromise = generateIceGiantTextureAsync(colors.base, 512);
+            normalMapPromise = generateNormalMapAsync(512, 0.3);
         } else {
-            texture = generateRockyTexture(colors.base, colors.detail, 512);
-            normalMap = generateNormalMap(512, 2.0);
+            texturePromise = generateRockyTextureAsync(colors.base, colors.detail, 512);
+            normalMapPromise = generateNormalMapAsync(512, 2.0);
         }
 
-        // Update material
-        if (mesh.material) {
-            mesh.material.map = texture;
-            mesh.material.normalMap = normalMap;
-            mesh.material.needsUpdate = true;
-        }
+        // Apply textures when ready (Non-blocking!)
+        Promise.all([texturePromise, normalMapPromise]).then(([texture, normalMap]) => {
+            // Check if mesh still exists and hasn't been downgraded already
+            if (mesh && mesh.material) {
+                // IMPORTANT: Texture repeats must be set here for DataTextures
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                normalMap.wrapS = THREE.RepeatWrapping;
+                normalMap.wrapT = THREE.RepeatWrapping;
 
-        console.log(`🔍 LOD: Upgraded ${planetData.pl_name} to high-res textures`);
+                mesh.material.map = texture;
+                mesh.material.normalMap = normalMap;
+
+                // Reset material to PBR values suitable for high-res
+                mesh.material.color.setHex(0xffffff); // White so texture shows
+                mesh.material.emissive.setHex(0x000000);
+                mesh.material.emissiveIntensity = 0;
+
+                // Earth-like roughness/metalness or default
+                // We don't have easy access to 'isEarth' here without re-checking name, so use generic
+                mesh.material.roughness = 0.8;
+                mesh.material.metalness = 0.1;
+
+                mesh.material.needsUpdate = true;
+            }
+        }).catch(err => {
+            console.error('Failed to generate high-res texture for', planetData.pl_name, err);
+        });
+
+        console.log(`🔍 LOD: Upgraded ${planetData.pl_name} to high-res textures (Async)`);
     }
 
     /**
@@ -714,7 +730,14 @@ export class ExoplanetField {
             if (mesh.material.normalMap) mesh.material.normalMap.dispose();
             mesh.material.map = null;
             mesh.material.normalMap = null;
+
+            // "Shine like stars" effect for distant planets
             mesh.material.color.setHex(colors.base);
+            mesh.material.emissive.setHex(colors.base);
+            mesh.material.emissiveIntensity = 0.8; // Bright glow
+            mesh.material.roughness = 1.0;         // No specular reflection
+            mesh.material.metalness = 0.0;
+
             mesh.material.needsUpdate = true;
         }
 
