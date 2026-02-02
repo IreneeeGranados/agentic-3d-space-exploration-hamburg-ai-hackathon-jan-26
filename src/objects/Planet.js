@@ -78,7 +78,7 @@ export class Planet {
         );
 
         // Get colors from composition
-        const colors = getColorByComposition(this.config.composition, parseFloat(this.config.temperature));
+        const colors = getColorByComposition(this.config.composition, parseFloat(this.config.temperature), this.config.radius || 1.0);
         const baseColor = this.config.color || colors.base;
         const detailColor = this.config.detailColor || colors.detail;
 

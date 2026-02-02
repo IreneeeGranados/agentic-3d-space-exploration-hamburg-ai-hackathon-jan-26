@@ -42,49 +42,165 @@ function fbm(x, y, octaves = 6) {
 }
 
 /**
- * Helper to get color based on composition and temperature
+ * Helper to get color based on composition, temperature, radius and mass
+ * This function ensures ALL planets get interesting, vibrant colors
  */
-export function getColorByComposition(composition, temperature) {
+export function getColorByComposition(composition, temperature, radius = 1.0, mass = 1.0) {
     const comp = (composition || '').toLowerCase();
     const temp = temperature || 300; // Default to Earth-like temp
 
-    // 1. Extreme Heat (Lava/Molten Worlds)
-    if (temp > 1200 && (comp.includes('rocky') || comp.includes('silicates') || comp.includes('iron'))) {
-        return { base: 0x1a1a1a, detail: 0xff4500, atmosphere: 0xff6347 }; // Charred black with lava orange
-    }
-
-    // 2. Gas Giants & Hot Jupiters
-    if (comp.includes('gas') || comp.includes('hydrogen') || comp.includes('helium')) {
-        if (temp > 1000) return { base: 0xff8c00, detail: 0xffd700, atmosphere: 0xffd700 }; // Hot Jupiter
-        if (temp < 150) return { base: 0xa0c4ff, detail: 0x1a75ff, atmosphere: 0x87ceeb };  // Cold Gas Giant
-        return { base: 0xc88b3a, detail: 0xe6a85c, atmosphere: 0xf4d7a8 }; // Jupiter-like
-    }
-
-    // 3. Ice Giants & Water Worlds
-    if (comp.includes('ice') || comp.includes('methane') || comp.includes('ammonia') || comp.includes('water')) {
-        if (comp.includes('water') || comp.includes('ocean')) {
-            return { base: 0x00416a, detail: 0x0077be, atmosphere: 0xadd8e6 }; // Deep Ocean
+    // 1. Extreme Heat (Lava/Molten Worlds) - temp > 1200K
+    if (temp > 1200) {
+        if (comp.includes('gas') || comp.includes('hydrogen')) {
+            // Hot Jupiter - ultra hot gas giant
+            return { base: 0xf97316, detail: 0xfcd34d, atmosphere: 0xfbbf24 }; // Orange/Gold
         }
-        if (temp < 100) return { base: 0x4169e1, detail: 0x00008b, atmosphere: 0xadd8e6 }; // Deep Blue Ice
-        return { base: 0x4fd0e7, detail: 0x00ced1, atmosphere: 0x00ced1 }; // Cyan/Turquoise
+        // Lava worlds
+        const lavaColors = [
+            { base: 0x1f1f1f, detail: 0xff4500, atmosphere: 0xff6347 }, // Black with lava
+            { base: 0x2d1810, detail: 0xff5722, atmosphere: 0xff7043 }, // Dark brown with orange
+            { base: 0x1a0a0a, detail: 0xdc2626, atmosphere: 0xef4444 }, // Magma red
+        ];
+        return lavaColors[Math.floor(temp % lavaColors.length)];
     }
 
-    // 4. Rocky / Terrestrial Planets
-    if (comp.includes('rocky') || comp.includes('silicates') || comp.includes('iron') || comp.includes('metal')) {
-        if (temp < 200) return { base: 0xf0f8ff, detail: 0xb0c4de, atmosphere: 0xffffff }; // Frozen/White
-        if (comp.includes('iron') || comp.includes('metal')) return { base: 0x4a4a4a, detail: 0x708090, atmosphere: 0x000000 };
-        if (comp.includes('sulfur')) return { base: 0xefdfbb, detail: 0xe1ad21, atmosphere: 0xffff00 };
-        if (comp.includes('oxide') || comp.includes('rust')) return { base: 0xcd5c5c, detail: 0x8b3a3a, atmosphere: 0xff4500 };
-        return { base: 0x8c7853, detail: 0x6b5d4f, atmosphere: 0x8c7853 };
+    // 2. Very Hot (700-1200K) - Scorched worlds
+    if (temp > 700) {
+        if (comp.includes('gas') || comp.includes('hydrogen')) {
+            return { base: 0xea580c, detail: 0xfb923c, atmosphere: 0xfed7aa }; // Warm orange gas giant
+        }
+        // Scorched rocky
+        const scorchedColors = [
+            { base: 0x78350f, detail: 0xb45309, atmosphere: 0xd97706 }, // Brown scorched
+            { base: 0x44403c, detail: 0x78716c, atmosphere: 0xa8a29e }, // Dark gray
+            { base: 0x7c2d12, detail: 0xea580c, atmosphere: 0xf97316 }, // Rust orange
+        ];
+        return scorchedColors[Math.floor((temp + mass * 10) % scorchedColors.length)];
     }
 
-    // 5. Special Case: Earth-like default
-    if (comp.includes('habitabl') || comp.includes('vegetation') || comp.includes('earth')) {
-        return { base: 0x228b22, detail: 0x1e90ff, atmosphere: 0x4a90e2 }; // Forest Green / Sea Blue
+    // 3. Warm Worlds (400-700K) - Venus-like
+    if (temp > 400) {
+        if (comp.includes('gas') || comp.includes('hydrogen')) {
+            return { base: 0xd4a574, detail: 0xe6c89a, atmosphere: 0xf5e6d3 }; // Warm tan gas giant
+        }
+        const venusColors = [
+            { base: 0xfcd34d, detail: 0xfef08a, atmosphere: 0xfef9c3 }, // Yellow/Sulfur
+            { base: 0xd97706, detail: 0xfbbf24, atmosphere: 0xfde68a }, // Amber
+            { base: 0xca8a04, detail: 0xeab308, atmosphere: 0xfacc15 }, // Gold
+            { base: 0xdc8850, detail: 0xe8a472, atmosphere: 0xf4c494 }, // Peach/Tan
+        ];
+        return venusColors[Math.floor((temp * radius) % venusColors.length)];
     }
 
-    // Default
-    return { base: 0x888888, detail: 0x666666, atmosphere: 0x4a90e2 };
+    // 4. Gas Giants (Large radius > 5 Earth radii) regardless of temp
+    if (radius > 5 || comp.includes('gas') || comp.includes('hydrogen') || comp.includes('helium')) {
+        if (temp < 100) {
+            // Cold gas giant - blues and cyans
+            const coldGasColors = [
+                { base: 0x0891b2, detail: 0x22d3ee, atmosphere: 0x67e8f9 }, // Cyan
+                { base: 0x0284c7, detail: 0x38bdf8, atmosphere: 0x7dd3fc }, // Sky blue
+                { base: 0x4f46e5, detail: 0x818cf8, atmosphere: 0xa5b4fc }, // Indigo
+            ];
+            return coldGasColors[Math.floor((temp + mass) % coldGasColors.length)];
+        }
+        // Standard gas giants - Jupiter/Saturn style
+        const gasColors = [
+            { base: 0xc88b3a, detail: 0xe6a85c, atmosphere: 0xf4d7a8 }, // Jupiter tan
+            { base: 0xd4a574, detail: 0xeecba8, atmosphere: 0xfef3e2 }, // Saturn cream
+            { base: 0xb45309, detail: 0xd97706, atmosphere: 0xfbbf24 }, // Orange giant
+            { base: 0x92400e, detail: 0xb45309, atmosphere: 0xd97706 }, // Brown giant
+            { base: 0x9f7e5a, detail: 0xc4a77d, atmosphere: 0xe8d0a0 }, // Beige giant
+        ];
+        return gasColors[Math.floor((temp + radius * 3) % gasColors.length)];
+    }
+
+    // 5. Ice Giants / Neptune-like (medium-large with ice/methane)
+    if (radius > 3 || comp.includes('ice') || comp.includes('methane') || comp.includes('ammonia')) {
+        const iceColors = [
+            { base: 0x06b6d4, detail: 0x22d3ee, atmosphere: 0x67e8f9 }, // Cyan/Turquoise
+            { base: 0x0ea5e9, detail: 0x38bdf8, atmosphere: 0x7dd3fc }, // Light blue
+            { base: 0x2563eb, detail: 0x60a5fa, atmosphere: 0x93c5fd }, // Blue
+            { base: 0x7c3aed, detail: 0xa78bfa, atmosphere: 0xc4b5fd }, // Purple
+            { base: 0x0891b2, detail: 0x14b8a6, atmosphere: 0x2dd4bf }, // Teal
+        ];
+        return iceColors[Math.floor((temp + radius * 5) % iceColors.length)];
+    }
+
+    // 6. Water Worlds / Ocean Planets
+    if (comp.includes('water') || comp.includes('ocean') || comp.includes('liquid')) {
+        const waterColors = [
+            { base: 0x0369a1, detail: 0x0284c7, atmosphere: 0x38bdf8 }, // Deep ocean
+            { base: 0x0e7490, detail: 0x06b6d4, atmosphere: 0x22d3ee }, // Teal ocean
+            { base: 0x047857, detail: 0x059669, atmosphere: 0x34d399 }, // Emerald sea
+            { base: 0x1e40af, detail: 0x3b82f6, atmosphere: 0x60a5fa }, // Blue ocean
+        ];
+        return waterColors[Math.floor((temp + mass * 7) % waterColors.length)];
+    }
+
+    // 7. Earth-like / Habitable Zone (250-350K)
+    if (temp > 250 && temp < 350) {
+        const habitableColors = [
+            { base: 0x16a34a, detail: 0x22c55e, atmosphere: 0x4ade80 }, // Green/Forest
+            { base: 0x0d9488, detail: 0x14b8a6, atmosphere: 0x2dd4bf }, // Teal/Tropical
+            { base: 0x2563eb, detail: 0x22c55e, atmosphere: 0x60a5fa }, // Blue/Green
+            { base: 0x059669, detail: 0x0891b2, atmosphere: 0x34d399 }, // Emerald
+            { base: 0x65a30d, detail: 0x84cc16, atmosphere: 0xa3e635 }, // Lime/Grassland
+        ];
+        return habitableColors[Math.floor((temp + radius * 11) % habitableColors.length)];
+    }
+
+    // 8. Cold Rocky Worlds (temp < 200K)
+    if (temp < 200) {
+        const coldColors = [
+            { base: 0x94a3b8, detail: 0xcbd5e1, atmosphere: 0xe2e8f0 }, // Silver/Gray
+            { base: 0x6b7280, detail: 0x9ca3af, atmosphere: 0xd1d5db }, // Steel gray
+            { base: 0xe0f2fe, detail: 0xbae6fd, atmosphere: 0x7dd3fc }, // Ice white-blue
+            { base: 0xc7d2fe, detail: 0xa5b4fc, atmosphere: 0x818cf8 }, // Lavender ice
+            { base: 0xddd6fe, detail: 0xc4b5fd, atmosphere: 0xa78bfa }, // Purple ice
+        ];
+        return coldColors[Math.floor((temp + radius * 13) % coldColors.length)];
+    }
+
+    // 9. Standard Rocky Planets (200-400K range we haven't covered)
+    if (comp.includes('iron') || comp.includes('metal')) {
+        return { base: 0x57534e, detail: 0x78716c, atmosphere: 0xa8a29e }; // Metallic gray
+    }
+    if (comp.includes('silicates') || comp.includes('rocky') || comp.includes('rock')) {
+        const rockyColors = [
+            { base: 0x78716c, detail: 0xa8a29e, atmosphere: 0xd6d3d1 }, // Gray rock
+            { base: 0x8b5cf6, detail: 0xa78bfa, atmosphere: 0xc4b5fd }, // Purple mineral
+            { base: 0xb45309, detail: 0xd97706, atmosphere: 0xfbbf24 }, // Orange/Mars-like
+            { base: 0x92400e, detail: 0xb45309, atmosphere: 0xd97706 }, // Rust
+            { base: 0x854d0e, detail: 0xa16207, atmosphere: 0xca8a04 }, // Brown rock
+        ];
+        return rockyColors[Math.floor((temp + radius * 17) % rockyColors.length)];
+    }
+    if (comp.includes('sulfur')) {
+        return { base: 0xeab308, detail: 0xfacc15, atmosphere: 0xfef08a }; // Io-like yellow
+    }
+    if (comp.includes('carbon')) {
+        return { base: 0x1c1917, detail: 0x44403c, atmosphere: 0x57534e }; // Dark carbon world
+    }
+
+    // 10. DEFAULT - Generate a unique color based on ALL parameters
+    // This ensures NO planet gets a boring white/gray color
+    const hue = ((temp * 0.5 + radius * 50 + mass * 30) % 360);
+    const saturation = 0.5 + (radius % 5) * 0.1; // 50-100% saturation
+    const lightness = 0.35 + (temp % 200) / 600; // 35-68% lightness
+
+    // Convert HSL to colors
+    const baseColor = new THREE.Color();
+    baseColor.setHSL(hue / 360, saturation, lightness);
+    const detailColor = new THREE.Color();
+    detailColor.setHSL((hue + 30) / 360, saturation * 0.8, lightness + 0.15);
+    const atmosphereColor = new THREE.Color();
+    atmosphereColor.setHSL((hue + 15) / 360, saturation * 0.6, lightness + 0.25);
+
+    return {
+        base: baseColor.getHex(),
+        detail: detailColor.getHex(),
+        atmosphere: atmosphereColor.getHex()
+    };
 }
 
 

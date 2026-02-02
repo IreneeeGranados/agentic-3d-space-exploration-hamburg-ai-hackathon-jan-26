@@ -174,7 +174,7 @@ export class ExoplanetField {
                     if (planet.color && planet.detailColor) {
                         colors = { base: planet.color, detail: planet.detailColor };
                     } else {
-                        colors = getColorByComposition(planet.characteristics?.principal_material || planetType, temperature);
+                        colors = getColorByComposition(planet.characteristics?.principal_material || planetType, temperature, radiusInEarthRadii, planet.pl_masse || 1.0);
                     }
 
                     // PBR Material Settings based on Planetary Composition
@@ -319,7 +319,7 @@ export class ExoplanetField {
                     if (planet.color && planet.detailColor) {
                         colors = { base: planet.color, detail: planet.detailColor };
                     } else {
-                        colors = getColorByComposition(planet.characteristics?.principal_material || planetType, temperature);
+                        colors = getColorByComposition(planet.characteristics?.principal_material || planetType, temperature, radiusInEarthRadii, planet.pl_masse || 1.0);
                     }
 
                     material = new THREE.MeshStandardMaterial({
@@ -338,7 +338,7 @@ export class ExoplanetField {
                     // Use enriched color if available
                     let baseColor = planet.color;
                     if (!baseColor) {
-                        const style = getColorByComposition(planetType, temperature);
+                        const style = getColorByComposition(planetType, temperature, radiusInEarthRadii, planet.pl_masse || 1.0);
                         baseColor = style.base;
                     }
 
@@ -607,9 +607,13 @@ export class ExoplanetField {
 
         const planetType = planetData.planetType || 'rocky';
         const temperature = planetData.pl_eqt || 300;
+        const radius = planetData.pl_rade || 1.0;
+        const mass = planetData.pl_masse || 1.0;
         const colors = getColorByComposition(
             planetData.characteristics?.principal_material || planetType,
-            temperature
+            temperature,
+            radius,
+            mass
         );
 
         let texture, normalMap;
@@ -645,9 +649,13 @@ export class ExoplanetField {
 
         const planetType = planetData.planetType || 'rocky';
         const temperature = planetData.pl_eqt || 300;
+        const radius = planetData.pl_rade || 1.0;
+        const mass = planetData.pl_masse || 1.0;
         const colors = getColorByComposition(
             planetData.characteristics?.principal_material || planetType,
-            temperature
+            temperature,
+            radius,
+            mass
         );
 
         // Use simple color material (no textures)
