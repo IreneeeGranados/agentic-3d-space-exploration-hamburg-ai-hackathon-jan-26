@@ -593,8 +593,18 @@ export function generateCloudTexture(size = 512, cloudColor = 0xffffff) {
             // FBM for cloud-like noise
             const noise = fbm(nx * 3, ny * 3, 6);
 
+            // Radial Mask for soft edges (Fix for "weird squares")
+            // Distance from center (0.5, 0.5)
+            const dx = nx - 0.5;
+            const dy = ny - 0.5;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            // Fade starts at 0.3, ends at 0.5 (edge)
+            const radialAlpha = 1.0 - THREE.MathUtils.smoothstep(dist, 0.3, 0.5);
+
             // Sharpen the clouds (alpha discard simulation)
-            const alpha = Math.max(0, (noise - 0.4) * 2);
+            // Combine noise with radial mask
+            let alpha = Math.max(0, (noise - 0.4) * 2);
+            alpha *= radialAlpha; // Mask edges
 
             const index = (y * size + x) * 4;
             data[index] = color.r * 255;
@@ -743,6 +753,117 @@ export function generateCratersTexture(baseColor, detailColor, size = 512) {
     texture.wrapT = THREE.RepeatWrapping;
     texture.colorSpace = THREE.SRGBColorSpace;
 
+    textureCache.set(cacheKey, texture);
+    return texture;
+}
+
+/**
+ * Generate a TPS (Thermal Protetcion System) texture (White Tiles) for Space Shuttle
+ */
+export function generateThermalTileTexture(size = 512) {
+    const cacheKey = getCacheKey('thermal_tiles', { size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // White background
+    ctx.fillStyle = '#dddddd';
+    ctx.fillRect(0, 0, size, size);
+
+    // Draw grid
+    ctx.strokeStyle = '#bbbbbb';
+    ctx.lineWidth = 1;
+
+    const count = 32; // Number of tiles across
+    const tileSize = size / count;
+
+    for (let y = 0; y < count; y++) {
+        for (let x = 0; x < count; x++) {
+            // Random variation per tile
+            const c = 220 + Math.random() * 35;
+            ctx.fillStyle = `rgb(${c},${c},${c})`;
+            ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+        }
+    }
+
+    // Add subtle noise
+    const imageData = ctx.getImageData(0, 0, size, size);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        if (Math.random() > 0.8) {
+            const v = (Math.random() - 0.5) * 10;
+            data[i] = Math.min(255, Math.max(0, data[i] + v));
+            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + v));
+            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + v));
+        }
+    }
+    ctx.putImageData(imageData, 0, 0);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
+    textureCache.set(cacheKey, texture);
+    return texture;
+}
+
+/**
+ * Generate a Reinforced Carbon-Carbon texture (Black Heat Shield) for Space Shuttle
+ */
+export function generateHeatShieldTexture(size = 512) {
+    const cacheKey = getCacheKey('heat_shield', { size });
+    if (textureCache.has(cacheKey)) return textureCache.get(cacheKey);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Black background
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(0, 0, size, size);
+
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1;
+
+    const count = 32;
+    const tileSize = size / count;
+
+    for (let y = 0; y < count; y++) {
+        for (let x = 0; x < count; x++) {
+            // Offset every other row
+            const offsetX = (y % 2 === 0) ? 0 : tileSize * 0.5;
+
+            // Random dark variation
+            const c = 10 + Math.random() * 20;
+            ctx.fillStyle = `rgb(${c},${c},${c})`;
+
+            ctx.fillRect(x * tileSize - offsetX, y * tileSize, tileSize, tileSize);
+            ctx.strokeRect(x * tileSize - offsetX, y * tileSize, tileSize, tileSize);
+        }
+    }
+
+    // Scorch marks
+    ctx.globalCompositeOperation = 'multiply';
+    for (let i = 0; i < 5; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const r = Math.random() * (size / 2);
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+        grad.addColorStop(0, 'rgba(0,0,0,0.8)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.colorSpace = THREE.SRGBColorSpace;
     textureCache.set(cacheKey, texture);
     return texture;
 }

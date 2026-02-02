@@ -23,6 +23,7 @@ import { WarpTunnel } from './src/objects/WarpTunnel.js';
 import { MultiplayerManager } from './src/multiplayer/MultiplayerManager.js';
 import { GalaxyField } from './src/objects/GalaxyField.js';
 import { SpaceDust } from './src/objects/SpaceDust.js';
+import { SpaceDebris } from './src/objects/SpaceDebris.js';
 
 class App {
     constructor() {
@@ -405,9 +406,19 @@ class App {
                     });
 
                     if (hit) {
-                        // Check if it has planetData (exoplanet OR solar system planet)
-                        if (hit.object.userData && hit.object.userData.planetData) {
-                            const planetData = hit.object.userData.planetData;
+                        // Traverse up to find the actual object holding planetData (could be parent of hit object)
+                        let targetObj = hit.object;
+                        let planetData = null;
+
+                        while (targetObj) {
+                            if (targetObj.userData && targetObj.userData.planetData) {
+                                planetData = targetObj.userData.planetData;
+                                break;
+                            }
+                            targetObj = targetObj.parent;
+                        }
+
+                        if (planetData) {
                             console.log('🪐 Planet Selected:', planetData.pl_name, planetData.isSolar ? '(Solar System)' : '(Exoplanet)');
 
                             // Store for info dialog
@@ -425,8 +436,8 @@ class App {
                                 this.explorationDialog.show(planetData);
                             }
                         } else {
-                            // Object without planetData (shouldn't happen)
-                            console.warn('⚠️ Clicked object has no planetData:', hit.object);
+                            // Object without planetData (shouldn't happen given the find logic above, but safety first)
+                            console.warn('⚠️ Clicked object has no planetData in hierarchy:', hit.object);
                         }
                     }
                 }
@@ -497,6 +508,9 @@ class App {
         // SpaceDust
         this.spaceDust = new SpaceDust(2000, 400);
         this.sceneManager.add(this.spaceDust.mesh);
+
+        // Random Space Debris (Asteroids)
+        this.spaceDebris = new SpaceDebris(this.sceneManager.scene, 40, 4000);
 
         console.log('  ✓ Environment created');
     }
@@ -873,6 +887,16 @@ class App {
             direction.applyQuaternion(this.spacecraft.group.quaternion);
 
             this.spaceDust.update(this.spacecraft.group.position, speed, direction);
+        }
+
+        // Update NebulaField
+        if (this.nebulaField && this.spacecraft) {
+            this.nebulaField.update(deltaTime, this.spacecraft.group.position);
+        }
+
+        // Update SpaceDebris
+        if (this.spaceDebris && this.spacecraft) {
+            this.spaceDebris.update(deltaTime, this.spacecraft.group.position);
         }
 
         // Update targeting square animation

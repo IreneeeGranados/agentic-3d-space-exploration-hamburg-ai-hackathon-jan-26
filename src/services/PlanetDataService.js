@@ -140,7 +140,7 @@ export class PlanetDataService {
      */
     applySolarSystemOverrides(planet) {
         const name = planet.pl_name;
-        
+
         // Mark as Solar System planet
         planet.isSolar = true;
 
@@ -179,7 +179,7 @@ export class PlanetDataService {
             case 'Saturn':
                 planet.color = 0xEAD6B8; // Pale gold
                 planet.detailColor = 0xA08F70;
-                planet.rarings = true; // Typo fix in mind logic
+                // planet.rarings = true; // Removed typo
                 planet.rings.enabled = true;
                 planet.rings.innerRadius = 1.2;
                 planet.rings.outerRadius = 2.3;
