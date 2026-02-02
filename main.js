@@ -4,7 +4,7 @@ import { CameraManager } from './src/core/Camera.js';
 import { RendererManager } from './src/core/Renderer.js';
 import { Planet } from './src/objects/Planet.js';
 import { Star } from './src/objects/Star.js';
-import { DynamicStarField } from './src/objects/DynamicStarField.js';
+import { StarField } from './src/objects/StarField.js';
 import { Spacecraft } from './src/objects/Spacecraft.js';
 import { PlanetDataService } from './src/services/PlanetDataService.js';
 import { ExoplanetField } from './src/objects/ExoplanetField.js';
@@ -21,6 +21,9 @@ import ElevenLabsService from './src/ai/ElevenLabsService.js';
 import { CONFIG, isAIConfigured, isNarrationConfigured } from './src/config/config.js';
 import { WarpTunnel } from './src/objects/WarpTunnel.js';
 import { MultiplayerManager } from './src/multiplayer/MultiplayerManager.js';
+import { GalaxyField } from './src/objects/GalaxyField.js';
+import { SpaceDust } from './src/objects/SpaceDust.js';
+import { SpaceDebris } from './src/objects/SpaceDebris.js';
 
 class App {
     constructor() {
@@ -31,10 +34,10 @@ class App {
         this.controlsEnabled = true; // Flag to enable/disable keyboard navigation
         this.multiplayerManager = null;
         this.multiplayerEnabled = false;
-        
+
         // Multiplayer server URL (configurable)
         this.multiplayerServerUrl = localStorage.getItem('multiplayerServerUrl') || 'http://localhost:3000';
-        
+
         this.init();
     }
 
@@ -49,10 +52,10 @@ class App {
             this.cameraManager = new CameraManager(this.canvas);
             this.rendererManager = new RendererManager(this.canvas);
             this.clock = new THREE.Clock();
-            
+
             // Add camera to scene so camera light works
             this.sceneManager.add(this.cameraManager.camera);
-            
+
             this.loadingManager.completeStep('Engine');
 
             // Step 2: Setup controls
@@ -101,18 +104,18 @@ class App {
         if (urlInput) {
             // Set initial value from localStorage or default
             urlInput.value = this.multiplayerServerUrl;
-            
+
             // Save URL when user changes it
             urlInput.addEventListener('change', (e) => {
                 const newUrl = e.target.value.trim() || 'http://localhost:3000';
                 this.multiplayerServerUrl = newUrl;
                 localStorage.setItem('multiplayerServerUrl', newUrl);
                 console.log('🔧 Multiplayer server URL updated:', newUrl);
-                
+
                 // Re-check server availability with new URL
                 this.checkMultiplayerAvailability();
             });
-            
+
             // Also check on blur
             urlInput.addEventListener('blur', (e) => {
                 const newUrl = e.target.value.trim() || 'http://localhost:3000';
@@ -129,10 +132,10 @@ class App {
     async checkMultiplayerAvailability() {
         console.log('🔍 Checking multiplayer server:', this.multiplayerServerUrl);
         const serverAvailable = await MultiplayerManager.checkServerAvailability(this.multiplayerServerUrl);
-        
+
         const statusEl = document.getElementById('multiplayer-status-inline');
         const btnEl = document.getElementById('multiplayer-btn');
-        
+
         if (serverAvailable) {
             console.log('✓ Multiplayer server detected');
             if (statusEl) statusEl.textContent = 'READY';
@@ -149,7 +152,7 @@ class App {
     async toggleMultiplayer() {
         const statusEl = document.getElementById('multiplayer-status-inline');
         const btnEl = document.getElementById('multiplayer-btn');
-        
+
         if (this.multiplayerEnabled) {
             // Disconnect
             if (this.multiplayerManager) {
@@ -180,7 +183,7 @@ class App {
     updateMultiplayerUI(connected) {
         const mpBtn = document.getElementById('multiplayer-btn');
         const mpStatus = document.getElementById('multiplayer-status-inline');
-        
+
         if (mpBtn) {
             mpBtn.textContent = connected ? '🔌 Disconnect' : '🌐 Join Multiplayer';
             if (connected) {
@@ -193,7 +196,7 @@ class App {
                 mpBtn.style.opacity = '1';
             }
         }
-        
+
         if (mpStatus) {
             if (connected && this.multiplayerManager) {
                 const status = this.multiplayerManager.getStatus();
@@ -211,22 +214,22 @@ class App {
             // Check if any input field is focused (user is typing)
             const activeElement = document.activeElement;
             const isTyping = activeElement && (
-                activeElement.tagName === 'INPUT' || 
+                activeElement.tagName === 'INPUT' ||
                 activeElement.tagName === 'TEXTAREA' ||
                 activeElement.isContentEditable
             );
-            
+
             // If user is typing, don't process game controls
             if (isTyping) {
                 return;
             }
-            
+
             // Check if narrator dialog is open
             const narratorOpen = this.narratorDialog && this.narratorDialog.isShowing();
-            
+
             // Check if planet exploration dialog is open
             const explorationOpen = this.explorationDialog && this.explorationDialog.isVisible();
-            
+
             // If any dialog is open, only allow arrow keys for movement
             if (narratorOpen || explorationOpen) {
                 // Allow arrow keys
@@ -250,16 +253,16 @@ class App {
                     e.preventDefault();
                     return;
                 }
-                
+
                 // Allow ESC (handled by dialogs)
                 if (e.code === 'Escape') {
                     return;
                 }
-                
+
                 // Block all other keys when dialog is open
                 return;
             }
-            
+
             // Normal mode - skip controls if navigation is disabled
             if (!this.controlsEnabled) return;
 
@@ -284,7 +287,7 @@ class App {
             // Check if narrator dialog or exploration dialog is open
             const narratorOpen = this.narratorDialog && this.narratorDialog.isShowing();
             const explorationOpen = this.explorationDialog && this.explorationDialog.isVisible();
-            
+
             // If any dialog is open, only handle arrow keys
             if (narratorOpen || explorationOpen) {
                 if (e.code === 'ArrowUp') this.keys.up = false;
@@ -293,7 +296,7 @@ class App {
                 if (e.code === 'ArrowRight') this.keys.right = false;
                 return;
             }
-            
+
             // Normal mode - skip controls if navigation is disabled
             if (!this.controlsEnabled) return;
 
@@ -353,8 +356,8 @@ class App {
         window.addEventListener('click', (event) => {
             // Don't process clicks if they're on UI elements
             const target = event.target;
-            if (target.closest('.ui-panel') || 
-                target.closest('.modal-overlay') || 
+            if (target.closest('.ui-panel') ||
+                target.closest('.modal-overlay') ||
                 target.closest('#planet-modal') ||
                 target.closest('.planet-exploration-dialog') ||
                 target.closest('.exploration-dialog-overlay') ||
@@ -403,9 +406,19 @@ class App {
                     });
 
                     if (hit) {
-                        // Check if it has planetData (exoplanet OR solar system planet)
-                        if (hit.object.userData && hit.object.userData.planetData) {
-                            const planetData = hit.object.userData.planetData;
+                        // Traverse up to find the actual object holding planetData (could be parent of hit object)
+                        let targetObj = hit.object;
+                        let planetData = null;
+
+                        while (targetObj) {
+                            if (targetObj.userData && targetObj.userData.planetData) {
+                                planetData = targetObj.userData.planetData;
+                                break;
+                            }
+                            targetObj = targetObj.parent;
+                        }
+
+                        if (planetData) {
                             console.log('🪐 Planet Selected:', planetData.pl_name, planetData.isSolar ? '(Solar System)' : '(Exoplanet)');
 
                             // Store for info dialog
@@ -423,8 +436,8 @@ class App {
                                 this.explorationDialog.show(planetData);
                             }
                         } else {
-                            // Object without planetData (shouldn't happen)
-                            console.warn('⚠️ Clicked object has no planetData:', hit.object);
+                            // Object without planetData (shouldn't happen given the find logic above, but safety first)
+                            console.warn('⚠️ Clicked object has no planetData in hierarchy:', hit.object);
                         }
                     }
                 }
@@ -480,15 +493,25 @@ class App {
 
     async createEnvironment() {
         console.log('  ✨ Creating star field...');
-        // Create dynamic star field that follows camera
-        this.dynamicStarField = new DynamicStarField(20000, 2000);
-        this.sceneManager.add(this.dynamicStarField.mesh);
+        // Create static massive star field (fixes "stars following camera" artifact)
+        this.starField = new StarField(15000, 2000000);
+        this.sceneManager.add(this.starField.mesh);
+
+        // Create Galaxy Field (background details)
+        this.galaxyField = new GalaxyField(5000000, 500);
+        this.sceneManager.add(this.galaxyField.group);
 
         // Warp Tunnel Effect
         this.warpTunnel = new WarpTunnel();
         this.sceneManager.add(this.warpTunnel.group);
 
-        // SpaceDust removed - cleaner view
+        // SpaceDust
+        this.spaceDust = new SpaceDust(2000, 400);
+        this.sceneManager.add(this.spaceDust.mesh);
+
+        // Random Space Debris (Asteroids)
+        this.spaceDebris = new SpaceDebris(this.sceneManager.scene, 40, 4000);
+
         console.log('  ✓ Environment created');
     }
 
@@ -581,7 +604,7 @@ class App {
 
         // Initialize exploration dialog
         this.explorationDialog = new PlanetExplorationDialog(openAIService, elevenLabsService, this);
-        
+
         // Initialize proximity-based narration system
         this.proximityDetector = new ProximityDetector(this.planetDataService, this.exoplanetField);
         this.narrationService = new NarrationService(openAIService, elevenLabsService);
@@ -703,7 +726,7 @@ class App {
 
         // Get closest planet
         const closest = this.proximityDetector.getClosestPlanet(this.spacecraft.group.position);
-        
+
         if (!closest) {
             console.log('⚠️ No planet nearby to narrate');
             return;
@@ -711,7 +734,7 @@ class App {
 
         const planet = closest.planet;
         const distance = closest.distance;
-        
+
         console.log(`🎙️ Narrating ${planet.pl_name} (${(distance / 10000).toFixed(2)} scaled units away)`);
 
         // Show dialog with loading state first
@@ -739,13 +762,13 @@ class App {
             console.log('📝 Generating narration...');
             // Generate narration
             const { text, audio } = await this.narrationService.generateNarration(planet);
-            
+
             console.log('💬 Showing narrator dialog...');
             // Show narrator dialog with text and audio
             await this.narratorDialog.show(planet, text, audio);
-            
+
             console.log('✅ Narrator dialog displayed');
-            
+
         } catch (error) {
             console.error('❌ Narration failed:', error);
             this.narratorDialog.hideLoading();
@@ -810,19 +833,17 @@ class App {
 
         const deltaTime = this.clock.getDelta();
 
-        // Update dynamic star field to follow camera
-        if (this.dynamicStarField && this.spacecraft) {
-            this.dynamicStarField.update(this.spacecraft.group.position);
-        }
+
 
         // Update all solar system planets
         if (this.planets) {
             this.planets.forEach(planet => planet.update(deltaTime));
         }
 
-        // Update exoplanet field
+        // Update exoplanet field with spacecraft position for LOD
         if (this.exoplanetField) {
-            this.exoplanetField.update(deltaTime);
+            const spacecraftPos = this.spacecraft ? this.spacecraft.getPosition() : null;
+            this.exoplanetField.update(deltaTime, spacecraftPos);
         }
 
         // Control spacecraft
@@ -857,6 +878,25 @@ class App {
                 this.cameraManager.camera.position,
                 this.cameraManager.camera.quaternion
             );
+        }
+
+        // Update SpaceDust
+        if (this.spaceDust && this.spacecraft) {
+            const speed = this.spacecraft.getSpeed();
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyQuaternion(this.spacecraft.group.quaternion);
+
+            this.spaceDust.update(this.spacecraft.group.position, speed, direction);
+        }
+
+        // Update NebulaField
+        if (this.nebulaField && this.spacecraft) {
+            this.nebulaField.update(deltaTime, this.spacecraft.group.position);
+        }
+
+        // Update SpaceDebris
+        if (this.spaceDebris && this.spacecraft) {
+            this.spaceDebris.update(deltaTime, this.spacecraft.group.position);
         }
 
         // Update targeting square animation
@@ -943,6 +983,11 @@ class App {
 
             // Point spacecraft towards planet
             this.spacecraft.group.lookAt(targetPosition);
+
+            // Force LOD refresh at new location
+            if (this.exoplanetField) {
+                this.exoplanetField.forceRefreshLOD(this.spacecraft.getPosition());
+            }
 
             console.log(`✓ Teleported to ${planet.pl_name} at distance ${offset.toFixed(0)} units`);
         }, 200);
@@ -1081,7 +1126,7 @@ class App {
         });
 
         console.log('✅ SpAIce floating button initialized');
-        
+
         // Setup multiplayer button
         const mpBtn = document.getElementById('multiplayer-btn');
         if (mpBtn) {

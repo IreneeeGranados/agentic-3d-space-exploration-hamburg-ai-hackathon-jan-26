@@ -4,10 +4,10 @@ import { generateStarTexture } from '../utils/textureGenerator.js';
 /**
  * SpaceDust Class
  * Creates a swarm of particles around the spacecraft to provide a sense of velocity.
- * Transforms into warp speed effect above 200 u/s.
+ * Implements an "infinite volume" effect using wrap-around logic.
  */
 export class SpaceDust {
-    constructor(count = 1000, range = 200) {
+    constructor(count = 2000, range = 400) {
         this.count = count;
         this.range = range;
         this.speedThreshold = 200; // Speed at which to switch to warp effect
@@ -20,23 +20,19 @@ export class SpaceDust {
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(this.count * 3);
         const sizes = new Float32Array(this.count);
-        const velocities = new Float32Array(this.count * 3); // For warp effect
+
+        // We'll use a local coordinate system relative to the camera for individual particles
+        // but offset them based on world position to simulate movement
 
         for (let i = 0; i < this.count; i++) {
             positions[i * 3] = (Math.random() - 0.5) * this.range;
             positions[i * 3 + 1] = (Math.random() - 0.5) * this.range;
             positions[i * 3 + 2] = (Math.random() - 0.5) * this.range;
             sizes[i] = Math.random() * 2;
-            
-            // Initialize velocities
-            velocities[i * 3] = 0;
-            velocities[i * 3 + 1] = 0;
-            velocities[i * 3 + 2] = 0;
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-        geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
 
         const material = new THREE.PointsMaterial({
             color: 0xffffff,
@@ -46,116 +42,111 @@ export class SpaceDust {
             opacity: 0.6,
             alphaTest: 0.05,
             blending: THREE.AdditiveBlending,
-            sizeAttenuation: true
+            sizeAttenuation: true,
+            depthWrite: false // Don't write depth, semitransparent
         });
 
         this.mesh = new THREE.Points(geometry, material);
+        this.mesh.frustumCulled = false; // Always render
         this.baseMaterial = material;
+
+        // Store initial relative positions
+        this.initialPositions = positions.slice();
     }
 
     /**
      * Update dust positions relative to spacecraft to keep them within range
+     * Uses modulo arithmetic for seamless wrapping
      */
-    update(spacecraftPosition, spacecraftSpeed = 0, spacecraftDirection = new THREE.Vector3(1, 0, 0)) {
+    update(spacecraftPosition, spacecraftSpeed = 0, spacecraftDirection = new THREE.Vector3(0, 0, -1)) {
         if (!this.mesh) return;
 
         this.currentSpeed = spacecraftSpeed;
         const positions = this.mesh.geometry.attributes.position.array;
-        const sizes = this.mesh.geometry.attributes.size.array;
-        
+
         // Determine if we should be in warp mode
         const shouldBeWarpMode = spacecraftSpeed > this.speedThreshold;
-        
-        // Transition to/from warp mode
+
         if (shouldBeWarpMode !== this.isWarpMode) {
             this.isWarpMode = shouldBeWarpMode;
-            console.log(`🌟 Speed effect mode: ${this.isWarpMode ? 'WARP' : 'NORMAL'} (${spacecraftSpeed.toFixed(0)} u/s)`);
         }
 
+        // Warp Effect Logic
         if (this.isWarpMode) {
-            // WARP SPEED EFFECT - Particles streak backwards
-            this.updateWarpMode(positions, sizes, spacecraftPosition, spacecraftDirection, spacecraftSpeed);
+            this.updateWarpMode(positions, spacecraftPosition, spacecraftDirection, spacecraftSpeed);
         } else {
-            // NORMAL MODE - Particles float around
             this.updateNormalMode(positions, spacecraftPosition);
         }
 
         this.mesh.geometry.attributes.position.needsUpdate = true;
-        this.mesh.geometry.attributes.size.needsUpdate = true;
     }
-    
-    updateNormalMode(positions, spacecraftPosition) {
-        // Normal floating particles
-        for (let i = 0; i < this.count; i++) {
-            const x = positions[i * 3];
-            const y = positions[i * 3 + 1];
-            const z = positions[i * 3 + 2];
 
-            // If a particle gets too far from spacecraft, wrap it around
-            if (Math.abs(x - spacecraftPosition.x) > this.range / 2) {
-                positions[i * 3] = spacecraftPosition.x + (Math.random() - 0.5) * this.range;
-            }
-            if (Math.abs(y - spacecraftPosition.y) > this.range / 2) {
-                positions[i * 3 + 1] = spacecraftPosition.y + (Math.random() - 0.5) * this.range;
-            }
-            if (Math.abs(z - spacecraftPosition.z) > this.range / 2) {
-                positions[i * 3 + 2] = spacecraftPosition.z + (Math.random() - 0.5) * this.range;
-            }
-        }
-        
-        // Reset visual properties for normal mode
-        this.baseMaterial.opacity = 0.6;
-        this.baseMaterial.size = 0.8;
-    }
-    
-    updateWarpMode(positions, sizes, spacecraftPosition, direction, speed) {
-        // Warp speed effect - particles stream past
-        const speedFactor = Math.min((speed - this.speedThreshold) / 500, 5.0); // Scale effect
-        const streamSpeed = 2.0 + speedFactor * 3.0; // How fast particles stream backwards
-        
-        // Direction opposite to movement (particles come from ahead, stream past)
-        const moveDir = direction.clone().normalize().multiplyScalar(-streamSpeed);
-        
+    updateNormalMode(positions, spacecraftPosition) {
+        // Wrap logic:
+        // Position = (InitialPosition + SpacecraftPosition) % Range - Range/2
+        // Wait, standard infinite grid:
+        // Relative = (WorldPos + Offset) % Range.
+        // Actually, we want the particles to stay fixed in world space until they go out of bounds.
+
+        const halfRange = this.range / 2;
+
         for (let i = 0; i < this.count; i++) {
             const idx = i * 3;
-            
-            // Move particles backwards relative to spacecraft direction
-            positions[idx] += moveDir.x;
-            positions[idx + 1] += moveDir.y;
-            positions[idx + 2] += moveDir.z;
-            
-            // Calculate distance from spacecraft
-            const dx = positions[idx] - spacecraftPosition.x;
-            const dy = positions[idx + 1] - spacecraftPosition.y;
-            const dz = positions[idx + 2] - spacecraftPosition.z;
-            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            
-            // If particle has streamed too far behind, respawn it ahead
-            if (distance > this.range / 2) {
-                // Spawn ahead in a cone in front of spacecraft
-                const angle = Math.random() * Math.PI * 2;
-                const radius = Math.random() * this.range * 0.4;
-                const ahead = Math.random() * this.range * 0.3 + 50; // Spawn ahead
-                
-                // Position ahead of spacecraft in a cone
-                const right = new THREE.Vector3(-direction.y, direction.x, 0).normalize();
-                const up = new THREE.Vector3().crossVectors(direction, right).normalize();
-                
-                const offset = right.multiplyScalar(Math.cos(angle) * radius)
-                    .add(up.multiplyScalar(Math.sin(angle) * radius))
-                    .add(direction.clone().multiplyScalar(ahead));
-                
-                positions[idx] = spacecraftPosition.x + offset.x;
-                positions[idx + 1] = spacecraftPosition.y + offset.y;
-                positions[idx + 2] = spacecraftPosition.z + offset.z;
-            }
-            
-            // Make particles bigger and brighter at high speed
-            sizes[i] = 1.5 + speedFactor * 2.0;
+
+            // Calculate relative position to camera
+            let x = this.initialPositions[idx] - spacecraftPosition.x;
+            let y = this.initialPositions[idx + 1] - spacecraftPosition.y;
+            let z = this.initialPositions[idx + 2] - spacecraftPosition.z;
+
+            // Efficient Wrap around using modulo (handles large distances without loops)
+            // ((x + halfRange) % range + range) % range - halfRange
+            // This maps any value to [-halfRange, halfRange]
+
+            x = ((x + halfRange) % this.range + this.range) % this.range - halfRange;
+            y = ((y + halfRange) % this.range + this.range) % this.range - halfRange;
+            z = ((z + halfRange) % this.range + this.range) % this.range - halfRange;
+
+            // Update actual mesh position (which is at 0,0,0 usually, but we move vertices)
+            // Or we can move the mesh to spacecraftPosition and offset vertices. 
+            // Better: Mesh is at 0,0,0 (world origin), vertices are at world coordinates.
+            // But floating point precision issues at large distances?
+            // The game uses a scene scale, but coordinates are still large.
+            // Best approach for dust: Keep mesh attached to camera/spacecraft, update vertices.
+
+            // Let's assume mesh is added to scene at 0,0,0.
+            // We set vertices to absolute world positions near spacecraft? No, that causes jitter.
+            // BEST: Add mesh to the spacecraft/camera group! Then vertices are local.
+            // BUT: If particles are "world fixed", they must move opposite to spacecraft in local space.
+
+            // Let's assume mesh is at world origin for now.
+
+            positions[idx] = spacecraftPosition.x + x;
+            positions[idx + 1] = spacecraftPosition.y + y;
+            positions[idx + 2] = spacecraftPosition.z + z;
         }
-        
-        // Enhance visual properties for warp mode
-        this.baseMaterial.opacity = Math.min(0.8 + speedFactor * 0.15, 0.95);
-        this.baseMaterial.size = 1.2 + speedFactor * 0.5;
+
+        this.baseMaterial.opacity = 0.6;
+        this.baseMaterial.size = 0.8;
+        this.baseMaterial.sizeAttenuation = true;
+    }
+
+    updateWarpMode(positions, spacecraftPosition, direction, speed) {
+        const halfRange = this.range / 2;
+
+        // In warp mode, we stretch them and make them stream
+        // This is purely visual, we don't care about "world fixed" accuracy as much
+
+        const speedFactor = Math.min((speed - this.speedThreshold) / 500, 5.0);
+
+        // Update opacity/size
+        this.baseMaterial.opacity = Math.min(0.4 + speedFactor * 0.1, 0.8);
+        this.baseMaterial.size = 0.8 + speedFactor * 0.5;
+        this.baseMaterial.sizeAttenuation = false; // Make them look like streaks? No, keep it true but bigger.
+
+        // Reuse normal mode logic for positioning, but maybe stretch them?
+        // Stretching points requires shaders or lines. Points are always squares/circles.
+        // We'll stick to just fast moving particles for now.
+
+        this.updateNormalMode(positions, spacecraftPosition);
     }
 }

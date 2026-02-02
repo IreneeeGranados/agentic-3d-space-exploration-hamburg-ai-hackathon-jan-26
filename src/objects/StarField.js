@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { generateStarTexture } from '../utils/textureGenerator.js';
 
 export class StarField {
-    constructor(count = 10000, radius = 1000) {
+    constructor(count = 15000, radius = 2000000) {
         this.count = count;
         this.radius = radius;
         this.createStarField();

@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { generateThermalTileTexture, generateHeatShieldTexture } from '../utils/textureGenerator.js';
 
 export class Spacecraft {
     constructor() {
@@ -65,6 +66,11 @@ export class Spacecraft {
         dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
         loader.setDRACOLoader(dracoLoader);
 
+        // Generate NASA Style Textures (Thermal Tiles & Heat Shield)
+        // We use procedural textures instead of loading external files to ensure they exist
+        const tileTexture = generateThermalTileTexture(512);
+        const heatShieldTexture = generateHeatShieldTexture(512);
+
         loader.load('assets/space_shuttle.glb', (gltf) => {
             console.log('Spacecraft Model Loaded');
             const model = gltf.scene;
@@ -74,27 +80,73 @@ export class Spacecraft {
             model.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
-                    child.castShadow = true;
                     child.receiveShadow = false; // Disable self-shadowing to prevent "square" artifacts
-                    if (child.material) {
-                        child.material.metalness = 0.6;
-                        child.material.roughness = 0.4;
-                    }
+
+                    // Apply custom spacecraft material with textures
+                    // Use heat shield for bottom/nose? Since we don't have UV mapping guarantee for specific parts,
+                    // we'll try to apply based on geometry or just use the tile texture which looks cool overall.
+                    // Ideally, we'd mix them based on world position (bottom black, top white), but textures are applied in local UVs.
+                    // For now, let's use the Thermal Tiles as the main hull texture.
+
+                    child.material = new THREE.MeshStandardMaterial({
+                        map: tileTexture,
+                        // normalMap: normalTexture, // Dropping normal map if we don't have a matching one
+                        metalness: 0.2, // Ceramic tiles are not metallic
+                        roughness: 0.8, // Rough ceramic surface
+                        envMapIntensity: 0.5,
+                        color: 0xffffff
+                    });
+
+                    // Enhancement: If we can identify parts by name in the GLB, we could assign heat shield.
+                    // Since we don't know the GLB structure, we stick to the white tiles for a unified "NASA" look.
                 }
             });
 
             this.mesh.add(model);
-            // Re-orient model: GLB standard is usually -Z forward. 
-            // We want nose to point towards +X (Forward).
-            // Rotating +90 deg (Math.PI/2) on Y makes -Z point to +X? 
-            // -Z -> +X is a 270 deg (or -90) rotation if we look from top.
-            // Let's use Math.PI (180 deg) to flip it if it was flying backwards.
-            // The user said it was flying backwards when it was at Math.PI/2. 
-            // So we flip it to -Math.PI/2.
+            // Re-orient Space Shuttle model
+            // If it flies backwards at Math.PI/2, we flip it.
             this.mesh.rotation.y = -Math.PI / 2;
         }, undefined, (error) => {
             console.error('An error occurred loading the spacecraft:', error);
+            // Fallback geometry if model fails
+            this.createFallbackSpacecraft();
         });
+    }
+
+    createFallbackSpacecraft() {
+        // Simple Shuttle-like shape
+        const group = new THREE.Group();
+
+        const tileTexture = generateThermalTileTexture(256);
+        const heatShieldTexture = generateHeatShieldTexture(256);
+
+        const matWhite = new THREE.MeshStandardMaterial({ map: tileTexture, roughness: 0.8, metalness: 0.2 });
+        const matBlack = new THREE.MeshStandardMaterial({ map: heatShieldTexture, roughness: 0.9, metalness: 0.1 });
+
+        // Fuselage
+        const fuselage = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.5, 15, 16), matWhite);
+        fuselage.rotation.z = Math.PI / 2;
+        group.add(fuselage);
+
+        // Nose
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(2, 4, 32), matBlack);
+        nose.rotation.z = -Math.PI / 2;
+        nose.position.x = 9.5;
+        group.add(nose);
+
+        // Wings
+        const wingGeom = new THREE.BoxGeometry(10, 0.5, 12);
+        // Taper wings? simplified to box for now
+        const wings = new THREE.Mesh(wingGeom, matWhite);
+        wings.position.set(-2, -0.5, 0);
+        group.add(wings);
+
+        // Vertical Stabilizer
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(4, 5, 0.5), matWhite);
+        tail.position.set(-6, 3, 0);
+        group.add(tail);
+
+        this.mesh.add(group);
     }
 
 
@@ -227,27 +279,64 @@ export class Spacecraft {
 
         offset.applyQuaternion(this.group.quaternion).add(this.group.position);
 
-        // Dynamic camera catch-up
+        // Dynamic camera catch-up based on speed AND distance
         const distance = camera.position.distanceTo(offset);
         let lerpFactor = 0.1;
+
+        // Dynamic FOV Effect (Warp Speed Sensation)
+        // Base FOV is usually 60 or 75. We widen it as speed increases.
+        const baseFOV = 60;
+        const maxFOV = 100;
+        // Normalize speed for effect (0 to 1 range for speeds 0 to 5000)
+        const effectIntensity = Math.min(this.forwardSpeed / 5000, 1.0);
+
+        const targetFOV = THREE.MathUtils.lerp(baseFOV, maxFOV, effectIntensity);
+        // Smoothly interpolate current FOV to target
+        camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.05);
+        camera.updateProjectionMatrix();
 
         if (this.viewMode === 'COCKPIT') {
             // FIX: Hard lock for cockpit to prevent jitter/float
             lerpFactor = 1.0;
         } else {
-            // Chase Mode Logic
-            // If we are moving very fast and the camera falls behind, snap it quicker
-            if (distance > 500) {
-                lerpFactor = 0.5;
+            // Speed-based camera follow: faster ship = snappier camera
+            // This prevents camera lag and clipping at high speeds
+            const speedRatio = Math.min(this.forwardSpeed / 1000, 1.0); // Normalize to 0-1 for speeds up to 1000
+            const baseMinLerp = 0.1;
+            const baseMaxLerp = 0.8;
+
+            // Higher speed = higher base lerp factor
+            lerpFactor = THREE.MathUtils.lerp(baseMinLerp, baseMaxLerp, speedRatio);
+
+            // Distance-based adjustments (tighter thresholds for responsiveness)
+            const speedAdjustedThreshold = Math.max(50, 200 - speedRatio * 150);
+
+            if (distance > speedAdjustedThreshold) {
+                // Camera falling behind - increase lerp
+                lerpFactor = Math.min(lerpFactor + 0.3, 0.95);
             }
-            if (distance > 2000) {
-                // Hard teleport if way too far (warp speed)
+
+            if (distance > speedAdjustedThreshold * 3) {
+                // Camera way behind - snap harder
+                lerpFactor = 0.98;
+            }
+
+            if (distance > speedAdjustedThreshold * 10 || this.forwardSpeed > 50000) {
+                // Warp speed or extreme lag - hard teleport to prevent clipping
                 camera.position.copy(offset);
                 lerpFactor = 1.0;
             }
         }
 
         camera.position.lerp(offset, lerpFactor);
+
+        // Camera Shake Effect at high speeds
+        if (this.forwardSpeed > 500) {
+            const shakeIntensity = Math.min((this.forwardSpeed - 500) / 5000, 1.0) * 0.5;
+            camera.position.x += (Math.random() - 0.5) * shakeIntensity;
+            camera.position.y += (Math.random() - 0.5) * shakeIntensity;
+            camera.position.z += (Math.random() - 0.5) * shakeIntensity;
+        }
 
         lookAhead.applyQuaternion(this.group.quaternion).add(this.group.position);
         camera.lookAt(lookAhead);
