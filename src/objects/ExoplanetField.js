@@ -34,16 +34,17 @@ export class ExoplanetField {
 
         // LOD System - Distance-based texture loading
         // Distance values are in world units (after x10000 scale)
-        // The world uses a x10000 scale, so distances are HUGE
+        // Optimized for performance - loads textures lazily to prevent freezing
         this.lodConfig = {
-            highDetailDistance: 5000000,    // 5 million units - load high-res within this range
-            mediumDetailDistance: 15000000, // 15 million units - unload beyond this
-            updateInterval: 500,            // Check every 500ms for responsiveness
-            maxUpdatesPerFrame: 10          // Allow more updates per frame for faster loading
+            highDetailDistance: 2000000,    // 2 million units - more selective
+            mediumDetailDistance: 5000000,  // 5 million units - unload beyond this
+            updateInterval: 1000,           // Check every 1000ms (less frequent)
+            maxUpdatesPerFrame: 2           // Only 2 updates per frame to maintain 60fps
         };
         this.lastLodUpdate = 0;
         this.planetMeshMap = new Map(); // Map planet name -> mesh for quick lookup
         this.loadedHighResTextures = new Set(); // Track which planets have high-res textures loaded
+        this.pendingLazyLoads = []; // Track pending lazy load operations
     }
 
     /**
@@ -517,58 +518,92 @@ export class ExoplanetField {
     }
 
     /**
-     * Force immediate LOD refresh - call after teleportation
-     * This immediately updates ALL planets without the frame limit
+     * Force LOD refresh - call after teleportation
+     * Uses lazy loading to prevent screen freezing - textures load progressively
      */
     forceRefreshLOD(spacecraftPosition) {
         if (!spacecraftPosition) return;
 
-        console.log('🔄 Force refreshing LOD for all planets...');
+        console.log('🔄 Starting lazy LOD refresh...');
         console.log(`📍 Spacecraft position: ${spacecraftPosition.x.toFixed(0)}, ${spacecraftPosition.y.toFixed(0)}, ${spacecraftPosition.z.toFixed(0)}`);
-        console.log(`📊 Total planets in map: ${this.planetMeshMap.size}`);
 
-        // First, downgrade all currently loaded high-res textures
+        // Cancel any pending lazy load operations
+        if (this.pendingLazyLoads) {
+            this.pendingLazyLoads.forEach(id => {
+                if (window.cancelIdleCallback) cancelIdleCallback(id);
+                else clearTimeout(id);
+            });
+        }
+        this.pendingLazyLoads = [];
+
+        // Quick downgrade of previously loaded textures (this is fast)
         for (const planetName of this.loadedHighResTextures) {
             const mesh = this.planetMeshMap.get(planetName);
             if (mesh) {
                 const planetData = mesh.userData.planetData || mesh.userData.planet;
                 if (planetData && !planetData.isSolar && !mesh.userData.isSolar) {
-                    this.downgradeToLowResTexture(mesh, planetData);
+                    // Quick downgrade - just set color, don't regenerate textures
+                    if (mesh.material) {
+                        mesh.material.map = null;
+                        mesh.material.normalMap = null;
+                        mesh.material.needsUpdate = true;
+                    }
                 }
             }
         }
         this.loadedHighResTextures.clear();
 
-        // Now upgrade nearby planets immediately
-        let upgraded = 0;
-        let closestDistance = Infinity;
-        let closestPlanet = null;
+        // Find all planets that need upgrading, sorted by distance (closest first)
+        const planetsToUpgrade = [];
 
         for (const [planetName, mesh] of this.planetMeshMap) {
             const planetWorldPos = new THREE.Vector3();
             mesh.getWorldPosition(planetWorldPos);
             const distance = spacecraftPosition.distanceTo(planetWorldPos);
 
-            // Track closest for debugging
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestPlanet = planetName;
-            }
-
             const planetData = mesh.userData.planetData || mesh.userData.planet;
             if (planetData?.isSolar || mesh.userData.isSolar) continue;
 
-            // Use larger threshold due to x10000 scale
             if (distance < this.lodConfig.highDetailDistance) {
-                this.upgradeToHighResTexture(mesh, planetData);
-                this.loadedHighResTextures.add(planetName);
-                upgraded++;
+                planetsToUpgrade.push({ planetName, mesh, planetData, distance });
             }
         }
 
-        console.log(`📏 Closest planet: ${closestPlanet} at distance ${closestDistance.toFixed(0)}`);
-        console.log(`🎯 LOD threshold: ${this.lodConfig.highDetailDistance}`);
-        console.log(`✅ LOD refresh complete: ${upgraded} planets upgraded to high-res`);
+        // Sort by distance - load closest planets first
+        planetsToUpgrade.sort((a, b) => a.distance - b.distance);
+
+        console.log(`📊 ${planetsToUpgrade.length} planets queued for lazy loading`);
+
+        // Load textures lazily, one at a time, using idle callbacks
+        let loadIndex = 0;
+        const loadNext = () => {
+            if (loadIndex >= planetsToUpgrade.length) {
+                console.log(`✅ Lazy LOD complete: ${planetsToUpgrade.length} planets upgraded`);
+                return;
+            }
+
+            const { planetName, mesh, planetData } = planetsToUpgrade[loadIndex];
+
+            // Upgrade this planet's texture
+            this.upgradeToHighResTexture(mesh, planetData);
+            this.loadedHighResTextures.add(planetName);
+            loadIndex++;
+
+            // Schedule next load during idle time (or use setTimeout fallback)
+            const scheduleNext = (callback) => {
+                if (window.requestIdleCallback) {
+                    return window.requestIdleCallback(callback, { timeout: 100 });
+                } else {
+                    return setTimeout(callback, 16); // ~60fps frame budget
+                }
+            };
+
+            const id = scheduleNext(loadNext);
+            this.pendingLazyLoads.push(id);
+        };
+
+        // Start lazy loading after a brief delay to let the teleport animation finish
+        setTimeout(loadNext, 50);
     }
 
     /**
