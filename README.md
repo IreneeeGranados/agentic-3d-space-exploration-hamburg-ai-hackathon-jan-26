@@ -2,7 +2,7 @@
 
 > **Explore 6,000+ Real NASA Exoplanets in 3D**
 
-[![Live Demo](https://img.shields.io/badge/🌌_LIVE_DEMO-Launch_Space_Odyssey-blueviolet?style=for-the-badge)](https://space-odyssey-8ga-87l.pages.dev)
+[![Live Demo](https://img.shields.io/badge/🌌_LIVE_DEMO-Launch_Space_Odyssey-blueviolet?style=for-the-badge)](https://agentic-space-exploration.pages.dev)
 
 [![GitHub Pages](https://img.shields.io/badge/🔬_ALTERNATIVE-GitHub_Pages_(Beta)-gray?style=for-the-badge)](https://zaexv.github.io/agentic-3d-space-exploration-hamburg-ai-hackathon-jan-26/)
 
@@ -106,6 +106,6 @@ Built with ❤️ at **Hamburg AI Hackathon 2026** by **Eduardo Pertierra Puche*
 
 <div align="center">
 
-**[🚀 Launch Demo](https://space-odyssey-8ga.pages.dev)** · **[📄 View Code](https://github.com/Zaexv/agentic-3d-space-exploration-hamburg-ai-hackathon-jan-26)**
+**[🚀 Launch Demo](https://agentic-space-exploration.pages.dev)** · **[📄 View Code](https://github.com/Zaexv/agentic-3d-space-exploration-hamburg-ai-hackathon-jan-26)**
 
 </div>
