@@ -674,9 +674,15 @@ export class PlanetExplorationDialog {
             }
         } catch (error) {
             console.error('Error generating AI description:', error);
+
+            let errorMessage = 'Failed to generate description. Please try again.';
+            if (error.code === 'QUOTA_EXCEEDED') {
+                errorMessage = `It seems I've run out of cosmic energy (Quota Exceeded). Please reach out to the project maintainer to recharge me: <a href="https://www.linkedin.com/in/epertierra" target="_blank" style="color: #00d9ff; text-decoration: underline;">Eduardo Pertierra</a>`;
+            }
+
             this.elements.aiDescriptionContainer.innerHTML = `
                 <div class="ai-description-error">
-                    <p>Failed to generate description. Please try again.</p>
+                    <p>${errorMessage}</p>
                     <div class="ai-description-actions">
                         <button class="ai-regenerate-btn" onclick="window.planetExplorationDialog.loadAIDescription(window.planetExplorationDialog.currentPlanet)">
                             Retry
@@ -762,9 +768,14 @@ export class PlanetExplorationDialog {
         } catch (error) {
             console.error('Error generating characteristics insights:', error);
 
+            let errorMessage = `❌ Failed to generate insights: ${error.message}`;
+            if (error.code === 'QUOTA_EXCEEDED') {
+                errorMessage = `It seems I've run out of cosmic energy (Quota Exceeded). Please reach out to the project maintainer to recharge me: <a href="https://www.linkedin.com/in/epertierra" target="_blank" style="color: #00d9ff; text-decoration: underline;">Eduardo Pertierra</a>`;
+            }
+
             container.innerHTML = `
                 <div class="ai-insights-error">
-                    <p>❌ Failed to generate insights: ${error.message}</p>
+                    <p>${errorMessage}</p>
                     <button class="ai-retry-btn" onclick="document.getElementById('generate-insights-btn').click()">
                         Try Again
                     </button>
@@ -1053,7 +1064,12 @@ export class PlanetExplorationDialog {
         } catch (error) {
             console.error('Chat error:', error);
             this.removeChatMessage(loadingId);
-            this.addChatMessage('error', `Sorry, I couldn't process that. ${error.message}`);
+
+            if (error.code === 'QUOTA_EXCEEDED') {
+                this.addChatMessage('error', `It seems I've run out of cosmic energy (Quota Exceeded). Please reach out to the project maintainer to recharge me: <a href="https://www.linkedin.com/in/epertierra" target="_blank" style="color: #00d9ff; text-decoration: underline;">Eduardo Pertierra</a>`);
+            } else {
+                this.addChatMessage('error', `Sorry, I couldn't process that. ${error.message}`);
+            }
         } finally {
             // Re-enable input
             if (this.elements.chatInput) this.elements.chatInput.disabled = false;

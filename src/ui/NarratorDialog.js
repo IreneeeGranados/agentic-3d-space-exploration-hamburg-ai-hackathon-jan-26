@@ -10,7 +10,7 @@ export class NarratorDialog {
         this.currentPlanet = null;
         this.typewriterInterval = null;
         this.chatHistory = [];
-        
+
         this.createDialog();
         this.attachEventListeners();
     }
@@ -20,7 +20,7 @@ export class NarratorDialog {
         this.container = document.createElement('div');
         this.container.id = 'narrator-dialog';
         this.container.className = 'narrator-dialog';
-        
+
         this.container.innerHTML = `
             <div class="narrator-content">
                 <!-- Loading Screen -->
@@ -121,7 +121,7 @@ export class NarratorDialog {
         `;
 
         document.body.appendChild(this.container);
-        
+
         // Cache element references
         this.elements = {
             planetName: document.getElementById('narrator-planet-name'),
@@ -145,22 +145,22 @@ export class NarratorDialog {
             console.log('❌ Close button clicked');
             this.hide();
         });
-        
+
         // Skip button
         this.elements.skipBtn.addEventListener('click', () => {
             console.log('⏭️ Skip button clicked');
             this.skip();
         });
-        
+
         // Minimize button
         this.elements.minimizeBtn.addEventListener('click', () => {
             console.log('🔽 Minimize button clicked');
             this.minimize();
         });
-        
+
         // Chat send button
         this.elements.chatSend.addEventListener('click', () => this.handleChatSend());
-        
+
         // Chat input - Enter key
         this.elements.chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -169,14 +169,14 @@ export class NarratorDialog {
                 this.handleChatSend();
             }
         });
-        
+
         // ESC key to close
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isVisible) {
                 console.log('⌨️ ESC pressed - closing dialog');
                 this.hide();
             }
-            
+
             // Prevent other keyboard shortcuts when dialog is open and user is typing
             if (this.isVisible && document.activeElement === this.elements.chatInput) {
                 // Only allow ESC, Enter, and normal typing
@@ -185,7 +185,7 @@ export class NarratorDialog {
                 }
             }
         });
-        
+
         console.log('✅ NarratorDialog event listeners attached');
     }
 
@@ -215,13 +215,13 @@ export class NarratorDialog {
             textLength: text?.length,
             hasAudio: !!audioBlob
         });
-        
+
         this.currentPlanet = planet;
-        
+
         // Clear chat history for new planet
         this.chatHistory = [];
         this.elements.chatMessages.innerHTML = '';
-        
+
         // Enable chat input if AI is available
         if (this.narrationService && this.narrationService.openAIService) {
             this.elements.chatInput.disabled = false;
@@ -231,29 +231,29 @@ export class NarratorDialog {
             this.elements.chatSend.disabled = true;
             this.elements.chatInput.placeholder = 'AI not configured';
         }
-        
+
         // Update content
         this.elements.planetName.textContent = planet.pl_name || 'Unknown Planet';
         console.log('✅ Planet name set to:', this.elements.planetName.textContent);
-        
+
         // Clear previous text
         this.elements.text.textContent = '';
-        
+
         // Show dialog
         console.log('👁️ Adding visible class to container...');
         this.container.classList.add('visible');
         this.container.classList.remove('minimized');
         this.isVisible = true;
-        
+
         // Hide loading overlay (if it was showing)
         this.hideLoading();
-        
+
         console.log('📝 Container classes:', this.container.className);
         console.log('📏 Container computed display:', window.getComputedStyle(this.container).display);
-        
+
         // Start typewriter effect for text
         this.typewriterEffect(text);
-        
+
         // Play audio if available (with delay to let text start appearing)
         if (audioBlob) {
             setTimeout(() => {
@@ -262,22 +262,22 @@ export class NarratorDialog {
         } else {
             this.elements.audioIndicator.style.display = 'none';
         }
-        
+
         console.log('✅ show() method completed');
     }
-    
+
     /**
      * Typewriter effect for text display
      */
     typewriterEffect(text, speed = 30) {
         let index = 0;
         this.elements.text.textContent = '';
-        
+
         // Clear any existing typewriter interval
         if (this.typewriterInterval) {
             clearInterval(this.typewriterInterval);
         }
-        
+
         this.typewriterInterval = setInterval(() => {
             if (index < text.length) {
                 this.elements.text.textContent += text.charAt(index);
@@ -295,29 +295,29 @@ export class NarratorDialog {
     async playAudio(audioBlob) {
         // Stop any existing audio
         this.stopAudio();
-        
+
         // Show audio indicator
         this.elements.audioIndicator.style.display = 'flex';
-        
+
         // Animate chatbot face (talking)
         if (this.elements.chatbotFace) {
             this.elements.chatbotFace.classList.add('talking');
         }
-        
+
         // Create audio element
         this.audioElement = new Audio();
         this.audioElement.src = URL.createObjectURL(audioBlob);
-        
+
         // Handle audio events
         this.audioElement.addEventListener('ended', () => {
             console.log('🎙️ Audio finished');
             this.elements.audioIndicator.style.display = 'none';
-            
+
             // Stop chatbot face animation
             if (this.elements.chatbotFace) {
                 this.elements.chatbotFace.classList.remove('talking');
             }
-            
+
             // Auto-hide after audio ends
             setTimeout(() => {
                 if (this.isVisible) {
@@ -325,12 +325,12 @@ export class NarratorDialog {
                 }
             }, 2000); // Stay visible 2 seconds after audio ends
         });
-        
+
         this.audioElement.addEventListener('error', (e) => {
             console.error('❌ Audio playback error:', e);
             this.elements.audioIndicator.style.display = 'none';
         });
-        
+
         // Play audio
         try {
             await this.audioElement.play();
@@ -348,12 +348,12 @@ export class NarratorDialog {
         if (this.audioElement) {
             this.audioElement.pause();
             this.audioElement.currentTime = 0;
-            
+
             // Clean up blob URL
             if (this.audioElement.src) {
                 URL.revokeObjectURL(this.audioElement.src);
             }
-            
+
             this.audioElement = null;
         }
     }
@@ -367,7 +367,7 @@ export class NarratorDialog {
             clearInterval(this.typewriterInterval);
             this.typewriterInterval = null;
         }
-        
+
         this.stopAudio();
         this.hide();
     }
@@ -379,29 +379,29 @@ export class NarratorDialog {
         this.container.classList.remove('visible');
         this.container.classList.remove('minimized');
         this.isVisible = false;
-        
+
         // Stop typewriter effect
         if (this.typewriterInterval) {
             clearInterval(this.typewriterInterval);
             this.typewriterInterval = null;
         }
-        
+
         // Stop and clean up audio
         this.stopAudio();
-        
+
         // Hide loading overlay
         this.hideLoading();
-        
+
         // Clear current planet
         this.currentPlanet = null;
-        
+
         // Clear chat history
         this.chatHistory = [];
         this.elements.chatMessages.innerHTML = '';
-        
+
         // Reset input
         this.elements.chatInput.value = '';
-        
+
         console.log('✅ NarratorDialog closed and cleaned up');
     }
 
@@ -418,47 +418,50 @@ export class NarratorDialog {
     async handleChatSend() {
         const input = this.elements.chatInput;
         const message = input.value.trim();
-        
+
         if (!message || !this.currentPlanet) return;
-        
+
         // Clear input
         input.value = '';
-        
+
         // Add user message to chat
         this.addChatMessage('user', message);
-        
+
         // Show loading overlay
         this.showLoading();
-        
+
         // Disable input while processing
         this.elements.chatInput.disabled = true;
         this.elements.chatSend.disabled = true;
-        
+
         try {
             // Generate response using AI
             const response = await this.askQuestion(message);
-            
+
             // Hide loading overlay
             this.hideLoading();
-            
+
             // Re-enable input
             this.elements.chatInput.disabled = false;
             this.elements.chatSend.disabled = false;
-            
-            // Add AI response
+
             this.addChatMessage('assistant', response);
-            
+
         } catch (error) {
             console.error('❌ Chat error:', error);
             this.hideLoading();
-            
+
             // Re-enable input
             this.elements.chatInput.disabled = false;
             this.elements.chatSend.disabled = false;
-            
-            this.addChatMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+
+            if (error.code === 'QUOTA_EXCEEDED') {
+                this.addChatMessage('assistant', `It seems I've run out of cosmic energy (Quota Exceeded). Please reach out to the project maintainer to recharge me: <a href="https://www.linkedin.com/in/epertierra" target="_blank" style="color: #00d9ff; text-decoration: underline;">Eduardo Pertierra</a>`);
+            } else {
+                this.addChatMessage('assistant', 'Sorry, I encountered an error. Please try again.');
+            }
         }
-        
+
         // Focus back on input
         this.elements.chatInput.focus();
     }
@@ -473,7 +476,7 @@ export class NarratorDialog {
 
         const planet = this.currentPlanet;
         const characteristics = planet.characteristics || {};
-        
+
         const context = `You are SpAIce, an enthusiastic AI space guide. Answer this question about ${planet.pl_name}:
 
 Question: ${question}
@@ -506,23 +509,23 @@ Provide a concise, friendly answer (2-3 sentences). Be enthusiastic and educatio
         const messageEl = document.createElement('div');
         messageEl.className = `narrator-chat-message ${role}`;
         messageEl.id = messageId;
-        
+
         if (isLoading) {
             messageEl.classList.add('loading');
         }
-        
+
         const icon = role === 'user' ? '👤' : '🤖';
-        
+
         messageEl.innerHTML = `
             <div class="message-icon">${icon}</div>
             <div class="message-text">${text}</div>
         `;
-        
+
         this.elements.chatMessages.appendChild(messageEl);
-        
+
         // Scroll to bottom
         this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
-        
+
         return messageId;
     }
 

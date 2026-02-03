@@ -56,9 +56,17 @@ Make it educational but captivating.`
 
 // Simple flag to check if AI is configured
 export function isAIConfigured() {
-    return CONFIG.features.enableAI &&
-        CONFIG.openai.apiKey &&
-        CONFIG.openai.apiKey !== 'YOUR_OPENAI_API_KEY_HERE';
+    const hasKey = CONFIG.openai.apiKey && CONFIG.openai.apiKey !== 'YOUR_OPENAI_API_KEY_HERE';
+    const enabled = CONFIG.features.enableAI && hasKey;
+
+    // Log configuration status (helpful for debugging in production)
+    if (!hasKey) {
+        console.warn('⚠️ OpenAI API key is missing or invalid in config');
+    } else if (!CONFIG.features.enableAI) {
+        console.log('ℹ️ AI features are disabled in config');
+    }
+
+    return enabled;
 }
 
 export function isNarrationConfigured() {

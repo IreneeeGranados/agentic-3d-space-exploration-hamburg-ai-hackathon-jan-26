@@ -32,6 +32,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
+          VITE_ELEVENLABS_API_KEY: ${{ secrets.VITE_ELEVENLABS_API_KEY }}
         run: npm run build
 
       - name: Setup Pages
