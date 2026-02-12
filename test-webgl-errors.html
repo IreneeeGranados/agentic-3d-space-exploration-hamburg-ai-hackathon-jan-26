@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL Error Testing</title>
+    <link rel="stylesheet" href="loading.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #39ff14;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.8);
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 2px solid rgba(57, 255, 20, 0.3);
+        }
+
+        .test-section h2 {
+            color: #00ffff;
+            margin-top: 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #39ff14 0%, #00ff88 100%);
+            border: 2px solid #39ff14;
+            color: #000;
+            padding: 12px 24px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+        }
+
+        .error-preview {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 107, 0, 0.3);
+            display: none;
+        }
+
+        .error-preview.visible {
+            display: block;
+        }
+
+        code {
+            background: rgba(57, 255, 20, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #39ff14;
+        }
+
+        .info {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-container">
+        <h1>🧪 WebGL Error Testing Suite</h1>
+        <p style="text-align: center; color: #888;">
+            Click the buttons below to simulate different WebGL error scenarios
+        </p>
+
+        <!-- Test 1: Hardware Issue -->
+        <div class="test-section">
+            <h2>1. Hardware/Driver Issue (Most Common)</h2>
+            <p>Simulates the error when hardware acceleration is disabled or GPU drivers are problematic.</p>
+            <button onclick="testHardwareIssue()">Simulate Hardware Issue</button>
+            <div id="preview-hardware" class="error-preview"></div>
+            <p class="info">
+                <strong>Real-world trigger:</strong> Disable hardware acceleration in
+                <code>chrome://settings/system</code>
+            </p>
+        </div>
+
+        <!-- Test 2: Old Browser -->
+        <div class="test-section">
+            <h2>2. Old Browser</h2>
+            <p>Simulates the error when using an outdated browser that doesn't support WebGL.</p>
+            <button onclick="testOldBrowser()">Simulate Old Browser</button>
+            <div id="preview-old-browser" class="error-preview"></div>
+            <p class="info">
+                <strong>Real-world trigger:</strong> Use Internet Explorer or very old browser versions
+            </p>
+        </div>
+
+        <!-- Test 3: No WebGL Support -->
+        <div class="test-section">
+            <h2>3. No WebGL Support</h2>
+            <p>Simulates the error when the browser doesn't support WebGL at all.</p>
+            <button onclick="testNoWebGLSupport()">Simulate No WebGL Support</button>
+            <div id="preview-no-webgl" class="error-preview"></div>
+            <p class="info">
+                <strong>Real-world trigger:</strong> WebGL disabled in browser settings or security software blocking it
+            </p>
+        </div>
+
+        <!-- Test 4: No Canvas -->
+        <div class="test-section">
+            <h2>4. No Canvas Support</h2>
+            <p>Simulates the error when HTML5 Canvas is not supported (extremely rare).</p>
+            <button onclick="testNoCanvas()">Simulate No Canvas</button>
+            <div id="preview-no-canvas" class="error-preview"></div>
+            <p class="info">
+                <strong>Real-world trigger:</strong> Very old browsers or Canvas disabled
+            </p>
+        </div>
+
+        <!-- Test 5: All Errors Comparison -->
+        <div class="test-section">
+            <h2>5. View All Errors Side-by-Side</h2>
+            <p>Display all error types simultaneously for comparison.</p>
+            <button onclick="showAllErrors()">Show All Errors</button>
+            <button onclick="hideAllErrors()">Hide All Errors</button>
+        </div>
+
+        <!-- Test 6: Test Detection Utility -->
+        <div class="test-section">
+            <h2>6. Test Your Browser's WebGL Support</h2>
+            <p>Run the actual WebGL detection on your current browser.</p>
+            <button onclick="testActualWebGL()">Test Current Browser</button>
+            <div id="actual-test-result" class="error-preview"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { WebGLDetector } from './src/utils/WebGLDetector.js';
+
+        // Make functions globally available
+        window.testHardwareIssue = function () {
+            const mockError = {
+                errorMessage: {
+                    title: 'Graphics Hardware Issue',
+                    description: 'WebGL is available but cannot initialize. This is usually due to graphics driver or hardware acceleration issues.',
+                    steps: [
+                        'Enable hardware acceleration in your browser settings',
+                        'Update your graphics drivers to the latest version',
+                        'Try restarting your browser',
+                        'Check if your GPU is blacklisted by visiting chrome://gpu or about:support',
+                        'Try disabling browser extensions that might interfere with graphics'
+                    ]
+                },
+                diagnostics: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    vendor: navigator.vendor,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    pixelRatio: window.devicePixelRatio || 1,
+                    gpu: 'Unable to detect'
+                }
+            };
+            displayError('preview-hardware', mockError);
+        };
+
+        window.testOldBrowser = function () {
+            const mockError = {
+                errorMessage: {
+                    title: 'Browser Too Old',
+                    description: 'Your browser version is too old and does not support WebGL.',
+                    steps: [
+                        'Update to the latest version of your browser',
+                        'Consider switching to a modern browser like Chrome, Firefox, or Edge',
+                        'Ensure your operating system is up to date'
+                    ]
+                },
+                diagnostics: {
+                    userAgent: 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; Trident/6.0)',
+                    platform: 'Win32',
+                    vendor: 'Microsoft',
+                    screenResolution: '1920x1080',
+                    pixelRatio: 1,
+                    gpu: 'Not available'
+                }
+            };
+            displayError('preview-old-browser', mockError);
+        };
+
+        window.testNoWebGLSupport = function () {
+            const mockError = {
+                errorMessage: {
+                    title: 'WebGL Not Supported',
+                    description: 'Your browser does not support WebGL technology.',
+                    steps: [
+                        'Update your browser to the latest version',
+                        'Try a different browser (Chrome, Firefox, Edge, or Safari)',
+                        'Check if WebGL is disabled in your browser settings'
+                    ]
+                },
+                diagnostics: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    vendor: navigator.vendor,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    pixelRatio: window.devicePixelRatio || 1,
+                    gpu: 'WebGL not available'
+                }
+            };
+            displayError('preview-no-webgl', mockError);
+        };
+
+        window.testNoCanvas = function () {
+            const mockError = {
+                errorMessage: {
+                    title: 'Canvas Not Supported',
+                    description: 'Your browser does not support HTML5 Canvas, which is required for this application.',
+                    steps: [
+                        'Update your browser to the latest version',
+                        'Try using a modern browser (Chrome, Firefox, Edge, or Safari)',
+                        'Check if your browser has Canvas support disabled'
+                    ]
+                },
+                diagnostics: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    vendor: navigator.vendor,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    pixelRatio: window.devicePixelRatio || 1,
+                    gpu: 'Not available'
+                }
+            };
+            displayError('preview-no-canvas', mockError);
+        };
+
+        window.showAllErrors = function () {
+            testHardwareIssue();
+            testOldBrowser();
+            testNoWebGLSupport();
+            testNoCanvas();
+        };
+
+        window.hideAllErrors = function () {
+            document.querySelectorAll('.error-preview').forEach(el => {
+                el.classList.remove('visible');
+            });
+        };
+
+        window.testActualWebGL = function () {
+            const result = WebGLDetector.detectWebGL();
+            const preview = document.getElementById('actual-test-result');
+
+            if (result.supported) {
+                preview.innerHTML = `
+                    <div style="color: #39ff14;">
+                        <h3>✅ WebGL is Supported!</h3>
+                        <p><strong>WebGL 2:</strong> ${result.webgl2 ? 'Yes' : 'No'}</p>
+                        <p><strong>WebGL 1:</strong> ${result.webgl1 ? 'Yes' : 'No'}</p>
+                        <h4>Diagnostics:</h4>
+                        <p><strong>Browser:</strong> ${result.diagnostics.userAgent}</p>
+                        <p><strong>Platform:</strong> ${result.diagnostics.platform}</p>
+                        <p><strong>Screen:</strong> ${result.diagnostics.screenResolution}</p>
+                        <p><strong>Pixel Ratio:</strong> ${result.diagnostics.pixelRatio}</p>
+                        ${result.diagnostics.gpu ? `
+                            <p><strong>GPU Vendor:</strong> ${result.diagnostics.gpu.vendor}</p>
+                            <p><strong>GPU Renderer:</strong> ${result.diagnostics.gpu.renderer}</p>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                displayError('actual-test-result', result);
+            }
+            preview.classList.add('visible');
+        };
+
+        function displayError(previewId, errorData) {
+            const preview = document.getElementById(previewId);
+            const errorInfo = errorData.errorMessage;
+
+            preview.innerHTML = `
+                <div class="webgl-error-content">
+                    <div class="error-icon">⚠️</div>
+                    <h2 class="error-title">${errorInfo.title}</h2>
+                    <p class="error-description">${errorInfo.description}</p>
+                    
+                    <div class="error-section">
+                        <h3>Troubleshooting Steps:</h3>
+                        <ol class="error-steps">
+                            ${errorInfo.steps.map(step => `<li>${step}</li>`).join('')}
+                        </ol>
+                    </div>
+
+                    <div class="error-section">
+                        <h3>Helpful Resources:</h3>
+                        <ul class="error-links">
+                            <li><a href="https://get.webgl.org/" target="_blank">Check WebGL Support</a></li>
+                            <li><a href="https://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" target="_blank">WebGL Setup Guide</a></li>
+                        </ul>
+                    </div>
+
+                    ${errorData.diagnostics ? `
+                    <details class="error-diagnostics">
+                        <summary>Diagnostic Information (for support)</summary>
+                        <div class="diagnostic-info">
+                            <p><strong>Browser:</strong> ${errorData.diagnostics.userAgent || 'Unknown'}</p>
+                            <p><strong>Platform:</strong> ${errorData.diagnostics.platform || 'Unknown'}</p>
+                            ${errorData.diagnostics.gpu && errorData.diagnostics.gpu !== 'Unable to detect' && errorData.diagnostics.gpu !== 'Not available' && errorData.diagnostics.gpu !== 'WebGL not available' ? `
+                                <p><strong>GPU Vendor:</strong> ${errorData.diagnostics.gpu.vendor || errorData.diagnostics.gpu}</p>
+                                ${errorData.diagnostics.gpu.renderer ? `<p><strong>GPU Renderer:</strong> ${errorData.diagnostics.gpu.renderer}</p>` : ''}
+                            ` : `<p><strong>GPU:</strong> ${errorData.diagnostics.gpu}</p>`}
+                            <p><strong>Screen:</strong> ${errorData.diagnostics.screenResolution || 'Unknown'}</p>
+                            <p><strong>Pixel Ratio:</strong> ${errorData.diagnostics.pixelRatio || 'Unknown'}</p>
+                        </div>
+                    </details>
+                    ` : ''}
+                </div>
+            `;
+
+            preview.classList.add('visible');
+        }
+
+        console.log('🧪 WebGL Error Testing Suite Loaded');
+        console.log('Click the buttons to simulate different error scenarios');
+    </script>
+</body>
+
+</html>

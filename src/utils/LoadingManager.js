@@ -289,6 +289,80 @@ export class LoadingManager {
     }
 
     /**
+     * Show WebGL-specific error with diagnostic information
+     */
+    showWebGLError(webglError) {
+        this.stopSlideshow();
+        this.stopProgressAnimation();
+
+        const errorInfo = webglError.errorMessage || {
+            title: 'WebGL Unavailable',
+            description: 'WebGL could not be initialized.',
+            steps: ['Update your browser', 'Enable hardware acceleration', 'Update graphics drivers']
+        };
+
+        // Update status
+        this.updateStatus('⚠️ ' + errorInfo.title, errorInfo.description);
+
+        // Change progress bar to error state
+        if (this.progressBar) {
+            this.progressBar.style.background = 'linear-gradient(90deg, #ff6b00, #ff0000)';
+            this.progressBar.style.width = '100%';
+        }
+
+        // Create detailed error content
+        const detailHTML = `
+            <div class="webgl-error-content">
+                <div class="error-icon">⚠️</div>
+                <h2 class="error-title">${errorInfo.title}</h2>
+                <p class="error-description">${errorInfo.description}</p>
+                
+                <div class="error-section">
+                    <h3>Troubleshooting Steps:</h3>
+                    <ol class="error-steps">
+                        ${errorInfo.steps.map(step => `<li>${step}</li>`).join('')}
+                    </ol>
+                </div>
+
+                <div class="error-section">
+                    <h3>Helpful Resources:</h3>
+                    <ul class="error-links">
+                        <li><a href="https://get.webgl.org/" target="_blank">Check WebGL Support</a></li>
+                        <li><a href="https://www.khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" target="_blank">WebGL Setup Guide</a></li>
+                    </ul>
+                </div>
+
+                ${webglError.diagnostics ? `
+                <details class="error-diagnostics">
+                    <summary>Diagnostic Information (for support)</summary>
+                    <div class="diagnostic-info">
+                        <p><strong>Browser:</strong> ${webglError.diagnostics.userAgent || 'Unknown'}</p>
+                        <p><strong>Platform:</strong> ${webglError.diagnostics.platform || 'Unknown'}</p>
+                        ${webglError.diagnostics.gpu ? `
+                            <p><strong>GPU Vendor:</strong> ${webglError.diagnostics.gpu.vendor || 'Unknown'}</p>
+                            <p><strong>GPU Renderer:</strong> ${webglError.diagnostics.gpu.renderer || 'Unknown'}</p>
+                        ` : ''}
+                        <p><strong>Screen:</strong> ${webglError.diagnostics.screenResolution || 'Unknown'}</p>
+                        <p><strong>Pixel Ratio:</strong> ${webglError.diagnostics.pixelRatio || 'Unknown'}</p>
+                    </div>
+                </details>
+                ` : ''}
+            </div>
+        `;
+
+        // Replace detail element with error content
+        if (this.detailElement) {
+            this.detailElement.innerHTML = detailHTML;
+            this.detailElement.style.maxWidth = '600px';
+            this.detailElement.style.margin = '0 auto';
+            this.detailElement.style.textAlign = 'left';
+        }
+
+        console.error('❌ WebGL Error:', errorInfo.title, errorInfo.description);
+        console.error('Diagnostics:', webglError.diagnostics);
+    }
+
+    /**
      * Show error state
      */
     error(message) {

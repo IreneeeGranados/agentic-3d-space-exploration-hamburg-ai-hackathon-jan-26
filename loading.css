@@ -601,3 +601,145 @@
 .start-exploring-btn:hover .btn-glow {
     transform: translate(0, 0);
 }
+
+/* ============================================
+   WEBGL ERROR CONTENT STYLES
+   ============================================ */
+
+.webgl-error-content {
+    text-align: left;
+    padding: 20px 0;
+}
+
+.error-icon {
+    font-size: 4em;
+    text-align: center;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 20px rgba(255, 107, 0, 0.8));
+    animation: error-pulse 2s ease-in-out infinite;
+}
+
+@keyframes error-pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 20px rgba(255, 107, 0, 0.8));
+    }
+    50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 30px rgba(255, 107, 0, 1));
+    }
+}
+
+.error-title {
+    font-family: 'Courier New', monospace;
+    font-size: 2em;
+    color: #ff6b00;
+    text-align: center;
+    margin: 0 0 15px 0;
+    text-shadow: 0 0 10px rgba(255, 107, 0, 0.8);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.error-description {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    color: #fff;
+    text-align: center;
+    margin: 0 0 30px 0;
+    line-height: 1.6;
+}
+
+.error-section {
+    margin: 25px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 107, 0, 0.3);
+}
+
+.error-section h3 {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2em;
+    color: #39ff14;
+    margin: 0 0 15px 0;
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.6);
+}
+
+.error-steps {
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    color: #00ffff;
+    line-height: 1.8;
+    margin: 0;
+    padding-left: 25px;
+}
+
+.error-steps li {
+    margin: 8px 0;
+}
+
+.error-links {
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    color: #00ffff;
+    line-height: 1.8;
+    margin: 0;
+    padding-left: 25px;
+    list-style: none;
+}
+
+.error-links li {
+    margin: 8px 0;
+}
+
+.error-links a {
+    color: #39ff14;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(57, 255, 20, 0.5);
+    transition: all 0.3s ease;
+}
+
+.error-links a:hover {
+    color: #00ff88;
+    border-bottom-color: #00ff88;
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.8);
+}
+
+.error-diagnostics {
+    margin: 25px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.error-diagnostics summary {
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    color: #888;
+    cursor: pointer;
+    padding: 10px;
+    transition: color 0.3s ease;
+}
+
+.error-diagnostics summary:hover {
+    color: #fff;
+}
+
+.diagnostic-info {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #aaa;
+    line-height: 1.8;
+    margin-top: 15px;
+    padding: 10px;
+}
+
+.diagnostic-info p {
+    margin: 5px 0;
+}
+
+.diagnostic-info strong {
+    color: #fff;
+}

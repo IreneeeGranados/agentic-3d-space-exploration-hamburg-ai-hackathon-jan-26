@@ -5,6 +5,7 @@
 
 import * as THREE from 'three';
 import { PostProcessingManager } from './PostProcessing.js';
+import { WebGLDetector } from '../utils/WebGLDetector.js';
 
 export class RendererManager {
     constructor(canvas) {
@@ -14,18 +15,39 @@ export class RendererManager {
     }
 
     createRenderer(canvas) {
-        const renderer = new THREE.WebGLRenderer({
-            canvas: canvas,
-            antialias: false, // FXAA/SMAA handled by composer usually, or disabled for performance
-            alpha: false,
-            powerPreference: "high-performance",
-            logarithmicDepthBuffer: true // Fix clipping at extreme distances
-        });
+        // Detect WebGL support before attempting to create renderer
+        const webglDetection = WebGLDetector.detectWebGL();
 
-        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        if (!webglDetection.supported) {
+            // Create a detailed error with diagnostic information
+            const error = new Error('WebGL is not available');
+            error.name = 'WebGLNotAvailableError';
+            error.webglError = webglDetection;
+            throw error;
+        }
 
-        return renderer;
+        try {
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: false, // FXAA/SMAA handled by composer usually, or disabled for performance
+                alpha: false,
+                powerPreference: "high-performance",
+                logarithmicDepthBuffer: true // Fix clipping at extreme distances
+            });
+
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            return renderer;
+        } catch (e) {
+            // If renderer creation fails, enhance the error with diagnostic info
+            const webglDetection = WebGLDetector.detectWebGL();
+            const error = new Error(`Failed to create WebGL renderer: ${e.message}`);
+            error.name = 'WebGLRendererCreationError';
+            error.webglError = webglDetection;
+            error.originalError = e;
+            throw error;
+        }
     }
 
     configureRenderer() {
@@ -34,7 +56,7 @@ export class RendererManager {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
-        
+
         // Ensure proper depth sorting for stars vs planets
         this.renderer.sortObjects = true;
     }
