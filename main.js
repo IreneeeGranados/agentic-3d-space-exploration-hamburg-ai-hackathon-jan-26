@@ -95,7 +95,27 @@ class App {
 
         } catch (error) {
             console.error('Initialization error:', error);
-            this.loadingManager.error(error.message);
+
+            // Check if this is a WebGL-specific error
+            if (error.name === 'WebGLNotAvailableError' || error.name === 'WebGLRendererCreationError') {
+                // Show WebGL-specific error screen with diagnostic info
+                this.loadingManager.showWebGLError(error.webglError || {
+                    errorMessage: {
+                        title: 'WebGL Error',
+                        description: error.message,
+                        steps: [
+                            'Update your browser to the latest version',
+                            'Enable hardware acceleration in browser settings',
+                            'Update your graphics drivers',
+                            'Try a different browser (Chrome, Firefox, Edge, or Safari)'
+                        ]
+                    },
+                    diagnostics: null
+                });
+            } else {
+                // Show generic error for non-WebGL errors
+                this.loadingManager.error(error.message);
+            }
         }
     }
 
